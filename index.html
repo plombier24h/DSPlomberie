@@ -279,6 +279,37 @@ nav a:hover{color:var(--blue);border-color:var(--blue)}
   .counters{grid-template-columns:1fr 1fr}
   .urgence-badge{display:none}
 }
+
+/* ===== VISIO DIAGNOSTIC ===== */
+.visio-btn{cursor:pointer;font-family:inherit}
+.visio-btn .visio-dot{width:9px;height:9px;border-radius:50%;background:#4CE28C;box-shadow:0 0 0 0 rgba(76,226,140,.7);animation:visio-pulse 1.8s infinite}
+@keyframes visio-pulse{0%{box-shadow:0 0 0 0 rgba(76,226,140,.6)}70%{box-shadow:0 0 0 8px rgba(76,226,140,0)}100%{box-shadow:0 0 0 0 rgba(76,226,140,0)}}
+.visio-btn.is-offline{opacity:.75}
+.visio-btn.is-offline .visio-dot{background:#9aa8b8;animation:none;box-shadow:none}
+.call-screen{position:fixed;inset:0;z-index:4000;background:radial-gradient(circle at 50% 22%,#1a8fd1 0%,#06243a 72%);display:flex;flex-direction:column;align-items:center;justify-content:space-between;color:#fff;text-align:center;padding:56px 24px 64px;font-family:'Red Hat Display',sans-serif}
+.call-top{display:flex;flex-direction:column;align-items:center;position:relative;z-index:2}
+.call-avatar{width:78px;height:78px;border-radius:50%;background:linear-gradient(155deg,rgba(232,119,34,.45),rgba(14,107,168,.55));border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:900;box-shadow:0 8px 30px rgba(0,0,0,.35);animation:call-pulse 2s ease-out infinite;overflow:hidden}
+.call-avatar i{font-size:30px}
+@keyframes call-pulse{0%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 0 rgba(255,255,255,.18)}70%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 18px rgba(255,255,255,0)}100%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 0 rgba(255,255,255,0)}}
+.call-name{font-size:1.2rem;font-weight:900;margin-top:14px}
+.call-status{font-size:.72rem;opacity:.7;margin-top:5px;text-transform:uppercase;letter-spacing:.1em}
+.call-actions{display:flex;align-items:flex-start;gap:24px;position:relative;z-index:2}
+.call-action{display:flex;flex-direction:column;align-items:center;gap:9px}
+.call-btn-label{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.call-btn{width:58px;height:58px;border-radius:15px;border:1.5px solid rgba(232,119,34,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s ease;background:rgba(6,36,58,.55);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:#f0a05a;font-size:20px;box-shadow:0 0 0 1px rgba(232,119,34,.12),0 0 18px rgba(232,119,34,.22)}
+.call-btn:active{transform:scale(.9)}
+.call-btn.hidden{display:none}
+.call-btn.mute-btn.active,.call-btn.camera-switch.active{color:#FF9C9C;border-color:rgba(255,107,107,.6);box-shadow:0 0 0 1px rgba(255,107,107,.2),0 0 18px rgba(255,90,90,.4)}
+.call-btn.hangup{width:66px;height:66px;color:#FF4B4B;border-color:rgba(255,107,107,.7);background:linear-gradient(155deg,rgba(255,107,107,.28),rgba(160,35,35,.4));box-shadow:0 0 0 1px rgba(255,107,107,.3),0 0 28px rgba(255,70,70,.5)}
+.call-btn.accept{width:66px;height:66px;color:#4CE28C;border-color:rgba(79,216,146,.7);background:linear-gradient(155deg,rgba(79,216,146,.28),rgba(30,130,75,.4));box-shadow:0 0 0 1px rgba(79,216,146,.3),0 0 28px rgba(70,220,140,.5)}
+.call-videos{position:absolute;inset:0}
+.call-videos.hidden{display:none}
+.call-videos video{width:100%;height:100%;object-fit:cover;background:#06243a}
+.call-videos .local-video{position:absolute;bottom:180px;right:14px;width:96px;height:132px;border-radius:14px;border:1.5px solid rgba(232,119,34,.65);object-fit:cover;z-index:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.call-videos.swapped #remote-video{position:absolute;bottom:180px;right:14px;width:96px;height:132px;border-radius:14px;border:1.5px solid rgba(232,119,34,.65);object-fit:cover;z-index:1;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.call-videos.swapped .local-video{position:absolute;inset:0;width:100%;height:100%;border-radius:0;border:none;z-index:0;box-shadow:none}
+@media(min-width:760px){.call-videos{top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(92vw,520px);background:#000}.call-videos #remote-video{object-fit:contain}}
+.call-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:4100;background:#06243a;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:12px 18px;font-size:.85rem;max-width:88vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 </style>
 </head>
 <body>
@@ -300,6 +331,7 @@ nav a:hover{color:var(--blue);border-color:var(--blue)}
         <a href="tel:0174601795" class="theme-btn"><i class="fas fa-phone"></i> 01 74 60 17 95</a>
         <a href="tel:0616694989" class="theme-btn outline"><i class="fas fa-mobile-alt"></i> 06 16 69 49 89</a>
         <a href="https://plombier24h.github.io/chaudiere-frisquet-installation/" class="theme-btn outline"><i class="fas fa-fire"></i> Nos chaudières</a>
+        <button type="button" id="btn-visio" class="theme-btn visio-btn"><span class="visio-dot"></span><i class="fas fa-video"></i> <span class="visio-label">Diagnostic vidéo</span></button>
       </div>
       <span class="hero-note">Devis gratuit · Disponible 24h/24 · 7j/7</span>
     </div>
@@ -599,5 +631,326 @@ window.addEventListener('scroll',()=>{
   scenes.forEach(function(v){ io.observe(v); });
 })();
 </script>
+
+<!-- ===== VISIO DIAGNOSTIC (client) ===== -->
+<div id="call-root"></div>
+<script type="module">
+/* =========================================================
+   CONFIG — À REMPLIR avec les valeurs de ton projet Firebase
+   (Console Firebase > Paramètres du projet > Vos applications > Config)
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCf0iuRqrKCIcChJVqrLqm5lj5A4gIHod8",
+  authDomain: "ds-plomberie-visio.firebaseapp.com",
+  projectId: "ds-plomberie-visio",
+  storageBucket: "ds-plomberie-visio.firebasestorage.app",
+  messagingSenderId: "1005022938633",
+  appId: "1:1005022938633:web:c3546559f9a4231bc2dad8"
+};
+
+/* Serveurs STUN/TURN — OpenRelay public (gratuit, sans inscription).
+   Pour passer sur ton propre compte Metered.ca : remplace username/credential. */
+const ICE_SERVERS = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun.relay.metered.ca:80" },
+  { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+];
+
+const RING_DURATION = 40000;   // ~10 sonneries
+const DESK_ID = "desk";        // file d'attente unique de la console
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, updateDoc, addDoc, onSnapshot, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const callRoot = document.getElementById('call-root');
+const visioBtn = document.getElementById('btn-visio');
+
+let currentUser = null;
+let deskOnline = false;
+let currentCallDocId = null, currentCallUnsub = null;
+let peerConnection = null, localStream = null, remoteStream = null, webrtcUnsubs = [];
+let ringTimeout = null, ringAudioCtx = null, ringInterval = null;
+let localAudioMuted = false, currentFacingMode = 'environment';
+
+/* ---------- utilitaires ---------- */
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'call-toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 5000);
+}
+
+/* ---------- sonnerie (Web Audio, aucun fichier) ---------- */
+function startRingtone(){
+  stopRingtone();
+  try { ringAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return; }
+  if(ringAudioCtx.state === 'suspended') ringAudioCtx.resume().catch(()=>{});
+  function beep(){
+    if(!ringAudioCtx) return;
+    if(ringAudioCtx.state === 'suspended') ringAudioCtx.resume().catch(()=>{});
+    const now = ringAudioCtx.currentTime;
+    [0, 0.22].forEach(delay => {
+      const osc = ringAudioCtx.createOscillator();
+      const gain = ringAudioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.value = 950;
+      gain.gain.setValueAtTime(0.0001, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.7, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.2);
+      osc.connect(gain).connect(ringAudioCtx.destination);
+      osc.start(now + delay); osc.stop(now + delay + 0.22);
+    });
+  }
+  beep();
+  ringInterval = setInterval(beep, 1200);
+}
+function stopRingtone(){
+  if(ringInterval){ clearInterval(ringInterval); ringInterval = null; }
+  if(ringAudioCtx){ ringAudioCtx.close().catch(()=>{}); ringAudioCtx = null; }
+}
+
+/* ---------- écran d'appel ---------- */
+function callScreenHtml(statusText){
+  return `
+    <div class="call-screen">
+      <div class="call-videos hidden" id="call-videos">
+        <video id="remote-video" autoplay playsinline></video>
+        <video id="local-video" class="local-video" autoplay playsinline muted></video>
+      </div>
+      <div class="call-top">
+        <div class="call-avatar"><i class="fas fa-user-hard-hat"></i></div>
+        <div class="call-name">DS Plomberie</div>
+        <div class="call-status" id="call-status">${statusText}</div>
+      </div>
+      <div class="call-actions">
+        <div class="call-action">
+          <button class="call-btn mute-btn hidden" id="btn-mute" aria-label="Muet"><i class="fas fa-microphone"></i></button>
+          <span class="call-btn-label">Muet</span>
+        </div>
+        <div class="call-action">
+          <button class="call-btn camera-switch hidden" id="btn-camera-switch" aria-label="Changer de caméra"><i class="fas fa-camera-rotate"></i></button>
+          <span class="call-btn-label">Caméra</span>
+        </div>
+        <div class="call-action">
+          <button class="call-btn hangup" id="btn-hangup" aria-label="Raccrocher"><i class="fas fa-phone-slash"></i></button>
+          <span class="call-btn-label">Raccrocher</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ---------- présence de la console ---------- */
+function watchDesk(){
+  onSnapshot(doc(db, "presence", DESK_ID), (snap) => {
+    const d = snap.data();
+    const fresh = d && d.online && d.updatedAt && (Date.now() - d.updatedAt < 90000);
+    deskOnline = !!fresh;
+    if(!visioBtn) return;
+    visioBtn.classList.toggle('is-offline', !deskOnline);
+    visioBtn.querySelector('.visio-label').textContent = deskOnline ? 'Diagnostic vidéo' : 'Visio hors ligne';
+  }, () => {});
+}
+
+/* ---------- démarrer l'appel ---------- */
+async function startCall(){
+  if(currentCallDocId) return;
+  if(!currentUser){ toast("Connexion en cours, réessayez dans 2 secondes."); return; }
+  if(!deskOnline){
+    toast("Aucun technicien en visio pour le moment — appelez le 01 74 60 17 95.");
+    return;
+  }
+
+  callRoot.innerHTML = callScreenHtml("Appel en cours...");
+  document.getElementById('btn-hangup').addEventListener('click', () => endCall());
+  startRingtone();
+
+  const callRef = doc(collection(db, "calls"));
+  currentCallDocId = callRef.id;
+  await setDoc(callRef, {
+    target: DESK_ID,
+    callerId: currentUser.uid,
+    callerName: "Visiteur du site",
+    source: "site DS Plomberie",
+    type: "video",
+    status: "ringing",
+    createdAt: serverTimestamp(),
+    createdAtMs: Date.now(),
+    ua: navigator.userAgent.slice(0, 180)
+  });
+
+  currentCallUnsub = onSnapshot(callRef, (snap) => {
+    const d = snap.data(); if(!d) return;
+    if(d.status === 'accepted'){
+      clearTimeout(ringTimeout); stopRingtone();
+      if(currentCallUnsub){ currentCallUnsub(); currentCallUnsub = null; }
+      connectCall(true);
+    } else if(d.status === 'rejected' || d.status === 'ended'){
+      endCall(true, false);
+      toast("Appel terminé.");
+    }
+  });
+
+  ringTimeout = setTimeout(async () => {
+    if(currentCallDocId){ await updateDoc(doc(db, "calls", currentCallDocId), { status: "ended" }).catch(()=>{}); }
+    endCall(true, false);
+    toast("Personne n'a répondu — appelez le 01 74 60 17 95.");
+  }, RING_DURATION);
+}
+
+/* ---------- connexion WebRTC (côté appelant) ---------- */
+async function connectCall(){
+  stopRingtone();
+  const callId = currentCallDocId;
+  const videosBox = document.getElementById('call-videos');
+  if(!videosBox) return;
+
+  try{
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: { facingMode: { ideal: 'environment' } }
+    });
+  }catch(e){
+    toast("Impossible d'accéder à la caméra/micro.");
+    endCall(); return;
+  }
+  videosBox.classList.remove('hidden');
+  document.getElementById('local-video').srcObject = localStream;
+  setupControls();
+  document.getElementById('call-status').textContent = "Connexion...";
+
+  peerConnection = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+
+  peerConnection.ontrack = (ev) => {
+    const rv = document.getElementById('remote-video');
+    if(rv && rv.srcObject !== ev.streams[0]){
+      rv.srcObject = ev.streams[0]; remoteStream = ev.streams[0];
+      rv.play().catch(()=>{});
+    }
+    const st = document.getElementById('call-status');
+    if(st) st.textContent = "En communication";
+  };
+
+  const connectTimeout = setTimeout(() => {
+    if(peerConnection){ toast("Connexion impossible : réseau incompatible. Réessayez en wifi."); endCall(); }
+  }, 35000);
+  peerConnection.onconnectionstatechange = () => {
+    if(!peerConnection) return;
+    if(peerConnection.connectionState === 'connected') clearTimeout(connectTimeout);
+    if(['failed','disconnected','closed'].includes(peerConnection.connectionState)){ clearTimeout(connectTimeout); endCall(); }
+  };
+  peerConnection.oniceconnectionstatechange = () => {
+    if(peerConnection && ['connected','completed'].includes(peerConnection.iceConnectionState)) clearTimeout(connectTimeout);
+  };
+
+  const callDocRef = doc(db, "calls", callId);
+  const callerCandidates = collection(callDocRef, "callerCandidates");
+  const calleeCandidates = collection(callDocRef, "calleeCandidates");
+
+  webrtcUnsubs.push(onSnapshot(callDocRef, (snap) => {
+    const d = snap.data();
+    if(d && (d.status === 'ended' || d.status === 'rejected')) endCall(true, false);
+  }));
+
+  peerConnection.onicecandidate = (ev) => { if(ev.candidate) addDoc(callerCandidates, ev.candidate.toJSON()); };
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  await updateDoc(callDocRef, { offer: { sdp: offer.sdp, type: offer.type } });
+
+  webrtcUnsubs.push(onSnapshot(callDocRef, async (snap) => {
+    const d = snap.data();
+    if(peerConnection && !peerConnection.currentRemoteDescription && d && d.answer){
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(d.answer));
+    }
+  }));
+  webrtcUnsubs.push(onSnapshot(calleeCandidates, (snap) => {
+    snap.docChanges().forEach(c => {
+      if(c.type === 'added' && peerConnection) peerConnection.addIceCandidate(new RTCIceCandidate(c.doc.data())).catch(()=>{});
+    });
+  }));
+}
+
+/* ---------- contrôles en cours d'appel ---------- */
+function setupControls(){
+  const muteBtn = document.getElementById('btn-mute');
+  if(muteBtn){
+    muteBtn.classList.remove('hidden');
+    muteBtn.addEventListener('click', () => {
+      if(!localStream) return;
+      localAudioMuted = !localAudioMuted;
+      localStream.getAudioTracks().forEach(t => t.enabled = !localAudioMuted);
+      muteBtn.classList.toggle('active', localAudioMuted);
+      muteBtn.innerHTML = localAudioMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
+    });
+  }
+  const switchBtn = document.getElementById('btn-camera-switch');
+  const videosBox = document.getElementById('call-videos');
+  const localVideo = document.getElementById('local-video');
+  if(switchBtn){
+    switchBtn.classList.remove('hidden');
+    let switching = false;
+    switchBtn.addEventListener('click', async () => {
+      if(!localStream || switching) return;
+      switching = true;
+      const next = currentFacingMode === 'user' ? 'environment' : 'user';
+      const oldTrack = localStream.getVideoTracks()[0];
+      const audioTrack = localStream.getAudioTracks()[0];
+      try{
+        if(oldTrack) oldTrack.stop();
+        const cam = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode: next } });
+        const newTrack = cam.getVideoTracks()[0];
+        if(!newTrack) throw new Error('pas de piste vidéo');
+        if(peerConnection){
+          const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+          if(sender) await sender.replaceTrack(newTrack);
+        }
+        const ns = new MediaStream();
+        if(audioTrack) ns.addTrack(audioTrack);
+        ns.addTrack(newTrack);
+        localStream = ns; currentFacingMode = next;
+        if(localVideo) localVideo.srcObject = localStream;
+      }catch(e){ toast("Changement de caméra impossible."); }
+      switching = false;
+    });
+  }
+  if(localVideo && videosBox && !videosBox.dataset.bound){
+    videosBox.dataset.bound = '1';
+    localVideo.addEventListener('click', () => videosBox.classList.toggle('swapped'));
+  }
+}
+
+/* ---------- raccrocher / nettoyage ---------- */
+function endCall(clearRoot = true, updateStatus = true){
+  clearTimeout(ringTimeout); stopRingtone();
+  if(peerConnection){ try{ peerConnection.close(); }catch(e){} peerConnection = null; }
+  if(localStream){ localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  if(remoteStream){ remoteStream.getTracks().forEach(t => t.stop()); remoteStream = null; }
+  webrtcUnsubs.forEach(u => { try{ u(); }catch(e){} }); webrtcUnsubs = [];
+  if(currentCallUnsub){ currentCallUnsub(); currentCallUnsub = null; }
+  if(currentCallDocId && updateStatus){
+    updateDoc(doc(db, "calls", currentCallDocId), { status: "ended" }).catch(()=>{});
+  }
+  currentCallDocId = null; localAudioMuted = false;
+  if(clearRoot) callRoot.innerHTML = '';
+}
+window.addEventListener('pagehide', () => {
+  if(currentCallDocId) updateDoc(doc(db, "calls", currentCallDocId), { status: "ended" }).catch(()=>{});
+});
+
+/* ---------- démarrage ---------- */
+onAuthStateChanged(auth, (user) => {
+  if(user){ currentUser = user; watchDesk(); }
+});
+signInAnonymously(auth).catch(() => toast("Service visio indisponible."));
+if(visioBtn) visioBtn.addEventListener('click', startCall);
+</script>
+
 </body>
 </html>

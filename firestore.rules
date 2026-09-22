@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Appels visio : un visiteur anonyme peut créer et mettre à jour son appel,
+    // la console (compte email/mot de passe) peut lire et répondre.
+    match /calls/{callId} {
+      allow read, create, update: if request.auth != null;
+      allow delete: if request.auth != null
+                    && request.auth.token.firebase.sign_in_provider == 'password';
+
+      match /{sub}/{candidateId} {
+        allow read, create: if request.auth != null;
+      }
+    }
+
+    // Présence de la console : lisible par tous les connectés,
+    // écrivable uniquement par un compte email/mot de passe (la console).
+    match /presence/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+  }
+}
