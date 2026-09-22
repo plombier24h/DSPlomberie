@@ -666,7 +666,9 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getFirestore, collection, doc, setDoc, updateDoc, addDoc, onSnapshot, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app  = initializeApp(firebaseConfig);
+// Nom d'app distinct : la session anonyme du site n'ecrase plus
+// la session email de la console (meme domaine).
+const app  = initializeApp(firebaseConfig, "dsplomberie-site");
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
@@ -945,10 +947,16 @@ window.addEventListener('pagehide', () => {
 });
 
 /* ---------- démarrage ---------- */
+let watching = false;
 onAuthStateChanged(auth, (user) => {
-  if(user){ currentUser = user; watchDesk(); }
+  if(user){
+    currentUser = user;
+    if(!watching){ watching = true; watchDesk(); }
+  } else {
+    currentUser = null;
+    signInAnonymously(auth).catch(() => toast("Service visio indisponible."));
+  }
 });
-signInAnonymously(auth).catch(() => toast("Service visio indisponible."));
 if(visioBtn) visioBtn.addEventListener('click', startCall);
 </script>
 

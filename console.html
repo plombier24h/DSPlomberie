@@ -140,7 +140,9 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
 import { getFirestore, collection, doc, setDoc, updateDoc, addDoc, onSnapshot, query, where, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app  = initializeApp(firebaseConfig);
+// Nom d'app distinct : la session d'authentification de la console est isolee
+// de celle du site public (meme domaine, sinon les deux s'ecrasent).
+const app  = initializeApp(firebaseConfig, "dsplomberie-console");
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
@@ -197,6 +199,12 @@ $('password').addEventListener('keydown', (e) => { if(e.key === 'Enter') $('btn-
 $('btn-logout').addEventListener('click', async () => { await setOnline(false); signOut(auth); });
 
 onAuthStateChanged(auth, (user) => {
+  if(user && user.isAnonymous){
+    // Session anonyme (venue du site public) : jamais valable pour la console.
+    signOut(auth);
+    $('login-err').textContent = "Session invalide, reconnectez-vous.";
+    return;
+  }
   if(user){
     $('view-login').classList.add('hidden');
     $('view-desk').classList.remove('hidden');
@@ -219,13 +227,29 @@ async function setOnline(state){
   $('pill-txt').textContent = state ? 'En ligne' : 'Hors ligne';
   $('btn-toggle').textContent = state ? 'Se mettre hors ligne' : 'Se remettre en ligne';
   $('waiting').classList.toggle('hidden', !state);
-  await setDoc(doc(db, "presence", DESK_ID), {
-    online: state, updatedAt: Date.now(), at: serverTimestamp()
-  }, { merge: true }).catch(()=>{});
+  try{
+    await setDoc(doc(db, "presence", DESK_ID), {
+      online: state, updatedAt: Date.now(), at: serverTimestamp()
+    }, { merge: true });
+  }catch(e){
+    // Echec d'ecriture = la console n'est PAS reellement en ligne : on le montre.
+    $('pill').classList.add('off');
+    $('pill-txt').textContent = 'Hors ligne';
+    $('waiting').classList.add('hidden');
+    toast("Presence non enregistree : " + (e.code || e.message));
+    if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+    return;
+  }
   if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
   if(state){
     heartbeatTimer = setInterval(() => {
-      setDoc(doc(db, "presence", DESK_ID), { online: true, updatedAt: Date.now() }, { merge: true }).catch(()=>{});
+      setDoc(doc(db, "presence", DESK_ID), { online: true, updatedAt: Date.now() }, { merge: true })
+        .catch((e) => {
+          $('pill').classList.add('off');
+          $('pill-txt').textContent = 'Hors ligne';
+          toast("Presence perdue : " + (e.code || e.message));
+          clearInterval(heartbeatTimer); heartbeatTimer = null;
+        });
     }, HEARTBEAT);
   }
 }
