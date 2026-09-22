@@ -59,32 +59,6 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .call-videos.swapped .local-video{position:absolute;inset:0;width:100%;height:100%;border-radius:0;border:none;z-index:0}
 @media(min-width:760px){.call-videos{top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(92vw,560px);background:#000}.call-videos #remote-video{object-fit:contain}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:4100;background:#06243a;color:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 18px;font-size:.85rem;max-width:88vw;text-align:center}
-
-/* ===== ASSISTANT DIAGNOSTIC (console uniquement) ===== */
-.assist{position:absolute;z-index:5;left:0;top:0;bottom:0;width:min(92vw,380px);background:rgba(4,20,33,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-right:1px solid var(--line);display:flex;flex-direction:column;text-align:left;transform:translateX(-102%);transition:transform .22s ease}
-.assist.open{transform:translateX(0)}
-.assist-head{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);flex:0 0 auto}
-.assist-head .rec{width:9px;height:9px;border-radius:50%;background:#FF4B4B;animation:pulse 1.6s infinite}
-.assist-head .rec.off{background:#9aa8b8;animation:none}
-.assist-tabs{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;flex:0 0 auto;border-bottom:1px solid var(--line)}
-.assist-tabs button{flex:0 0 auto;background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.75);border-radius:999px;padding:6px 12px;font:600 .72rem 'Red Hat Display',sans-serif;cursor:pointer;white-space:nowrap}
-.assist-tabs button.on{background:var(--orange);border-color:var(--orange);color:#fff}
-.assist-body{flex:1 1 auto;overflow-y:auto;padding:14px 16px}
-.fiche h3{font-size:.98rem;font-weight:900;margin-bottom:10px;color:#fff}
-.fiche .blk{margin-bottom:12px}
-.fiche .blk b{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin-bottom:4px}
-.fiche .blk ul{margin:0;padding-left:16px}
-.fiche .blk li{font-size:.83rem;color:rgba(255,255,255,.88);margin-bottom:3px}
-.fiche .blk p{font-size:.83rem;color:rgba(255,255,255,.88)}
-.fiche .flag{background:rgba(232,119,34,.14);border:1px solid rgba(232,119,34,.4);border-radius:6px;padding:9px 11px;font-size:.8rem;color:#ffd7ae}
-.fiche .tarif{font-size:.8rem;color:#fff;background:rgba(255,255,255,.07);border-radius:6px;padding:9px 11px}
-.assist-empty{font-size:.83rem;color:rgba(255,255,255,.45);padding:10px 0}
-.assist-tr{flex:0 0 auto;max-height:30%;overflow-y:auto;border-top:1px solid var(--line);padding:12px 16px;font-size:.8rem;color:rgba(255,255,255,.7);line-height:1.5}
-.assist-tr .interim{color:rgba(255,255,255,.4);font-style:italic}
-@media(max-width:759px){
-  .assist{left:0;right:0;top:auto;bottom:0;width:auto;height:74vh;border-right:none;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(102%)}
-  .assist.open{transform:translateY(0)}
-}
 </style>
 </head>
 <body>
@@ -363,12 +337,6 @@ function handleIncoming(callId, data){
           <video id="remote-video" autoplay playsinline></video>
           <video id="local-video" class="local-video" autoplay playsinline muted></video>
         </div>
-        <div class="assist" id="assist">
-          <div class="assist-head"><span class="rec off" id="assist-rec"></span><span id="assist-rec-lbl">Assistant diagnostic</span></div>
-          <div class="assist-tabs" id="assist-tabs"></div>
-          <div class="assist-body" id="assist-body"></div>
-          <div class="assist-tr" id="assist-tr"></div>
-        </div>
         <div class="call-top">
           <div class="call-avatar"><i class="fas fa-user"></i></div>
           <div class="call-name">${data.callerName || 'Visiteur'}</div>
@@ -384,10 +352,6 @@ function handleIncoming(callId, data){
             <span class="call-btn-label">Caméra</span>
           </div>
           <div class="call-action">
-            <button class="call-btn" id="btn-assist"><i class="fas fa-clipboard-list"></i></button>
-            <span class="call-btn-label">Fiches</span>
-          </div>
-          <div class="call-action">
             <button class="call-btn hangup" id="btn-hangup"><i class="fas fa-phone-slash"></i></button>
             <span class="call-btn-label">Raccrocher</span>
           </div>
@@ -395,7 +359,6 @@ function handleIncoming(callId, data){
       </div>`;
     $('btn-hangup').addEventListener('click', () => endCall());
     addLog(data, 'Répondu');
-    startAssistant(callId, data);
     connectCall(callId);
   });
 }
@@ -505,7 +468,6 @@ function setupControls(){
 }
 
 function endCall(clearRoot = true, updateStatus = true){
-  stopAssistant();
   clearTimeout(missedTimeout); stopRingtone();
   if(peerConnection){ try{ peerConnection.close(); }catch(e){} peerConnection = null; }
   if(localStream){ localStream.getTracks().forEach(t => t.stop()); localStream = null; }
@@ -527,212 +489,6 @@ function addLog(data, verdict){
                   <span class="when">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>`;
   list.prepend(el);
 }
-
-/* =========================================================
-   ASSISTANT DIAGNOSTIC — transcription live + fiches metier
-   Visible uniquement cote console. Le client ne voit rien.
-   ========================================================= */
-
-const TARIF = "Déplacement 60 € TTC · 1ʳᵉ heure 167,20 € TTC · heure suivante 107,20 € TTC";
-
-const FICHES = [
-  {
-    id: 'bouchon', court: 'Bouchon', titre: 'Bouchon WC / évier / douche',
-    mots: ['bouche','bouché','bouchee','bouchon','debouche','deboucher','descend plus','deborde','debordement','stagne','evacuation','siphon','wc','toilette','evier','lavabo','douche','baignoire'],
-    montrer: ["L'évacuation concernée et le niveau d'eau","Sous le lavabo : le siphon","Le regard s'il y en a un"],
-    questions: ["Un seul point ou plusieurs ?","Depuis quand ?","Déjà eu le problème ?","Maison ou appartement ?","Un produit a déjà été versé ?"],
-    causes: ["Un seul point → bouchon local (siphon, coude)","Plusieurs points → bouchon de colonne ou de collecteur"],
-    annonce: "Forfait de base. Furet manuel ou électrique selon l'accès, à confirmer sur place."
-  },
-  {
-    id: 'fuite', court: 'Fuite', titre: "Fuite d'eau",
-    mots: ['fuite','fuit','coule','goutte','degat des eaux','degat','tache','humidite','humide','compteur','infiltration','moisissure'],
-    montrer: ["Le point qui coule","Le plafond ou le mur touché","Le compteur d'eau","La vanne d'arrêt"],
-    questions: ["Goutte à goutte ou jet ?","As-tu coupé l'eau ?","Le compteur tourne robinets fermés ?","Y a-t-il un voisin au-dessus ?"],
-    causes: ["Joint ou raccord si le point est visible","Canalisation encastrée si tache sans point visible"],
-    flag: "Ne jamais affirmer l'origine d'une fuite encastrée avant la détection.",
-    annonce: "Détection de fuite au tarif standard."
-  },
-  {
-    id: 'odeur', court: 'Odeur', titre: "Odeur d'égout",
-    mots: ['odeur','sent mauvais','pue','puanteur','egout','remontee d odeur','mauvaise odeur'],
-    montrer: ["Le point d'où vient l'odeur","Les siphons","La ventilation","Le regard extérieur"],
-    questions: ["Permanent ou par moments ?","Pire après la pluie ?","Le logement a-t-il été inoccupé récemment ?"],
-    causes: ["Siphon désamorcé (absence prolongée)","Ventilation primaire bouchée","Défaut sur le réseau"],
-    annonce: "Diagnostic sur place, souvent couplé à une inspection caméra."
-  },
-  {
-    id: 'refoulement', court: 'Refoulement', titre: 'Refoulement / colonne bouchée',
-    mots: ['refoule','refoulement','remonte dans','tous les wc','cave','inonde','inondation','sous-sol','sous sol','colonne','collecteur','plusieurs appartements','immeuble','copropriete','syndic'],
-    montrer: ["Tous les points touchés","La cave et le sous-sol","Le regard"],
-    questions: ["Combien de logements touchés ?","Tu es propriétaire, locataire ou syndic ?","La cave ou le rez-de-chaussée sont-ils touchés ?"],
-    causes: ["Bouchon de colonne ou de collecteur → curage haute pression"],
-    flag: "Copropriété : identifier qui commande et qui paie AVANT de partir.",
-    annonce: "Intervention urgente. Curage haute pression."
-  },
-  {
-    id: 'camera', court: 'Caméra', titre: 'Inspection caméra / assainissement',
-    mots: ['camera','inspection','diagnostic','vente','notaire','expertise','racine','assainissement','rapport','controle','conformite'],
-    montrer: ["Les regards accessibles","Le tracé supposé du réseau","Les documents existants"],
-    questions: ["C'est pour une vente ?","Un litige ?","Un sinistre assurance ?","Un rapport écrit est-il attendu ?"],
-    causes: ["Prestation de constat — pas de diagnostic à annoncer avant passage caméra"],
-    annonce: "Inspection caméra avec rapport, au tarif standard."
-  },
-  {
-    id: 'chaudiere', court: 'Chaudière', titre: 'Chaudière — opportunité remplacement',
-    mots: ['chaudiere','chauffage','eau chaude','radiateur','frisquet','chauffe','pression','manometre','fioul','gaz'],
-    montrer: ["La chaudière entière","La plaque signalétique : marque, modèle, année","L'emplacement","L'évacuation des fumées"],
-    questions: ["Quel âge a la chaudière ?","Gaz ou fioul ?","Des pannes à répétition ?","Propriétaire ou locataire ?","Combien de radiateurs, quelle surface ?"],
-    causes: ["Pas de dépannage chaudière → on renvoie","Entretien : ponctuellement","Remplacement : c'est la cible"],
-    flag: "Plus de 15 ans, pannes répétées ou fioul → pousser le remplacement.",
-    annonce: "Visite technique de remplacement au tarif standard, déduite du devis en cas de commande. Chaudières Frisquet : tarif sur devis.",
-    lien: "https://plombier24h.github.io/chaudiere-frisquet-installation/"
-  }
-];
-
-let recog = null, recActive = false, wantRec = false;
-let transcriptFinal = '', transcriptInterim = '', assistCallId = null, assistCallerName = '';
-let assistStartedAt = null, fichesVues = new Set(), ficheManuelle = null;
-
-const strip = (t) => t.toLowerCase()
-  .normalize('NFD').replace(/[̀-ͯ]/g, '')
-  .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ');
-
-function scoreFiches(txt){
-  const t = strip(txt);
-  return FICHES.map(f => {
-    let n = 0;
-    f.mots.forEach(m => { if(t.includes(strip(m))) n++; });
-    return { f, n };
-  }).filter(x => x.n > 0).sort((a,b) => b.n - a.n);
-}
-
-function ficheHtml(f){
-  const li = (arr) => arr.map(x => `<li>${x}</li>`).join('');
-  return `
-    <div class="fiche">
-      <h3>${f.titre}</h3>
-      <div class="blk"><b>À faire montrer</b><ul>${li(f.montrer)}</ul></div>
-      <div class="blk"><b>Questions à poser</b><ul>${li(f.questions)}</ul></div>
-      <div class="blk"><b>Causes probables</b><ul>${li(f.causes)}</ul></div>
-      ${f.flag ? `<div class="blk"><div class="flag">${f.flag}</div></div>` : ''}
-      <div class="blk"><b>Ce qu'on annonce</b><p>${f.annonce}</p></div>
-      ${f.lien ? `<div class="blk"><b>Renvoi</b><p><a href="${f.lien}" target="_blank" rel="noopener" style="color:#f0a05a">Site chaudières Frisquet</a></p></div>` : ''}
-      <div class="blk"><div class="tarif">${TARIF}</div></div>
-    </div>`;
-}
-
-function renderAssist(){
-  const body = document.getElementById('assist-body');
-  const tabs = document.getElementById('assist-tabs');
-  if(!body || !tabs) return;
-
-  const ranked = scoreFiches(transcriptFinal + ' ' + transcriptInterim);
-  const auto = ranked.length ? ranked[0].f : null;
-  if(auto) fichesVues.add(auto.id);
-  const active = ficheManuelle || auto;
-
-  tabs.innerHTML = FICHES.map(f => {
-    const on = active && f.id === active.id ? ' on' : '';
-    const hit = ranked.find(r => r.f.id === f.id);
-    return `<button class="${on.trim()}" data-fiche="${f.id}">${hit ? '• ' : ''}${f.court}</button>`;
-  }).join('');
-  tabs.querySelectorAll('button').forEach(b => {
-    b.addEventListener('click', () => {
-      ficheManuelle = FICHES.find(f => f.id === b.dataset.fiche);
-      renderAssist();
-      const a = document.getElementById('assist'); if(a) a.classList.add('open');
-    });
-  });
-
-  body.innerHTML = active
-    ? ficheHtml(active)
-    : `<p class="assist-empty">Aucun cas détecté pour l'instant. Parle, ou choisis une fiche ci-dessus.</p>`;
-}
-
-function renderTranscript(){
-  const tr = document.getElementById('assist-tr');
-  if(!tr) return;
-  tr.innerHTML = (transcriptFinal || '') + (transcriptInterim ? `<span class="interim"> ${transcriptInterim}</span>` : '');
-  tr.scrollTop = tr.scrollHeight;
-}
-
-function startAssistant(callId, data){
-  assistCallId = callId;
-  assistCallerName = (data && data.callerName) || 'Visiteur';
-  assistStartedAt = Date.now();
-  transcriptFinal = ''; transcriptInterim = ''; fichesVues = new Set(); ficheManuelle = null;
-
-  const panel = document.getElementById('assist');
-  const btn = document.getElementById('btn-assist');
-  if(btn && panel) btn.addEventListener('click', () => panel.classList.toggle('open'));
-  renderAssist(); renderTranscript();
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const dot = document.getElementById('assist-rec');
-  if(!SR){
-    if(dot) dot.classList.add('off');
-    const lbl = document.getElementById('assist-rec-lbl');
-    if(lbl) lbl.textContent = 'Transcription non supportée';
-    return;
-  }
-  wantRec = true;
-  recog = new SR();
-  recog.lang = 'fr-FR';
-  recog.continuous = true;
-  recog.interimResults = true;
-  recog.onstart = () => { recActive = true; if(dot) dot.classList.remove('off'); };
-  recog.onresult = (ev) => {
-    let interim = '';
-    for(let i = ev.resultIndex; i < ev.results.length; i++){
-      const r = ev.results[i];
-      if(r.isFinal) transcriptFinal += r[0].transcript.trim() + ' ';
-      else interim += r[0].transcript;
-    }
-    transcriptInterim = interim;
-    renderTranscript();
-    renderAssist();
-  };
-  recog.onerror = (e) => {
-    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
-      wantRec = false;
-      if(dot) dot.classList.add('off');
-      toast("Transcription refusée : micro non autorisé.");
-    }
-  };
-  recog.onend = () => {
-    recActive = false;
-    if(wantRec){ try{ recog.start(); }catch(e){} }
-    else if(dot) dot.classList.add('off');
-  };
-  try{ recog.start(); }catch(e){}
-}
-
-async function stopAssistant(){
-  wantRec = false;
-  if(recog){ try{ recog.stop(); }catch(e){} recog = null; }
-  recActive = false;
-  const texte = (transcriptFinal || '').trim();
-  if(!assistCallId || !texte){ assistCallId = null; return; }
-  const payload = {
-    callId: assistCallId,
-    callerName: assistCallerName,
-    transcript: texte,
-    fichesDetectees: [...fichesVues],
-    startedAtMs: assistStartedAt,
-    endedAtMs: Date.now(),
-    dureeSec: Math.round((Date.now() - assistStartedAt) / 1000),
-    createdAt: serverTimestamp()
-  };
-  assistCallId = null;
-  try{
-    await addDoc(collection(db, "diagnostics"), payload);
-    toast("Transcription enregistrée.");
-  }catch(e){
-    toast("Transcription non enregistrée : " + (e.code || e.message));
-  }
-}
-
 </script>
 </body>
 </html>
