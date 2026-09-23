@@ -30,7 +30,8 @@ service cloud.firestore {
 
     // Transcriptions et notes : chaque poste crée les siennes, l'admin seul corrige ou supprime.
     match /diagnostics/{docId} {
-      allow read, create: if connecte();
+      allow read:   if admin() || (connecte() && resource.data.auteur == request.auth.token.email);
+      allow create: if connecte() && request.resource.data.auteur == request.auth.token.email;
       allow update, delete: if admin();
     }
 

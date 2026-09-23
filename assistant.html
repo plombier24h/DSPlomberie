@@ -38,17 +38,17 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 
 /* fiches */
 .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:12px}
-.tabs button{flex:0 0 auto;background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.75);border-radius:999px;padding:7px 14px;font:600 .76rem 'Red Hat Display',sans-serif;cursor:pointer;white-space:nowrap}
+.tabs button{flex:0 0 auto;background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.75);border-radius:999px;padding:6px 12px;font:600 .73rem 'Red Hat Display',sans-serif;cursor:pointer;white-space:nowrap}
 .tabs button.on{background:var(--orange);border-color:var(--orange);color:#fff}
-.fiche{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
-.fiche h3{font-size:1rem;font-weight:900;margin-bottom:12px}
-.fiche .blk{margin-bottom:14px}
-.fiche .blk b{display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin-bottom:5px}
+.fiche{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.fiche h3{font-size:.94rem;font-weight:900;margin-bottom:10px}
+.fiche .blk{margin-bottom:12px}
+.fiche .blk b{display:block;font-size:.61rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin-bottom:5px}
 .fiche .blk ul{margin:0;padding-left:17px}
-.fiche .blk li{font-size:.86rem;color:rgba(255,255,255,.88);margin-bottom:4px}
-.fiche .blk p{font-size:.86rem;color:rgba(255,255,255,.88)}
-.fiche .flag{background:rgba(232,119,34,.14);border:1px solid rgba(232,119,34,.42);border-radius:6px;padding:10px 12px;font-size:.83rem;color:#ffd7ae}
-.fiche .tarif{background:rgba(255,255,255,.07);border-radius:6px;padding:10px 12px;font-size:.82rem}
+.fiche .blk li{font-size:.81rem;color:rgba(255,255,255,.88);margin-bottom:4px}
+.fiche .blk p{font-size:.81rem;color:rgba(255,255,255,.88)}
+.fiche .flag{background:rgba(232,119,34,.14);border:1px solid rgba(232,119,34,.42);border-radius:6px;padding:8px 11px;font-size:.78rem;color:#ffd7ae}
+.fiche .tarif{background:rgba(255,255,255,.07);border-radius:6px;padding:8px 11px;font-size:.78rem}
 .empty-txt{color:rgba(255,255,255,.45);font-size:.85rem;padding:12px 0}
 .pxl{margin-top:2px}
 .pxr{display:flex;justify-content:space-between;gap:10px;border-top:1px solid rgba(255,255,255,.08);padding:7px 0;font-size:.83rem}
@@ -62,10 +62,10 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .mod-kw{color:var(--orange);font-size:.75rem}
 .mod-v{font-size:.75rem;color:rgba(255,255,255,.5)}
 .mod-p{font-size:.9rem;font-weight:900;color:#4CE28C;margin-top:4px}
-.mod-p .devis{color:rgba(255,255,255,.5);font-weight:400;font-style:italic;font-size:.82rem}
+.mod-p .sur-devis{color:rgba(255,255,255,.5);font-weight:400;font-style:italic;font-size:.82rem}
 
 /* transcription + notes */
-.tr{margin-top:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:.82rem;color:rgba(255,255,255,.7);max-height:150px;overflow-y:auto;line-height:1.55}
+.tr{margin-top:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:.78rem;color:rgba(255,255,255,.7);max-height:120px;overflow-y:auto;line-height:1.55}
 .tr .interim{color:rgba(255,255,255,.4);font-style:italic}
 .notes{margin-top:18px}
 .notes h2{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.5);margin-bottom:8px}
@@ -75,19 +75,33 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .notes-bar .etat{font-size:.76rem;color:rgba(255,255,255,.45)}
 .hist{margin-top:22px}
 .hist h2{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.5);margin-bottom:8px}
-.hitem{border:1px solid var(--line);border-radius:8px;padding:11px 14px;margin-bottom:7px;background:rgba(0,0,0,.18);font-size:.84rem}
-.hitem .q{font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:3px}
+.hist-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.hist-head h2{margin:0}
+.hitem{border:1px solid var(--line);border-radius:8px;margin-bottom:7px;background:rgba(0,0,0,.18);font-size:.84rem;overflow:hidden}
+.hitem>summary{list-style:none;cursor:pointer;padding:11px 14px}
+.hitem>summary::-webkit-details-marker{display:none}
+.hitem[open]>summary{border-bottom:1px solid var(--line)}
+.hitem .q{font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:3px;display:flex;gap:10px;flex-wrap:wrap}
+.hitem .q .ttc{color:#4CE28C;font-weight:700}
+.hitem .apercu{color:rgba(255,255,255,.85);line-height:1.5}
+.hitem .detail{padding:12px 14px;display:grid;gap:12px}
+.hitem .detail b{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin-bottom:4px}
+.hitem .detail p{white-space:pre-wrap;font-size:.83rem;color:rgba(255,255,255,.88);line-height:1.55;margin:0}
+.hitem .detail .brut{font-size:.79rem;color:rgba(255,255,255,.6)}
+.hitem .dvl{display:flex;justify-content:space-between;gap:10px;font-size:.79rem;padding:4px 0;border-top:1px solid rgba(255,255,255,.07)}
+.hitem .dvl:first-of-type{border-top:none}
+.hitem .acts{display:flex;gap:8px;flex-wrap:wrap}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:900;background:#06243a;color:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 18px;font-size:.85rem;max-width:88vw;text-align:center}
 
 /* ===== sujets cumulés + devis ===== */
-.sujets{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.sujets{display:flex;flex-wrap:wrap;gap:6px;padding:10px 13px;border:1px solid var(--line);border-radius:10px;background:var(--ink2);margin-bottom:12px}
 .sujets-vide{font-size:.72rem;color:rgba(255,255,255,.35)}
 .suj{display:inline-flex;align-items:center;gap:5px;background:rgba(232,119,34,.16);border:1px solid rgba(232,119,34,.45);color:#ffc793;border-radius:999px;padding:3px 5px 3px 10px;font-size:.72rem;cursor:pointer}
 .suj.on{background:var(--orange);border-color:var(--orange);color:#fff}
 .suj button{background:none;border:none;color:inherit;cursor:pointer;font-size:.95rem;line-height:1;padding:0 3px}
-.devis{display:flex;flex-direction:column;min-height:0}
-.devis h4{font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45);padding:12px 14px 8px;margin:0}
-.devis-corps{flex:1 1 auto;overflow-y:auto;padding:0 14px}
+.devis{display:flex;flex-direction:column;min-height:0;background:var(--ink2);border:1px solid var(--line);border-radius:10px;position:sticky;top:14px}
+.devis h4{font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45);padding:13px 15px 9px;margin:0}
+.devis-corps{flex:1 1 auto;overflow-y:auto;padding:0 15px;max-height:300px}
 .dl{display:grid;grid-template-columns:1fr auto auto auto auto auto;align-items:center;gap:7px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.76rem}
 .dl:first-child{border-top:none}
 .dl-d{min-width:0;line-height:1.3}
@@ -114,18 +128,6 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 /* deux colonnes : fiche a gauche, devis a droite */
 .duo{display:grid;grid-template-columns:1fr;gap:16px}
 @media(min-width:900px){ .duo{grid-template-columns:1fr 300px; align-items:start} }
-.devis{background:var(--ink2);border:1px solid var(--line);border-radius:10px;position:sticky;top:14px}
-.devis h4{padding:13px 15px 9px}
-.devis-corps{padding:0 15px;max-height:300px;overflow-y:auto}
-.fiche{padding:16px 18px}
-.fiche h3{font-size:.94rem;margin-bottom:10px}
-.fiche .blk{margin-bottom:12px}
-.fiche .blk b{font-size:.61rem}
-.fiche .blk li,.fiche .blk p{font-size:.81rem}
-.fiche .tarif,.fiche .flag{font-size:.78rem;padding:8px 11px}
-.tabs button{padding:6px 12px;font-size:.73rem}
-.tr{font-size:.78rem;max-height:120px}
-.sujets{border-bottom:none;border:1px solid var(--line);border-radius:10px;background:var(--ink2);margin-bottom:12px;padding:10px 13px}
 </style>
 </head>
 <body>
@@ -179,8 +181,11 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
     </div>
 
     <div class="hist">
-      <h2>Mes derniers appels</h2>
-      <div id="hist-list"><p class="empty-txt">Rien pour l'instant.</p></div>
+      <div class="hist-head">
+        <h2>Mes notes enregistrées</h2>
+        <span class="etat" id="hist-nb"></span>
+      </div>
+      <div id="hist-list"><p class="empty-txt">Chargement…</p></div>
     </div>
   </section>
 </div>
@@ -200,7 +205,7 @@ const FENETRE_MOTS = 25;
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp }
+import { getFirestore, collection, doc, addDoc, onSnapshot, query, where, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app  = initializeApp(firebaseConfig, "dsplomberie-poste");
@@ -390,7 +395,7 @@ function blocCatalogue(){
     const pv=eur(m.prixVenteTTC);
     return `<div class="mod"><div class="mod-t">${m.gamme||''} <span class="mod-kw">${m.kwMin===m.kwMax?m.kwMin:m.kwMin+'-'+m.kwMax} kW</span></div>
       <div class="mod-v">${m.variante||''}</div>
-      <div class="mod-p">${pv ? pv+' TTC' : '<span class="devis">sur devis</span>'}</div></div>`;
+      <div class="mod-p">${pv ? pv+' TTC' : '<span class="sur-devis">sur devis</span>'}</div></div>`;
   }).join('') + `</div>`;
 }
 function ficheHtml(f){
@@ -657,6 +662,66 @@ function arreterEcouteSansSauver(){
 }
 $('btn-reset').addEventListener('click', reinitialiser);
 
+/* ---------- mes notes enregistrees ---------- */
+let histo=[];
+function esc(v){ return String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function dateFr(ms){
+  if(!ms) return '—';
+  return new Date(ms).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function texteNote(d){
+  const l=[];
+  l.push('Note du '+dateFr(d.endedAtMs));
+  if(d.note) l.push('', d.note);
+  if((d.devis||[]).length){
+    l.push('', 'Devis :');
+    d.devis.forEach(x=>l.push('- '+x.designation+'  x'+(x.qte||1)+'  '+eur(x.prixHT*(x.qte||1))+' HT'));
+    l.push('Total TTC : '+eur(d.totalTTC||0));
+  }
+  if(d.transcript) l.push('', 'Transcription :', d.transcript);
+  return l.join('\n');
+}
+function renderHisto(){
+  const box=$('hist-list');
+  $('hist-nb').textContent = histo.length ? histo.length+' enregistrée'+(histo.length>1?'s':'') : '';
+  if(!histo.length){ box.innerHTML='<p class="empty-txt">Aucune note enregistrée pour l\'instant.</p>'; return; }
+  box.innerHTML = histo.map((d,i)=>{
+    const titres=(d.sujets||[]).map(id=>{ const f=fiches.find(x=>x.id===id); return f?f.titre:id; }).filter(Boolean);
+    const duree=d.dureeSec?Math.round(d.dureeSec/60)+' min':'';
+    const apercu=(d.note||d.transcript||'').slice(0,150);
+    const lignes=(d.devis||[]).map(x=>`<div class="dvl"><span>${esc(x.designation)} <span style="opacity:.5">x${x.qte||1}</span></span><span>${eur((x.prixHT||0)*(x.qte||1))} HT</span></div>`).join('');
+    return `<details class="hitem" data-i="${i}">
+      <summary>
+        <div class="q"><span>${dateFr(d.endedAtMs)}</span>${duree?`<span>${duree}</span>`:''}${titres.length?`<span>${esc(titres.join(' · '))}</span>`:''}${d.totalTTC?`<span class="ttc">${eur(d.totalTTC)} TTC</span>`:''}</div>
+        <div class="apercu">${esc(apercu)}${(d.note||d.transcript||'').length>150?'…':''}</div>
+      </summary>
+      <div class="detail">
+        ${d.note?`<div><b>Ma note</b><p>${esc(d.note)}</p></div>`:''}
+        ${lignes?`<div><b>Devis préparé</b>${lignes}<div class="dvl"><span>Total TTC</span><span style="color:#4CE28C;font-weight:700">${eur(d.totalTTC||0)}</span></div></div>`:''}
+        ${d.transcript?`<div><b>Transcription</b><p class="brut">${esc(d.transcript)}</p></div>`:''}
+        <div class="acts">
+          <button class="btn ghost small" data-copie="${i}"><i class="fas fa-copy"></i> Copier</button>
+          <button class="btn ghost small" data-reprendre="${i}"><i class="fas fa-rotate-left"></i> Reprendre dans la note</button>
+        </div>
+      </div>
+    </details>`;
+  }).join('');
+}
+$('hist-list').addEventListener('click',(e)=>{
+  const c=e.target.closest('[data-copie]');
+  if(c){ const d=histo[+c.dataset.copie]; if(d){ navigator.clipboard.writeText(texteNote(d)).then(()=>toast("Note copiée."),()=>toast("Copie impossible.")); } return; }
+  const r=e.target.closest('[data-reprendre]');
+  if(r){
+    const d=histo[+r.dataset.reprendre];
+    if(!d) return;
+    const actuel=$('note').value.trim();
+    if(actuel && !confirm("Remplacer la note en cours par celle-ci ?")) return;
+    $('note').value = d.note || '';
+    $('note').focus();
+    toast("Note rechargée.");
+  }
+});
+
 /* ---------- login ---------- */
 $('btn-login').addEventListener('click', async ()=>{
   $('login-err').textContent='';
@@ -699,19 +764,13 @@ function ecouterTout(){
     const d=s.data(); if(d){ ['deplacement','premiereHeure','heureSuivante'].forEach(k=>{ if(d[k]!=null) tarifs[k]=d[k]; }); }
     render();
   },()=>{});
-  const q=query(collection(db,"diagnostics"),where("auteur","==",monEmail),orderBy("endedAtMs","desc"),limit(10));
-  onSnapshot(q,(s)=>{
-    const l=s.docs.map(x=>x.data());
-    const box=$('hist-list');
-    if(!l.length){ box.innerHTML='<p class="empty-txt">Rien pour l\'instant.</p>'; return; }
-    box.innerHTML=l.map(d=>{
-      const dt=d.endedAtMs?new Date(d.endedAtMs):null;
-      const q=dt?dt.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
-      const txt=(d.note||d.transcript||'').slice(0,160).replace(/</g,'&lt;');
-      return `<div class="hitem"><div class="q">${q}</div>${txt}${(d.note||d.transcript||'').length>160?'…':''}</div>`;
-    }).join('');
-  },()=>{
-    $('hist-list').innerHTML='<p class="empty-txt">Historique indisponible (index Firestore en cours de création).</p>';
+  onSnapshot(query(collection(db,"diagnostics"),where("auteur","==",monEmail)),(s)=>{
+    histo = s.docs.map(x=>({docId:x.id,...x.data()}))
+             .sort((a,b)=>(b.endedAtMs||0)-(a.endedAtMs||0))
+             .slice(0,50);
+    renderHisto();
+  },(e)=>{
+    $('hist-list').innerHTML='<p class="empty-txt">Notes indisponibles : '+esc(e.code||e.message)+'</p>';
   });
 }
 </script>
