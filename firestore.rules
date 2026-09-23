@@ -32,7 +32,7 @@ service cloud.firestore {
     match /diagnostics/{docId} {
       allow read:   if admin() || (connecte() && resource.data.auteur == request.auth.token.email);
       allow create: if connecte() && request.resource.data.auteur == request.auth.token.email;
-      allow update, delete: if admin();
+      allow update, delete: if admin() || (connecte() && resource.data.auteur == request.auth.token.email);
     }
 
     // Présence de la console visio.

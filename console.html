@@ -61,7 +61,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:4100;background:#06243a;color:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 18px;font-size:.85rem;max-width:88vw;text-align:center}
 
 /* ===== ASSISTANT DIAGNOSTIC (console uniquement) ===== */
-.assist{position:absolute;z-index:5;left:0;top:0;bottom:0;width:min(96vw,760px);background:rgba(4,20,33,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-right:1px solid var(--line);display:flex;flex-direction:column;text-align:left;transform:translateX(-102%);transition:transform .22s ease}
+.assist{position:absolute;z-index:5;left:0;top:0;bottom:0;width:min(92vw,440px);background:rgba(4,20,33,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-right:1px solid var(--line);display:flex;flex-direction:column;text-align:left;transform:translateX(-102%);transition:transform .22s ease}
 .assist.open{transform:translateX(0)}
 .assist-head{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);flex:0 0 auto}
 .assist-head .rec{width:9px;height:9px;border-radius:50%;background:#FF4B4B;animation:pulse 1.6s infinite}
@@ -204,40 +204,49 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .suj.on{background:var(--orange);border-color:var(--orange);color:#fff}
 .suj button{background:none;border:none;color:inherit;cursor:pointer;font-size:.95rem;line-height:1;padding:0 3px}
 .devis{display:flex;flex-direction:column;min-height:0}
-.devis h4{font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45);padding:12px 14px 8px;margin:0}
-.devis-corps{flex:1 1 auto;overflow-y:auto;padding:0 14px}
-.dl{display:grid;grid-template-columns:1fr auto auto auto auto auto;align-items:center;gap:7px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.76rem}
+.devis h4{font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45);padding:12px 16px 8px;margin:0}
+.devis-corps{flex:1 1 auto;overflow-y:auto;padding:0 16px}
+.dl{padding:10px 0;border-top:1px solid rgba(255,255,255,.09)}
 .dl:first-child{border-top:none}
-.dl-d{min-width:0;line-height:1.3}
-.dl-u{color:rgba(255,255,255,.3);font-size:.64rem;margin-left:5px}
-.dl-q{display:flex;align-items:center;gap:4px}
-.dl-q button{width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#fff;cursor:pointer;font-size:.72rem;line-height:1;padding:0}
-.dl-q span{min-width:14px;text-align:center}
-.dl-pu{color:rgba(255,255,255,.5);white-space:nowrap;font-size:.7rem}
-.dl-tva{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:4px;color:rgba(255,255,255,.7);font-size:.66rem;padding:2px 3px}
-.dl-m{font-weight:700;white-space:nowrap}
-.dl-x{background:none;border:none;color:rgba(255,255,255,.28);cursor:pointer;padding:2px}
+.dl-d{font-size:.88rem;line-height:1.35;color:#fff;margin-bottom:7px}
+.dl-u{color:rgba(255,255,255,.32);font-size:.7rem;margin-left:6px}
+.dl-bas{display:flex;align-items:center;gap:9px}
+.dl-q{flex:0 0 auto;display:flex;align-items:center;gap:5px}
+.dl-q button{width:24px;height:24px;border-radius:5px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#fff;cursor:pointer;font-size:.86rem;line-height:1;padding:0}
+.dl-q button:hover{border-color:var(--orange)}
+.dl-q span{min-width:20px;text-align:center;font-size:.84rem;font-weight:700}
+.dl-pu{color:rgba(255,255,255,.5);white-space:nowrap;font-size:.76rem}
+.dl-tva{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:5px;color:rgba(255,255,255,.75);font-size:.74rem;padding:3px 4px}
+.dl-m{margin-left:auto;font-weight:900;white-space:nowrap;font-size:.94rem}
+.dl-x{flex:0 0 auto;background:none;border:none;color:rgba(255,255,255,.45);cursor:pointer;padding:3px;font-size:.92rem}
 .dl-x:hover{color:#FF6B6B}
-.devis-sugg{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px;border-top:1px solid var(--line)}
-.sg{background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.8);border-radius:6px;padding:5px 9px;font:400 .71rem 'Red Hat Display',sans-serif;cursor:pointer;text-align:left}
+.devis-sugg{display:flex;flex-wrap:wrap;gap:6px;padding:11px 16px;border-top:1px solid var(--line)}
+.sg{background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.8);border-radius:6px;padding:6px 10px;font:400 .76rem 'Red Hat Display',sans-serif;cursor:pointer;text-align:left}
 .sg:hover{border-color:var(--orange);color:#fff}
-.sg i{color:var(--orange);font-size:.62rem;margin-right:3px}
+.sg i{color:var(--orange);font-size:.66rem;margin-right:4px}
 .sg em{color:#4CE28C;font-style:normal;font-weight:700;margin-left:5px}
-.devis-total{border-top:1px solid var(--line);padding:10px 14px;display:grid;gap:4px;font-size:.78rem}
+.devis-total{border-top:1px solid var(--line);padding:12px 16px;display:grid;gap:5px;font-size:.84rem}
 .devis-total div{display:flex;justify-content:space-between}
 .devis-total span{color:rgba(255,255,255,.5)}
-.devis-total .ttc{font-size:.95rem;padding-top:5px;border-top:1px solid rgba(255,255,255,.1)}
+.devis-total .ttc{font-size:1.05rem;padding-top:6px;border-top:1px solid rgba(255,255,255,.1)}
 .devis-total .ttc b{color:#4CE28C}
 
-/* panneau assistant : deux colonnes, plus compact */
-.assist-cols{flex:1 1 auto;display:flex;min-height:0}
+/* fiches a gauche, devis a droite de l'ecran */
 .assist-gauche{flex:1 1 auto;display:flex;flex-direction:column;min-width:0;min-height:0}
-.assist-droite{flex:0 0 288px;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:rgba(0,0,0,.18)}
-@media(max-width:860px){
-  .assist{width:auto}
-  .assist-cols{flex-direction:column}
-  .assist-droite{flex:0 0 auto;max-height:46%;border-left:none;border-top:1px solid var(--line)}
-}
+.devis-panneau{position:absolute;z-index:6;right:0;top:0;bottom:0;width:min(94vw,420px);background:rgba(4,20,33,.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-left:1px solid var(--line);display:flex;flex-direction:column;text-align:left;transform:translateX(102%);transition:transform .22s ease}
+.devis-panneau.open{transform:translateX(0)}
+.devis-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);flex:0 0 auto}
+.devis-head button{background:none;border:none;color:rgba(255,255,255,.5);font-size:1.15rem;line-height:1;cursor:pointer;padding:0 2px}
+.devis-head button:hover{color:#fff}
+
+/* recapitulatif garde a l'ecran apres le raccrochage */
+.recap-screen{justify-content:flex-start;padding:26px 16px;overflow-y:auto;background:radial-gradient(circle at 50% 0%,#0d4b74 0%,#06243a 70%)}
+.recap{width:min(96vw,640px);margin:0 auto;text-align:left;background:rgba(4,20,33,.92);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;overflow:hidden}
+.recap h2{font-size:1.1rem;font-weight:900;padding:18px 18px 4px}
+.recap-sub{font-size:.8rem;color:rgba(255,255,255,.55);padding:0 18px 13px}
+.recap .sujets{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.recap .devis-corps{max-height:46vh}
+.recap-actions{display:flex;gap:10px;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -632,6 +641,10 @@ function handleIncoming(callId, data){
             <span class="call-btn-label">Fiches</span>
           </div>
           <div class="call-action">
+            <button class="call-btn" id="btn-devis"><i class="fas fa-file-invoice"></i></button>
+            <span class="call-btn-label">Devis</span>
+          </div>
+          <div class="call-action">
             <button class="call-btn hangup" id="btn-hangup"><i class="fas fa-phone-slash"></i></button>
             <span class="call-btn-label">Raccrocher</span>
           </div>
@@ -757,7 +770,7 @@ function endCall(clearRoot = true, updateStatus = true){
   webrtcUnsubs.forEach(u => { try{ u(); }catch(e){} }); webrtcUnsubs = [];
   if(currentCallDocId && updateStatus) updateDoc(doc(db, "calls", currentCallDocId), { status:"ended" }).catch(()=>{});
   currentCallDocId = null; localAudioMuted = false;
-  if(clearRoot) callRoot.innerHTML = '';
+  if(clearRoot) ecranRecap();
 }
 
 /* ---------- journal ---------- */
@@ -1339,19 +1352,17 @@ function panneauAssistant(titre, ouvert){
     <div class="assist${ouvert ? ' open' : ''}" id="assist">
       <div class="assist-head"><span class="rec off" id="assist-rec"></span><span id="assist-rec-lbl">${titre}</span></div>
       <div class="sujets" id="sujets"></div>
-      <div class="assist-cols">
-        <div class="assist-gauche">
-          <div class="assist-tabs" id="assist-tabs"></div>
-          <div class="assist-body" id="assist-body"></div>
-          <div class="assist-tr" id="assist-tr"></div>
-        </div>
-        <div class="assist-droite devis">
-          <h4>Devis en préparation</h4>
-          <div class="devis-corps" id="devis-lignes"></div>
-          <div class="devis-sugg" id="devis-sugg"></div>
-          <div class="devis-total" id="devis-total"></div>
-        </div>
+      <div class="assist-gauche">
+        <div class="assist-tabs" id="assist-tabs"></div>
+        <div class="assist-body" id="assist-body"></div>
+        <div class="assist-tr" id="assist-tr"></div>
       </div>
+    </div>
+    <div class="devis-panneau open" id="devis-panneau">
+      <div class="devis-head"><span>Devis en préparation</span><button id="btn-devis-fermer" title="Masquer">&times;</button></div>
+      <div class="devis-corps" id="devis-lignes"></div>
+      <div class="devis-sugg" id="devis-sugg"></div>
+      <div class="devis-total" id="devis-total"></div>
     </div>`;
 }
 
@@ -1500,17 +1511,19 @@ function renderDevis(){
   box.innerHTML = devis.map((l, i) => `
     <div class="dl">
       <div class="dl-d">${l.des}<span class="dl-u">${l.unite}</span></div>
-      <div class="dl-q">
-        <button data-moins="${i}">−</button><span>${l.qte}</span><button data-plus="${i}">+</button>
+      <div class="dl-bas">
+        <div class="dl-q">
+          <button data-moins="${i}">−</button><span>${l.qte}</span><button data-plus="${i}">+</button>
+        </div>
+        <div class="dl-pu">${eur(l.pu)}</div>
+        <select class="dl-tva" data-tva="${i}">
+          <option value="10"${l.tva === 10 ? ' selected' : ''}>10 %</option>
+          <option value="20"${l.tva === 20 ? ' selected' : ''}>20 %</option>
+          <option value="0"${l.tva === 0 ? ' selected' : ''}>0 %</option>
+        </select>
+        <div class="dl-m">${eur(l.pu * l.qte)}</div>
+        <button class="dl-x" data-rm="${i}" title="Retirer"><i class="fas fa-xmark"></i></button>
       </div>
-      <div class="dl-pu">${eur(l.pu)}</div>
-      <select class="dl-tva" data-tva="${i}">
-        <option value="10"${l.tva === 10 ? ' selected' : ''}>10 %</option>
-        <option value="20"${l.tva === 20 ? ' selected' : ''}>20 %</option>
-        <option value="0"${l.tva === 0 ? ' selected' : ''}>0 %</option>
-      </select>
-      <div class="dl-m">${eur(l.pu * l.qte)}</div>
-      <button class="dl-x" data-rm="${i}" title="Retirer"><i class="fas fa-xmark"></i></button>
     </div>`).join('');
 
   box.querySelectorAll('[data-plus]').forEach(b => b.addEventListener('click', () => { devis[+b.dataset.plus].qte++; renderDevis(); }));
@@ -1587,11 +1600,16 @@ function startAssistant(callId, data){
   assistStartedAt = Date.now();
   transcriptFinal = ''; transcriptInterim = ''; fichesVues = new Set();
   ficheManuelle = null; kwDetecte = null;
-  sujets = []; devisInit();
+  sujets = []; devisInit(); dernierDiagId = null;
 
   const panel = document.getElementById('assist');
   const btn = document.getElementById('btn-assist');
   if(btn && panel) btn.addEventListener('click', () => panel.classList.toggle('open'));
+  const pdev = document.getElementById('devis-panneau');
+  const btnDev = document.getElementById('btn-devis');
+  if(btnDev && pdev) btnDev.addEventListener('click', () => pdev.classList.toggle('open'));
+  const fermeDev = document.getElementById('btn-devis-fermer');
+  if(fermeDev && pdev) fermeDev.addEventListener('click', () => pdev.classList.remove('open'));
   renderAssist(); renderTranscript(); renderSujets(); renderDevis();
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1673,11 +1691,72 @@ async function stopAssistant(){
   };
   assistCallId = null;
   try{
-    await addDoc(collection(db, "diagnostics"), payload);
+    const ref = await addDoc(collection(db, "diagnostics"), payload);
+    dernierDiagId = ref.id;
     toast("Transcription enregistrée.");
   }catch(e){
     toast("Transcription non enregistrée : " + (e.code || e.message));
   }
+}
+
+/* ---------- recapitulatif garde a l'ecran apres le raccrochage ---------- */
+let dernierDiagId = null;
+function ecranRecap(){
+  if(!devis.length && !sujets.length){ callRoot.innerHTML = ''; return; }
+  callRoot.innerHTML = `
+    <div class="call-screen recap-screen">
+      <div class="recap">
+        <h2>Appel terminé</h2>
+        <p class="recap-sub">Le devis reste modifiable. Enregistre-le quand il est bon, il part dans l'onglet Diagnostics.</p>
+        <div class="sujets" id="sujets"></div>
+        <div class="devis">
+          <h4>Devis</h4>
+          <div class="devis-corps" id="devis-lignes"></div>
+          <div class="devis-sugg" id="devis-sugg"></div>
+          <div class="devis-total" id="devis-total"></div>
+        </div>
+        <div class="recap-actions">
+          <button class="btn small" id="btn-recap-save"><i class="fas fa-floppy-disk"></i> Enregistrer le devis</button>
+          <button class="btn ghost small" id="btn-recap-close"><i class="fas fa-xmark"></i> Fermer</button>
+        </div>
+      </div>
+    </div>`;
+  renderSujets(); renderDevis();
+  document.getElementById('btn-recap-save').addEventListener('click', enregistrerDevisRecap);
+  document.getElementById('btn-recap-close').addEventListener('click', () => {
+    callRoot.innerHTML = '';
+    sujets = []; devisInit(); dernierDiagId = null;
+  });
+}
+async function enregistrerDevisRecap(){
+  const t = devisTotaux();
+  const maj = {
+    sujets: [...sujets],
+    devis: devis.map(l => ({ designation: l.des, unite: l.unite, prixHT: l.pu, tva: l.tva, qte: l.qte })),
+    totalHT: Math.round(t.ht * 100) / 100,
+    totalTTC: Math.round(t.ttc * 100) / 100
+  };
+  try{
+    if(dernierDiagId){
+      await updateDoc(doc(db, "diagnostics", dernierDiagId), maj);
+    }else{
+      const ref = await addDoc(collection(db, "diagnostics"), {
+        source: 'console',
+        auteur: (auth.currentUser && auth.currentUser.email) || '',
+        callerName: assistCallerName || 'Appel',
+        transcript: (transcriptFinal || '').trim(),
+        fichesDetectees: [...fichesVues],
+        kwDetecte: kwDetecte,
+        startedAtMs: assistStartedAt || Date.now(),
+        endedAtMs: Date.now(),
+        dureeSec: 0,
+        createdAt: serverTimestamp(),
+        ...maj
+      });
+      dernierDiagId = ref.id;
+    }
+    toast("Devis enregistré.");
+  }catch(e){ toast("Devis non enregistré : " + (e.code || e.message)); }
 }
 
 /* ---------- mode ECOUTE : assistant sans visio ---------- */
@@ -1697,6 +1776,10 @@ function ouvrirEcoute(){
           <span class="call-btn-label">Fiches</span>
         </div>
         <div class="call-action">
+          <button class="call-btn" id="btn-devis"><i class="fas fa-file-invoice"></i></button>
+          <span class="call-btn-label">Devis</span>
+        </div>
+        <div class="call-action">
           <button class="call-btn hangup" id="btn-stop-ecoute"><i class="fas fa-stop"></i></button>
           <span class="call-btn-label">Arrêter</span>
         </div>
@@ -1707,7 +1790,7 @@ function ouvrirEcoute(){
 }
 function fermerEcoute(){
   stopAssistant();
-  callRoot.innerHTML = '';
+  ecranRecap();
 }
 
 /* ---------- ecran CATALOGUE ---------- */

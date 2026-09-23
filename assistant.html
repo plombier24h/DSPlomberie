@@ -100,34 +100,36 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .suj.on{background:var(--orange);border-color:var(--orange);color:#fff}
 .suj button{background:none;border:none;color:inherit;cursor:pointer;font-size:.95rem;line-height:1;padding:0 3px}
 .devis{display:flex;flex-direction:column;min-height:0;background:var(--ink2);border:1px solid var(--line);border-radius:10px;position:sticky;top:14px}
-.devis h4{font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45);padding:13px 15px 9px;margin:0}
-.devis-corps{flex:1 1 auto;overflow-y:auto;padding:0 15px;max-height:300px}
-.dl{display:grid;grid-template-columns:1fr auto auto auto auto auto;align-items:center;gap:7px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.76rem}
+.devis h4{font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45);padding:13px 16px 9px;margin:0}
+.devis-corps{flex:1 1 auto;overflow-y:auto;padding:0 16px;max-height:340px}
+.dl{padding:10px 0;border-top:1px solid rgba(255,255,255,.09)}
 .dl:first-child{border-top:none}
-.dl-d{min-width:0;line-height:1.3}
-.dl-u{color:rgba(255,255,255,.3);font-size:.64rem;margin-left:5px}
-.dl-q{display:flex;align-items:center;gap:4px}
-.dl-q button{width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#fff;cursor:pointer;font-size:.72rem;line-height:1;padding:0}
-.dl-q span{min-width:14px;text-align:center}
-.dl-pu{color:rgba(255,255,255,.5);white-space:nowrap;font-size:.7rem}
-.dl-tva{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:4px;color:rgba(255,255,255,.7);font-size:.66rem;padding:2px 3px}
-.dl-m{font-weight:700;white-space:nowrap}
-.dl-x{background:none;border:none;color:rgba(255,255,255,.28);cursor:pointer;padding:2px}
+.dl-d{font-size:.88rem;line-height:1.35;color:#fff;margin-bottom:7px}
+.dl-u{color:rgba(255,255,255,.32);font-size:.7rem;margin-left:6px}
+.dl-bas{display:flex;align-items:center;gap:9px}
+.dl-q{flex:0 0 auto;display:flex;align-items:center;gap:5px}
+.dl-q button{width:24px;height:24px;border-radius:5px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#fff;cursor:pointer;font-size:.86rem;line-height:1;padding:0}
+.dl-q button:hover{border-color:var(--orange)}
+.dl-q span{min-width:20px;text-align:center;font-size:.84rem;font-weight:700}
+.dl-pu{color:rgba(255,255,255,.5);white-space:nowrap;font-size:.76rem}
+.dl-tva{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:5px;color:rgba(255,255,255,.75);font-size:.74rem;padding:3px 4px}
+.dl-m{margin-left:auto;font-weight:900;white-space:nowrap;font-size:.94rem}
+.dl-x{flex:0 0 auto;background:none;border:none;color:rgba(255,255,255,.45);cursor:pointer;padding:3px;font-size:.92rem}
 .dl-x:hover{color:#FF6B6B}
-.devis-sugg{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px;border-top:1px solid var(--line)}
-.sg{background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.8);border-radius:6px;padding:5px 9px;font:400 .71rem 'Red Hat Display',sans-serif;cursor:pointer;text-align:left}
+.devis-sugg{display:flex;flex-wrap:wrap;gap:6px;padding:11px 16px;border-top:1px solid var(--line)}
+.sg{background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.8);border-radius:6px;padding:6px 10px;font:400 .76rem 'Red Hat Display',sans-serif;cursor:pointer;text-align:left}
 .sg:hover{border-color:var(--orange);color:#fff}
 .sg i{color:var(--orange);font-size:.62rem;margin-right:3px}
 .sg em{color:#4CE28C;font-style:normal;font-weight:700;margin-left:5px}
-.devis-total{border-top:1px solid var(--line);padding:10px 14px;display:grid;gap:4px;font-size:.78rem}
+.devis-total{border-top:1px solid var(--line);padding:12px 16px;display:grid;gap:5px;font-size:.84rem}
 .devis-total div{display:flex;justify-content:space-between}
 .devis-total span{color:rgba(255,255,255,.5)}
-.devis-total .ttc{font-size:.95rem;padding-top:5px;border-top:1px solid rgba(255,255,255,.1)}
+.devis-total .ttc{font-size:1.05rem;padding-top:6px;border-top:1px solid rgba(255,255,255,.1)}
 .devis-total .ttc b{color:#4CE28C}
 
 /* deux colonnes : fiche a gauche, devis a droite */
 .duo{display:grid;grid-template-columns:1fr;gap:16px}
-@media(min-width:900px){ .duo{grid-template-columns:1fr 300px; align-items:start} }
+@media(min-width:900px){ .duo{grid-template-columns:1fr 380px; align-items:start} }
 </style>
 </head>
 <body>
@@ -176,6 +178,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <textarea id="note" placeholder="Nom du client, adresse, ce qu'il décrit, ce que tu lui as annoncé…"></textarea>
       <div class="notes-bar">
         <button class="btn small" id="btn-note"><i class="fas fa-floppy-disk"></i> Enregistrer la note</button>
+        <button class="btn ghost small hidden" id="btn-note-annuler"><i class="fas fa-xmark"></i> Annuler la modification</button>
         <span class="etat" id="note-etat"></span>
       </div>
     </div>
@@ -205,7 +208,7 @@ const FENETRE_MOTS = 25;
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, onSnapshot, query, where, serverTimestamp }
+import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app  = initializeApp(firebaseConfig, "dsplomberie-poste");
@@ -488,17 +491,19 @@ function renderDevis(){
   box.innerHTML = devis.map((l, i) => `
     <div class="dl">
       <div class="dl-d">${l.des}<span class="dl-u">${l.unite}</span></div>
-      <div class="dl-q">
-        <button data-moins="${i}">−</button><span>${l.qte}</span><button data-plus="${i}">+</button>
+      <div class="dl-bas">
+        <div class="dl-q">
+          <button data-moins="${i}">−</button><span>${l.qte}</span><button data-plus="${i}">+</button>
+        </div>
+        <div class="dl-pu">${eur(l.pu)}</div>
+        <select class="dl-tva" data-tva="${i}">
+          <option value="10"${l.tva === 10 ? ' selected' : ''}>10 %</option>
+          <option value="20"${l.tva === 20 ? ' selected' : ''}>20 %</option>
+          <option value="0"${l.tva === 0 ? ' selected' : ''}>0 %</option>
+        </select>
+        <div class="dl-m">${eur(l.pu * l.qte)}</div>
+        <button class="dl-x" data-rm="${i}" title="Retirer"><i class="fas fa-xmark"></i></button>
       </div>
-      <div class="dl-pu">${eur(l.pu)}</div>
-      <select class="dl-tva" data-tva="${i}">
-        <option value="10"${l.tva === 10 ? ' selected' : ''}>10 %</option>
-        <option value="20"${l.tva === 20 ? ' selected' : ''}>20 %</option>
-        <option value="0"${l.tva === 0 ? ' selected' : ''}>0 %</option>
-      </select>
-      <div class="dl-m">${eur(l.pu * l.qte)}</div>
-      <button class="dl-x" data-rm="${i}" title="Retirer"><i class="fas fa-xmark"></i></button>
     </div>`).join('');
 
   box.querySelectorAll('[data-plus]').forEach(b => b.addEventListener('click', () => { devis[+b.dataset.plus].qte++; renderDevis(); }));
@@ -618,6 +623,15 @@ $('btn-mic').addEventListener('click',()=>{ ecoute ? arreterEcoute() : demarrerE
 async function enregistrer(manuel){
   const note=$('note').value.trim();
   const texte=(transcriptFinal||'').trim();
+  if(noteEnEdition){
+    if(!note){ toast("La note est vide."); return; }
+    try{
+      await updateDoc(doc(db,"diagnostics",noteEnEdition),{ note:note, modifieAtMs: Date.now() });
+      toast("Note modifiée.");
+      sortirEdition();
+    }catch(e){ toast("Modification refusée : " + (e.code||e.message)); }
+    return;
+  }
   if(!note && !texte){ if(manuel) toast("Rien à enregistrer."); return; }
   const ranked=scoreFiches(texte);
   try{
@@ -664,6 +678,31 @@ $('btn-reset').addEventListener('click', reinitialiser);
 
 /* ---------- mes notes enregistrees ---------- */
 let histo=[];
+let noteEnEdition=null;
+function sortirEdition(){
+  noteEnEdition=null;
+  $('note').value='';
+  $('btn-note-annuler').classList.add('hidden');
+  $('btn-note').innerHTML='<i class="fas fa-floppy-disk"></i> Enregistrer la note';
+  $('note-etat').textContent='';
+}
+function entrerEdition(d){
+  noteEnEdition=d.docId;
+  $('note').value=d.note||'';
+  $('btn-note-annuler').classList.remove('hidden');
+  $('btn-note').innerHTML='<i class="fas fa-check"></i> Valider la modification';
+  $('note-etat').textContent='Modification de la note du '+dateFr(d.endedAtMs);
+  $('note').focus();
+  $('note').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function supprimerNote(d){
+  if(!confirm("Supprimer définitivement la note du "+dateFr(d.endedAtMs)+" ?")) return;
+  try{
+    await deleteDoc(doc(db,"diagnostics",d.docId));
+    if(noteEnEdition===d.docId) sortirEdition();
+    toast("Note supprimée.");
+  }catch(e){ toast("Suppression refusée : " + (e.code||e.message)); }
+}
 function esc(v){ return String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function dateFr(ms){
   if(!ms) return '—';
@@ -700,8 +739,9 @@ function renderHisto(){
         ${lignes?`<div><b>Devis préparé</b>${lignes}<div class="dvl"><span>Total TTC</span><span style="color:#4CE28C;font-weight:700">${eur(d.totalTTC||0)}</span></div></div>`:''}
         ${d.transcript?`<div><b>Transcription</b><p class="brut">${esc(d.transcript)}</p></div>`:''}
         <div class="acts">
+          <button class="btn ghost small" data-modif="${i}"><i class="fas fa-pen"></i> Modifier</button>
+          <button class="btn ghost small" data-suppr="${i}"><i class="fas fa-trash"></i> Supprimer</button>
           <button class="btn ghost small" data-copie="${i}"><i class="fas fa-copy"></i> Copier</button>
-          <button class="btn ghost small" data-reprendre="${i}"><i class="fas fa-rotate-left"></i> Reprendre dans la note</button>
         </div>
       </div>
     </details>`;
@@ -710,17 +750,19 @@ function renderHisto(){
 $('hist-list').addEventListener('click',(e)=>{
   const c=e.target.closest('[data-copie]');
   if(c){ const d=histo[+c.dataset.copie]; if(d){ navigator.clipboard.writeText(texteNote(d)).then(()=>toast("Note copiée."),()=>toast("Copie impossible.")); } return; }
-  const r=e.target.closest('[data-reprendre]');
-  if(r){
-    const d=histo[+r.dataset.reprendre];
+  const m=e.target.closest('[data-modif]');
+  if(m){
+    const d=histo[+m.dataset.modif];
     if(!d) return;
     const actuel=$('note').value.trim();
-    if(actuel && !confirm("Remplacer la note en cours par celle-ci ?")) return;
-    $('note').value = d.note || '';
-    $('note').focus();
-    toast("Note rechargée.");
+    if(!noteEnEdition && actuel && !confirm("La note en cours n'est pas enregistrée. Continuer ?")) return;
+    entrerEdition(d);
+    return;
   }
+  const x=e.target.closest('[data-suppr]');
+  if(x){ const d=histo[+x.dataset.suppr]; if(d) supprimerNote(d); }
 });
+$('btn-note-annuler').addEventListener('click',sortirEdition);
 
 /* ---------- login ---------- */
 $('btn-login').addEventListener('click', async ()=>{
