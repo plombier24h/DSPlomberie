@@ -843,18 +843,20 @@ async function dedoublonner(nomCollection, liste, cle, label){
   groupes.forEach(g => {
     if(g.length < 2) return;
     // on garde le plus ancien (createdAt le plus petit), on supprime les autres
+    // on garde la plus recente ; a date egale, celle qui a le plus de mots-cles
     const tries = g.slice().sort((a,b) => {
       const ta = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : 0;
       const tb = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : 0;
-      return ta - tb;
+      if(ta !== tb) return tb - ta;
+      return ((b.mots||[]).length) - ((a.mots||[]).length);
     });
     aSupprimer.push(...tries.slice(1));
   });
   if(!aSupprimer.length){ toast("Aucun doublon trouvé."); return; }
-  if(!confirm(`${aSupprimer.length} doublon(s) détecté(s) sur ${label}. Les supprimer ? Le plus ancien de chaque est conservé.`)) return;
+  if(!confirm(`${aSupprimer.length} doublon(s) détecté(s) sur ${label}. Les supprimer ? La version la plus récente de chaque est conservée.`)) return;
   let ko = 0;
   for(const x of aSupprimer){
-    try{ await deleteDoc(doc(db, nomCollection, x.id || x.docId)); } catch(e){ ko++; }
+    try{ await deleteDoc(doc(db, nomCollection, x.docId || x.id)); } catch(e){ ko++; }
   }
   toast(ko ? `${aSupprimer.length - ko} supprimé(s), ${ko} en échec.` : `${aSupprimer.length} doublon(s) supprimé(s).`);
 }
@@ -1026,6 +1028,7 @@ async function appliquerCoefsCatalogue(){
 
 /* ---------- fiches & tarifs pilotes depuis Firestore ---------- */
 let fiches = FICHES_DEFAUT.slice();
+let fichesBrutes = [];          // liste telle qu'elle est en base, doublons compris
 let fichesUnsub = null, tarifsUnsub = null;
 let tarifs = { deplacement: 60, premiereHeure: 167.20, heureSuivante: 107.20 };
 
@@ -1054,6 +1057,7 @@ function ecouterFiches(){
     const docs = snap.docs.map(d => ({ docId: d.id, ...d.data() }))
       .sort((a,b) => (a.ordre||0) - (b.ordre||0));
     // tant que la collection est vide, on garde les fiches d'origine
+    fichesBrutes = docs;
     fiches = uniquesFiches(docs.length ? docs.map(d => ({ ...d, id: d.docId })) : FICHES_DEFAUT.slice());
     renderFiches();
     renderAssist();
@@ -1769,7 +1773,7 @@ function initOnglets(){
   const coa = document.getElementById('btn-co-apply');
   if(coa) coa.addEventListener('click', appliquerCoefsCatalogue);
   const fd = document.getElementById('btn-fic-dedup');
-  if(fd) fd.addEventListener('click', () => dedoublonner('fiches', fiches.filter(x => x.docId), x => x.id, 'les fiches'));
+  if(fd) fd.addEventListener('click', () => dedoublonner('fiches', fichesBrutes, x => x.id || x.titre, 'les fiches'));
   const pd = document.getElementById('btn-px-dedup');
   if(pd) pd.addEventListener('click', () => dedoublonner('prix', prix, x => (x.famille||'') + '|' + (x.designation||''), 'les tarifs'));
   const ec = document.getElementById('btn-ecoute');
