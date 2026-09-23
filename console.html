@@ -1278,7 +1278,7 @@ function modelesPourKw(kw){
 }
 
 /* ---------- moteur de fiches ---------- */
-let recog = null, wantRec = false;
+let recog = null, wantRec = false, recogActif = false, recogWatch = null, micStream = null;
 let transcriptFinal = '', transcriptInterim = '';
 let assistCallId = null, assistCallerName = '';
 let assistStartedAt = null, fichesVues = new Set(), ficheManuelle = null, kwDetecte = null;
@@ -1394,14 +1394,16 @@ function startAssistant(callId, data){
     return;
   }
   wantRec = true;
-  let echecs = 0, dernierStart = 0;
+  // On garde le micro ouvert comme en visio : Chrome ne le relache plus entre deux relances.
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(st => { micStream = st; })
+    .catch(() => {});
   recog = new SR();
   recog.lang = 'fr-FR';
   recog.continuous = true;
   recog.interimResults = true;
-  recog.onstart = () => { dernierStart = Date.now(); if(dot) dot.classList.remove('off'); };
+  recog.onstart = () => { recogActif = true; if(dot) dot.classList.remove('off'); };
   recog.onresult = (ev) => {
-    echecs = 0;
     let interim = '';
     for(let i = ev.resultIndex; i < ev.results.length; i++){
       const r = ev.results[i];
@@ -1415,6 +1417,7 @@ function startAssistant(callId, data){
     renderAssist();
   };
   recog.onerror = (e) => {
+    // 'no-speech' et 'aborted' sont normaux : on laisse le chien de garde relancer.
     if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
       wantRec = false;
       if(dot) dot.classList.add('off');
@@ -1422,24 +1425,24 @@ function startAssistant(callId, data){
     }
   };
   recog.onend = () => {
+    recogActif = false;
     if(!wantRec){ if(dot) dot.classList.add('off'); return; }
-    // garde anti-boucle : si la reconnaissance s'arrete tout de suite, on espace puis on abandonne
-    if(Date.now() - dernierStart < 1000){ echecs++; } else { echecs = 0; }
-    if(echecs >= 3){
-      wantRec = false;
-      if(dot) dot.classList.add('off');
-      const lbl = document.getElementById('assist-rec-lbl');
-      if(lbl) lbl.textContent = 'Transcription arrêtée';
-      return;
-    }
-    setTimeout(() => { if(wantRec){ try{ recog.start(); }catch(e){} } }, 400);
+    try{ recog.start(); }catch(e){}   // relance immediate, sans perdre de mots
   };
   try{ recog.start(); }catch(e){}
+  // chien de garde : Chrome coupe la reconnaissance toutes les ~60 s, on la remet en route
+  if(recogWatch) clearInterval(recogWatch);
+  recogWatch = setInterval(() => {
+    if(!wantRec || recogActif || !recog) return;
+    try{ recog.start(); }catch(e){}
+  }, 3000);
 }
 
 async function stopAssistant(){
-  wantRec = false;
-  if(recog){ try{ recog.stop(); }catch(e){} recog = null; }
+  wantRec = false; recogActif = false;
+  if(recogWatch){ clearInterval(recogWatch); recogWatch = null; }
+  if(recog){ try{ recog.abort(); }catch(e){} recog = null; }
+  if(micStream){ micStream.getTracks().forEach(t => t.stop()); micStream = null; }
   const texte = (transcriptFinal || '').trim();
   if(!assistCallId || !texte){ assistCallId = null; return; }
   const payload = {

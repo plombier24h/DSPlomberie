@@ -253,6 +253,7 @@ let tarifs = { deplacement: 60, premiereHeure: 167.20, heureSuivante: 107.20 };
 let ficheManuelle = null, kwDetecte = null;
 let transcriptFinal = '', transcriptInterim = '';
 let recog = null, wantRec = false, ecoute = false, debutMs = null;
+let recogActif = false, recogWatch = null, micStream = null;
 let monEmail = '';
 
 const strip = (t) => (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
@@ -353,12 +354,13 @@ function demarrerEcoute(){
   transcriptFinal=''; transcriptInterim=''; kwDetecte=null; ficheManuelle=null; debutMs=Date.now();
   renderTr(); render();
   wantRec=true; ecoute=true; majMic();
-  let echecs=0, dernier=0;
+  // micro maintenu ouvert : la reconnaissance peut se relancer sans coupure audible
+  navigator.mediaDevices.getUserMedia({ audio:true }).then(st=>{ micStream=st; }).catch(()=>{});
   recog = new SR();
   recog.lang='fr-FR'; recog.continuous=true; recog.interimResults=true;
-  recog.onstart=()=>{ dernier=Date.now(); };
+  recog.onstart=()=>{ recogActif=true; };
   recog.onresult=(ev)=>{
-    echecs=0; let it='';
+    let it='';
     for(let i=ev.resultIndex;i<ev.results.length;i++){
       const r=ev.results[i];
       if(r.isFinal) transcriptFinal += r[0].transcript.trim()+' '; else it += r[0].transcript;
@@ -368,22 +370,29 @@ function demarrerEcoute(){
     renderTr(); render();
   };
   recog.onerror=(e)=>{
+    // 'no-speech' et 'aborted' sont normaux, on ne coupe pas l'ecoute
     if(e.error==='not-allowed'||e.error==='service-not-allowed'){
       wantRec=false; ecoute=false; majMic();
       toast("Micro refusé. Autorise le micro pour ce site.");
     }
   };
   recog.onend=()=>{
+    recogActif=false;
     if(!wantRec){ ecoute=false; majMic(); return; }
-    if(Date.now()-dernier<1000){ echecs++; } else { echecs=0; }
-    if(echecs>=3){ wantRec=false; ecoute=false; majMic(); toast("Transcription interrompue."); return; }
-    setTimeout(()=>{ if(wantRec){ try{ recog.start(); }catch(e){} } },400);
+    try{ recog.start(); }catch(e){}
   };
   try{ recog.start(); }catch(e){}
+  if(recogWatch) clearInterval(recogWatch);
+  recogWatch = setInterval(()=>{
+    if(!wantRec || recogActif || !recog) return;
+    try{ recog.start(); }catch(e){}
+  }, 3000);
 }
 function arreterEcoute(){
-  wantRec=false; ecoute=false;
-  if(recog){ try{ recog.stop(); }catch(e){} recog=null; }
+  wantRec=false; ecoute=false; recogActif=false;
+  if(recogWatch){ clearInterval(recogWatch); recogWatch=null; }
+  if(recog){ try{ recog.abort(); }catch(e){} recog=null; }
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
   majMic();
   if((transcriptFinal||'').trim()) enregistrer(false);
 }
