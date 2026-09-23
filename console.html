@@ -85,6 +85,51 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
   .assist{left:0;right:0;top:auto;bottom:0;width:auto;height:74vh;border-right:none;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(102%)}
   .assist.open{transform:translateY(0)}
 }
+
+/* ===== ONGLETS CONSOLE + CATALOGUE + DIAGNOSTICS ===== */
+.ctabs{display:flex;gap:8px;margin:20px 0 18px;border-bottom:1px solid var(--line)}
+.ctabs button{background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,.55);font:700 .85rem 'Red Hat Display',sans-serif;padding:10px 4px;margin-right:14px;cursor:pointer}
+.ctabs button.on{color:#fff;border-bottom-color:var(--orange)}
+.empty-txt{color:rgba(255,255,255,.45);font-size:.85rem;padding:14px 0}
+.btn.small{padding:8px 14px;font-size:.78rem}
+.cat-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.cat-row{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:rgba(0,0,0,.18);flex-wrap:wrap}
+.cat-main{flex:1 1 220px;min-width:0}
+.cat-t{font-weight:700;font-size:.88rem}
+.cat-kw{color:var(--orange);font-weight:900;font-size:.78rem;margin-left:4px}
+.cat-v{font-size:.76rem;color:rgba(255,255,255,.5);margin-top:2px}
+.cat-prix{flex:0 0 auto;display:flex;flex-direction:column;gap:4px}
+.cat-prix label{font-size:.6rem;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.4)}
+.cat-achat{font-size:.82rem;color:rgba(255,255,255,.55)}
+.cat-prix input{width:120px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:8px 10px;color:#fff;font:600 .85rem 'Red Hat Display',sans-serif}
+.cat-prix input:focus{outline:none;border-color:var(--blue-light)}
+.cat-prix input.ok{border-color:#4CE28C;box-shadow:0 0 0 2px rgba(76,226,140,.2)}
+.cat-del{background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.9rem;padding:6px}
+.cat-del:hover{color:#FF6B6B}
+.cat-new{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;padding:14px;border:1px dashed var(--line);border-radius:8px;margin-top:14px}
+.cat-new input{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:9px 11px;color:#fff;font:400 .85rem 'Red Hat Display',sans-serif}
+.cat-new input:focus{outline:none;border-color:var(--blue-light)}
+.cat-new .w-lg{flex:1 1 180px;min-width:140px}
+.cat-new .w-sm{width:84px}
+.diag{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;overflow:hidden;background:rgba(0,0,0,.18)}
+.diag-head{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;flex-wrap:wrap}
+.diag-head i{margin-left:auto;color:rgba(255,255,255,.35);transition:transform .18s}
+.diag-head.open i{transform:rotate(180deg)}
+.diag-when{font-weight:700;font-size:.84rem}
+.diag-meta{font-size:.76rem;color:rgba(255,255,255,.5)}
+.diag-tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;background:rgba(232,119,34,.18);border:1px solid rgba(232,119,34,.4);color:#ffc793;border-radius:999px;padding:3px 8px}
+.diag-body{display:none;padding:0 14px 14px;border-top:1px solid var(--line)}
+.diag-body.open{display:block}
+.diag-body p{font-size:.85rem;color:rgba(255,255,255,.8);line-height:1.6;margin:12px 0}
+.mod{border-top:1px solid rgba(255,255,255,.1);padding:9px 0}
+.mod:first-of-type{border-top:none}
+.mod-t{font-size:.84rem;font-weight:700;color:#fff}
+.mod-kw{color:var(--orange);font-size:.74rem}
+.mod-v{font-size:.74rem;color:rgba(255,255,255,.5);margin-top:1px}
+.mod-p{font-size:.88rem;font-weight:900;color:#4CE28C;margin-top:4px;display:flex;align-items:baseline;gap:10px}
+.mod-p .devis{color:rgba(255,255,255,.5);font-weight:400;font-style:italic;font-size:.8rem}
+.mod-c{font-size:.68rem;font-weight:400;color:rgba(255,255,255,.35)}
 </style>
 </head>
 <body>
@@ -120,6 +165,13 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <button class="btn ghost" id="btn-toggle">Se mettre hors ligne</button>
     </div>
 
+    <div class="ctabs">
+      <button id="tab-appels" class="on">Appels</button>
+      <button id="tab-catalogue">Catalogue</button>
+      <button id="tab-diagnostics">Diagnostics</button>
+    </div>
+
+    <div id="pan-appels">
     <div class="empty" id="waiting">
       <i class="fas fa-satellite-dish"></i>
       En attente d'un appel<br>
@@ -129,6 +181,26 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
     <div class="log">
       <h2>Derniers appels</h2>
       <div id="log-list"><p style="color:rgba(255,255,255,.4);font-size:.85rem">Aucun appel pour l'instant.</p></div>
+    </div>
+    </div>
+
+    <div id="pan-catalogue" class="hidden">
+      <div class="cat-actions">
+        <button class="btn ghost small" id="btn-cat-import">Importer les 13 chaudières Frisquet</button>
+      </div>
+      <div id="cat-list"></div>
+      <div class="cat-new">
+        <input class="w-lg" id="cat-new-gamme" placeholder="Gamme (ex. HYDROMOTRIX Condensation Visio)">
+        <input class="w-lg" id="cat-new-var" placeholder="Variante (murale, mixte…)">
+        <input class="w-sm" id="cat-new-kwmin" type="number" placeholder="kW min">
+        <input class="w-sm" id="cat-new-kwmax" type="number" placeholder="kW max">
+        <input class="w-sm" id="cat-new-prix" type="number" step="0.01" placeholder="Vente €">
+        <button class="btn small" id="btn-cat-add"><i class="fas fa-plus"></i> Ajouter</button>
+      </div>
+    </div>
+
+    <div id="pan-diagnostics" class="hidden">
+      <div id="diag-list"></div>
     </div>
   </section>
 </div>
@@ -163,7 +235,7 @@ const HEARTBEAT = 30000;
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, updateDoc, addDoc, onSnapshot, query, where, serverTimestamp }
+import { getFirestore, collection, doc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Nom d'app distinct : la session d'authentification de la console est isolee
@@ -238,6 +310,9 @@ onAuthStateChanged(auth, (user) => {
     $('password').value = '';
     setOnline(true);
     listenIncoming();
+    initOnglets();
+    ecouterCatalogue();
+    ecouterDiagnostics();
   } else {
     $('view-desk').classList.add('hidden');
     $('view-login').classList.remove('hidden');
@@ -531,16 +606,19 @@ function addLog(data, verdict){
 }
 
 /* =========================================================
-   ASSISTANT DIAGNOSTIC — transcription live + fiches metier
-   Visible uniquement cote console. Le client ne voit rien.
+   ASSISTANT DIAGNOSTIC + CATALOGUE + DIAGNOSTICS
+   Tout est cote console. Le client ne voit rien.
    ========================================================= */
 
 const TARIF = "Déplacement 60 € TTC · 1ʳᵉ heure 167,20 € TTC · heure suivante 107,20 € TTC";
+const FENETRE_MOTS = 40;   // la fiche suit les 40 derniers mots prononces
+
+const CATALOGUE_SEED = [{"gamme": "HYDROMOTRIX Condensation Visio","variante": "Murale, mixte instantanée","kwMin": 18,"kwMax": 25,"refCedeo": "3432055","refFab": "A4AB25020","prixCedeoTTC": 4987.2},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, mixte instantanée","kwMin": 18,"kwMax": 25,"refCedeo": "3432176","refFab": "A4AL25020","prixCedeoTTC": 4999.2},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, chauffage seul","kwMin": 18,"kwMax": 25,"refCedeo": "3432177","refFab": "A4AL25050","prixCedeoTTC": 4693.2},{"gamme": "HYDROMOTRIX Condensation Visio","variante": "Murale, chauffage seul","kwMin": 25,"kwMax": 32,"refCedeo": "3432061","refFab": "A4AB32050","prixCedeoTTC": 5355.6},{"gamme": "HYDROCONFORT Condensation Visio 50+R","variante": "ECS","kwMin": 20,"kwMax": 20,"refCedeo": "7822874","refFab": "A4AJ20160","prixCedeoTTC": 5683.2},{"gamme": "HYDROCONFORT Condensation Visio","variante": "Murale, mixte accumulée 80 L","kwMin": 14,"kwMax": 20,"refCedeo": "3432069","refFab": "A4AJ20020","prixCedeoTTC": 5976.0},{"gamme": "HYDROMOTRIX Compact Evolution Visio","variante": "Murale, basse température, mixte instantanée","kwMin": 25,"kwMax": 25,"refCedeo": "3655678","refFab": "","prixCedeoTTC": 3850.8},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale VMC, basse température, mixte instantanée","kwMin": 25,"kwMax": 25,"refCedeo": "3813426","refFab": "B4AA25030","prixCedeoTTC": 3646.8},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, mixte accumulée 80 L","kwMin": 14,"kwMax": 20,"refCedeo": "3432075","refFab": "A4AL20050","prixCedeoTTC": 6446.4},{"gamme": "HYDROMOTRIX Tradition Visio","variante": "Murale cheminée, mixte instantanée","kwMin": 23,"kwMax": 23,"refCedeo": "6149589","refFab": "","prixCedeoTTC": 3094.8},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale cheminée, chauffage seul","kwMin": 25,"kwMax": 25,"refCedeo": "3750778","refFab": "B4AA25050","prixCedeoTTC": 3397.2},{"gamme": "HYDROMOTRIX Compact Visio","variante": "Chauffage seul + VMC","kwMin": 25,"kwMax": 25,"refCedeo": "3655682","refFab": "","prixCedeoTTC": 3612.0},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale, basse température, mixte instantanée","kwMin": 30,"kwMax": 30,"refCedeo": "6151405","refFab": "","prixCedeoTTC": 4434.0}];
 
 const FICHES = [
   {
     id: 'bouchon', court: 'Bouchon', titre: 'Bouchon WC / évier / douche',
-    mots: ['bouche','bouché','bouchee','bouchon','debouche','deboucher','descend plus','deborde','debordement','stagne','evacuation','siphon','wc','toilette','evier','lavabo','douche','baignoire'],
+    mots: ['bouche','bouchee','bouchon','debouche','deboucher','descend plus','deborde','debordement','stagne','evacuation','siphon','wc','toilette','evier','lavabo','douche','baignoire'],
     montrer: ["L'évacuation concernée et le niveau d'eau","Sous le lavabo : le siphon","Le regard s'il y en a un"],
     questions: ["Un seul point ou plusieurs ?","Depuis quand ?","Déjà eu le problème ?","Maison ou appartement ?","Un produit a déjà été versé ?"],
     causes: ["Un seul point → bouchon local (siphon, coude)","Plusieurs points → bouchon de colonne ou de collecteur"],
@@ -582,23 +660,65 @@ const FICHES = [
   },
   {
     id: 'chaudiere', court: 'Chaudière', titre: 'Chaudière — opportunité remplacement',
-    mots: ['chaudiere','chauffage','eau chaude','radiateur','frisquet','chauffe','pression','manometre','fioul','gaz'],
+    mots: ['chaudiere','chauffage','eau chaude','radiateur','frisquet','chauffe','pression','manometre','fioul','gaz','kw','kilowatt'],
     montrer: ["La chaudière entière","La plaque signalétique : marque, modèle, année","L'emplacement","L'évacuation des fumées"],
     questions: ["Quel âge a la chaudière ?","Gaz ou fioul ?","Des pannes à répétition ?","Propriétaire ou locataire ?","Combien de radiateurs, quelle surface ?"],
     causes: ["Pas de dépannage chaudière → on renvoie","Entretien : ponctuellement","Remplacement : c'est la cible"],
     flag: "Plus de 15 ans, pannes répétées ou fioul → pousser le remplacement.",
-    annonce: "Visite technique de remplacement au tarif standard, déduite du devis en cas de commande. Chaudières Frisquet : tarif sur devis.",
-    lien: "https://plombier24h.github.io/chaudiere-frisquet-installation/"
+    annonce: "Visite technique de remplacement au tarif standard, déduite du devis en cas de commande.",
+    lien: "https://plombier24h.github.io/chaudiere-frisquet-installation/",
+    catalogue: true
   }
 ];
 
-let recog = null, recActive = false, wantRec = false;
-let transcriptFinal = '', transcriptInterim = '', assistCallId = null, assistCallerName = '';
-let assistStartedAt = null, fichesVues = new Set(), ficheManuelle = null;
+/* ---------- utilitaires ---------- */
+const strip = (t) => (t||'').toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
 
-const strip = (t) => t.toLowerCase()
-  .normalize('NFD').replace(/[̀-ͯ]/g, '')
-  .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ');
+const eur = (n) => (n === null || n === undefined || n === '' || isNaN(n))
+  ? null : Number(n).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+
+const CHIFFRES = {'dix':10,'douze':12,'quatorze':14,'quinze':15,'seize':16,'dix-huit':18,'dix huit':18,'vingt':20,'vingt-trois':23,'vingt trois':23,'vingt-cinq':25,'vingt cinq':25,'vingt-huit':28,'vingt huit':28,'trente':30,'trente-deux':32,'trente deux':32,'trente-cinq':35,'trente cinq':35,'quarante':40,'quarante-cinq':45,'quarante cinq':45};
+
+function detecterKw(txt){
+  const t = strip(txt);
+  let m = t.match(/(\d{1,3})\s*(kw|kilowatt|kilo watt|kilowatts)/);
+  if(m) return parseInt(m[1], 10);
+  for(const mot in CHIFFRES){
+    if(new RegExp(mot.replace(/-/g,'[ -]') + '\\s*(kw|kilowatt)').test(t)) return CHIFFRES[mot];
+  }
+  return null;
+}
+
+/* ---------- catalogue ---------- */
+let catalogue = [], catalogueUnsub = null;
+
+function ecouterCatalogue(){
+  if(catalogueUnsub) return;
+  catalogueUnsub = onSnapshot(collection(db, "catalogue"), (snap) => {
+    catalogue = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (a.gamme||'').localeCompare(b.gamme||'') || (a.kwMin||0) - (b.kwMin||0));
+    renderCatalogue();
+    renderAssist();
+  }, () => {});
+}
+
+function modelesPourKw(kw){
+  if(kw === null) return [];
+  return catalogue.filter(m => m.actif !== false && (m.kwMin||0) <= kw && kw <= (m.kwMax||0));
+}
+
+/* ---------- moteur de fiches ---------- */
+let recog = null, wantRec = false;
+let transcriptFinal = '', transcriptInterim = '';
+let assistCallId = null, assistCallerName = '';
+let assistStartedAt = null, fichesVues = new Set(), ficheManuelle = null, kwDetecte = null;
+
+function fenetre(){
+  const mots = (transcriptFinal + ' ' + transcriptInterim).trim().split(/\s+/);
+  return mots.slice(-FENETRE_MOTS).join(' ');
+}
 
 function scoreFiches(txt){
   const t = strip(txt);
@@ -609,11 +729,33 @@ function scoreFiches(txt){
   }).filter(x => x.n > 0).sort((a,b) => b.n - a.n);
 }
 
+function blocCatalogue(){
+  const kw = kwDetecte;
+  if(kw === null){
+    return `<div class="blk"><b>Modèles</b><p class="assist-empty">Dis une puissance (« 25 kW ») pour voir les modèles correspondants.</p></div>`;
+  }
+  const mods = modelesPourKw(kw);
+  if(!mods.length){
+    return `<div class="blk"><b>Modèles ${kw} kW</b><p class="assist-empty">Aucun modèle à ${kw} kW dans le catalogue.</p></div>`;
+  }
+  const rows = mods.map(m => {
+    const pv = eur(m.prixVenteTTC);
+    const pc = eur(m.prixCedeoTTC);
+    return `<div class="mod">
+      <div class="mod-t">${m.gamme || ''} <span class="mod-kw">${m.kwMin === m.kwMax ? m.kwMin : m.kwMin + '-' + m.kwMax} kW</span></div>
+      <div class="mod-v">${m.variante || ''}</div>
+      <div class="mod-p">${pv ? pv + ' TTC' : '<span class="devis">sur devis</span>'}${pc ? `<span class="mod-c">achat ${pc}</span>` : ''}</div>
+    </div>`;
+  }).join('');
+  return `<div class="blk"><b>Modèles ${kw} kW — ${mods.length} référence${mods.length>1?'s':''}</b>${rows}</div>`;
+}
+
 function ficheHtml(f){
   const li = (arr) => arr.map(x => `<li>${x}</li>`).join('');
   return `
     <div class="fiche">
       <h3>${f.titre}</h3>
+      ${f.catalogue ? blocCatalogue() : ''}
       <div class="blk"><b>À faire montrer</b><ul>${li(f.montrer)}</ul></div>
       <div class="blk"><b>Questions à poser</b><ul>${li(f.questions)}</ul></div>
       <div class="blk"><b>Causes probables</b><ul>${li(f.causes)}</ul></div>
@@ -629,19 +771,21 @@ function renderAssist(){
   const tabs = document.getElementById('assist-tabs');
   if(!body || !tabs) return;
 
-  const ranked = scoreFiches(transcriptFinal + ' ' + transcriptInterim);
+  const ranked = scoreFiches(fenetre());
   const auto = ranked.length ? ranked[0].f : null;
   if(auto) fichesVues.add(auto.id);
   const active = ficheManuelle || auto;
 
-  tabs.innerHTML = FICHES.map(f => {
-    const on = active && f.id === active.id ? ' on' : '';
-    const hit = ranked.find(r => r.f.id === f.id);
-    return `<button class="${on.trim()}" data-fiche="${f.id}">${hit ? '• ' : ''}${f.court}</button>`;
-  }).join('');
+  const chips = [`<button class="${ficheManuelle ? '' : 'on'}" data-fiche="__auto">Auto</button>`]
+    .concat(FICHES.map(f => {
+      const on = (ficheManuelle && f.id === ficheManuelle.id) ? ' on' : '';
+      const hit = ranked.find(r => r.f.id === f.id);
+      return `<button class="${on.trim()}" data-fiche="${f.id}">${hit ? '• ' : ''}${f.court}</button>`;
+    }));
+  tabs.innerHTML = chips.join('');
   tabs.querySelectorAll('button').forEach(b => {
     b.addEventListener('click', () => {
-      ficheManuelle = FICHES.find(f => f.id === b.dataset.fiche);
+      ficheManuelle = b.dataset.fiche === '__auto' ? null : FICHES.find(f => f.id === b.dataset.fiche);
       renderAssist();
       const a = document.getElementById('assist'); if(a) a.classList.add('open');
     });
@@ -649,7 +793,7 @@ function renderAssist(){
 
   body.innerHTML = active
     ? ficheHtml(active)
-    : `<p class="assist-empty">Aucun cas détecté pour l'instant. Parle, ou choisis une fiche ci-dessus.</p>`;
+    : `<p class="assist-empty">Aucun cas détecté. Parle, ou choisis une fiche ci-dessus.</p>`;
 }
 
 function renderTranscript(){
@@ -659,11 +803,13 @@ function renderTranscript(){
   tr.scrollTop = tr.scrollHeight;
 }
 
+/* ---------- transcription ---------- */
 function startAssistant(callId, data){
   assistCallId = callId;
   assistCallerName = (data && data.callerName) || 'Visiteur';
   assistStartedAt = Date.now();
-  transcriptFinal = ''; transcriptInterim = ''; fichesVues = new Set(); ficheManuelle = null;
+  transcriptFinal = ''; transcriptInterim = ''; fichesVues = new Set();
+  ficheManuelle = null; kwDetecte = null;
 
   const panel = document.getElementById('assist');
   const btn = document.getElementById('btn-assist');
@@ -679,12 +825,14 @@ function startAssistant(callId, data){
     return;
   }
   wantRec = true;
+  let echecs = 0, dernierStart = 0;
   recog = new SR();
   recog.lang = 'fr-FR';
   recog.continuous = true;
   recog.interimResults = true;
-  recog.onstart = () => { recActive = true; if(dot) dot.classList.remove('off'); };
+  recog.onstart = () => { dernierStart = Date.now(); if(dot) dot.classList.remove('off'); };
   recog.onresult = (ev) => {
+    echecs = 0;
     let interim = '';
     for(let i = ev.resultIndex; i < ev.results.length; i++){
       const r = ev.results[i];
@@ -692,6 +840,8 @@ function startAssistant(callId, data){
       else interim += r[0].transcript;
     }
     transcriptInterim = interim;
+    const kw = detecterKw(fenetre());
+    if(kw !== null) kwDetecte = kw;
     renderTranscript();
     renderAssist();
   };
@@ -703,9 +853,17 @@ function startAssistant(callId, data){
     }
   };
   recog.onend = () => {
-    recActive = false;
-    if(wantRec){ try{ recog.start(); }catch(e){} }
-    else if(dot) dot.classList.add('off');
+    if(!wantRec){ if(dot) dot.classList.add('off'); return; }
+    // garde anti-boucle : si la reconnaissance s'arrete tout de suite, on espace puis on abandonne
+    if(Date.now() - dernierStart < 1000){ echecs++; } else { echecs = 0; }
+    if(echecs >= 3){
+      wantRec = false;
+      if(dot) dot.classList.add('off');
+      const lbl = document.getElementById('assist-rec-lbl');
+      if(lbl) lbl.textContent = 'Transcription arrêtée';
+      return;
+    }
+    setTimeout(() => { if(wantRec){ try{ recog.start(); }catch(e){} } }, 400);
   };
   try{ recog.start(); }catch(e){}
 }
@@ -713,7 +871,6 @@ function startAssistant(callId, data){
 async function stopAssistant(){
   wantRec = false;
   if(recog){ try{ recog.stop(); }catch(e){} recog = null; }
-  recActive = false;
   const texte = (transcriptFinal || '').trim();
   if(!assistCallId || !texte){ assistCallId = null; return; }
   const payload = {
@@ -721,6 +878,7 @@ async function stopAssistant(){
     callerName: assistCallerName,
     transcript: texte,
     fichesDetectees: [...fichesVues],
+    kwDetecte: kwDetecte,
     startedAtMs: assistStartedAt,
     endedAtMs: Date.now(),
     dureeSec: Math.round((Date.now() - assistStartedAt) / 1000),
@@ -733,6 +891,163 @@ async function stopAssistant(){
   }catch(e){
     toast("Transcription non enregistrée : " + (e.code || e.message));
   }
+}
+
+/* ---------- ecran CATALOGUE ---------- */
+function renderCatalogue(){
+  const box = document.getElementById('cat-list');
+  if(!box) return;
+  if(!catalogue.length){
+    box.innerHTML = `<p class="empty-txt">Catalogue vide. Clique sur « Importer les 13 chaudières Frisquet » pour partir des références CEDEO.</p>`;
+    return;
+  }
+  box.innerHTML = catalogue.map(m => `
+    <div class="cat-row" data-id="${m.id}">
+      <div class="cat-main">
+        <div class="cat-t">${m.gamme || ''} <span class="cat-kw">${m.kwMin === m.kwMax ? m.kwMin : m.kwMin + '-' + m.kwMax} kW</span></div>
+        <div class="cat-v">${m.variante || ''}${m.refCedeo ? ' · réf. CEDEO ' + m.refCedeo : ''}</div>
+      </div>
+      <div class="cat-prix">
+        <label>Achat CEDEO</label>
+        <span class="cat-achat">${eur(m.prixCedeoTTC) || '—'}</span>
+      </div>
+      <div class="cat-prix">
+        <label>Prix de vente TTC</label>
+        <input type="number" step="0.01" min="0" value="${m.prixVenteTTC != null ? m.prixVenteTTC : ''}" placeholder="—" data-pv="${m.id}">
+      </div>
+      <button class="cat-del" data-del="${m.id}" title="Supprimer"><i class="fas fa-trash"></i></button>
+    </div>`).join('');
+
+  box.querySelectorAll('input[data-pv]').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const v = inp.value === '' ? null : parseFloat(inp.value);
+      try{
+        await updateDoc(doc(db, "catalogue", inp.dataset.pv), { prixVenteTTC: v });
+        inp.classList.add('ok'); setTimeout(() => inp.classList.remove('ok'), 900);
+      }catch(e){ toast("Enregistrement refusé : " + (e.code || e.message)); }
+    });
+  });
+  box.querySelectorAll('button[data-del]').forEach(b => {
+    b.addEventListener('click', async () => {
+      if(!confirm("Supprimer cette référence du catalogue ?")) return;
+      try{ await deleteDoc(doc(db, "catalogue", b.dataset.del)); }
+      catch(e){ toast("Suppression refusée : " + (e.code || e.message)); }
+    });
+  });
+}
+
+async function importerCatalogue(){
+  if(catalogue.length && !confirm("Le catalogue contient déjà des références. Ajouter quand même les 13 modèles Frisquet ?")) return;
+  const btn = document.getElementById('btn-cat-import');
+  if(btn){ btn.disabled = true; btn.textContent = 'Import…'; }
+  try{
+    for(const m of CATALOGUE_SEED){
+      await addDoc(collection(db, "catalogue"), {
+        marque: 'Frisquet', actif: true, prixVenteTTC: null, ...m, createdAt: serverTimestamp()
+      });
+    }
+    toast("Catalogue importé.");
+  }catch(e){ toast("Import refusé : " + (e.code || e.message)); }
+  if(btn){ btn.disabled = false; btn.textContent = 'Importer les 13 chaudières Frisquet'; }
+}
+
+async function ajouterModele(){
+  const g = document.getElementById('cat-new-gamme').value.trim();
+  const v = document.getElementById('cat-new-var').value.trim();
+  const kmin = parseInt(document.getElementById('cat-new-kwmin').value, 10);
+  const kmax = parseInt(document.getElementById('cat-new-kwmax').value, 10) || kmin;
+  const pv = document.getElementById('cat-new-prix').value;
+  if(!g || isNaN(kmin)){ toast("Gamme et puissance minimum obligatoires."); return; }
+  try{
+    await addDoc(collection(db, "catalogue"), {
+      marque: 'Frisquet', gamme: g, variante: v, kwMin: kmin, kwMax: kmax,
+      refCedeo: '', refFab: '', prixCedeoTTC: null,
+      prixVenteTTC: pv === '' ? null : parseFloat(pv),
+      actif: true, createdAt: serverTimestamp()
+    });
+    ['cat-new-gamme','cat-new-var','cat-new-kwmin','cat-new-kwmax','cat-new-prix'].forEach(id => document.getElementById(id).value = '');
+  }catch(e){ toast("Ajout refusé : " + (e.code || e.message)); }
+}
+
+/* ---------- ecran DIAGNOSTICS ---------- */
+let diagsUnsub = null, diags = [];
+
+function ecouterDiagnostics(){
+  if(diagsUnsub) return;
+  const q = query(collection(db, "diagnostics"), orderBy("endedAtMs", "desc"), limit(40));
+  diagsUnsub = onSnapshot(q, (snap) => {
+    diags = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderDiagnostics();
+  }, (e) => {
+    const box = document.getElementById('diag-list');
+    if(box) box.innerHTML = `<p class="empty-txt">Lecture impossible : ${e.code || e.message}</p>`;
+  });
+}
+
+function renderDiagnostics(){
+  const box = document.getElementById('diag-list');
+  if(!box) return;
+  if(!diags.length){
+    box.innerHTML = `<p class="empty-txt">Aucune transcription pour l'instant. Elles apparaîtront ici après chaque appel.</p>`;
+    return;
+  }
+  box.innerHTML = diags.map(d => {
+    const dt = d.endedAtMs ? new Date(d.endedAtMs) : null;
+    const quand = dt ? dt.toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
+    const mn = d.dureeSec ? Math.floor(d.dureeSec/60) + ' min ' + (d.dureeSec%60) + ' s' : '—';
+    const tags = (d.fichesDetectees || []).map(id => {
+      const f = FICHES.find(x => x.id === id);
+      return `<span class="tag">${f ? f.court : id}</span>`;
+    }).join('');
+    return `
+      <div class="diag">
+        <div class="diag-head" data-open="${d.id}">
+          <span class="diag-when">${quand}</span>
+          <span class="diag-meta">${d.callerName || 'Visiteur'} · ${mn}${d.kwDetecte ? ' · ' + d.kwDetecte + ' kW' : ''}</span>
+          <span class="diag-tags">${tags}</span>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="diag-body" id="diag-${d.id}">
+          <p>${(d.transcript || '').replace(/</g,'&lt;')}</p>
+          <button class="btn ghost small" data-copy="${d.id}"><i class="fas fa-copy"></i> Copier</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  box.querySelectorAll('[data-open]').forEach(h => {
+    h.addEventListener('click', () => {
+      const b = document.getElementById('diag-' + h.dataset.open);
+      if(b) b.classList.toggle('open');
+      h.classList.toggle('open');
+    });
+  });
+  box.querySelectorAll('[data-copy]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const d = diags.find(x => x.id === b.dataset.copy);
+      if(!d) return;
+      try{ await navigator.clipboard.writeText(d.transcript || ''); toast("Transcription copiée."); }
+      catch(e){ toast("Copie impossible."); }
+    });
+  });
+}
+
+/* ---------- onglets de la console ---------- */
+function initOnglets(){
+  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-diagnostics':'pan-diagnostics' };
+  Object.keys(map).forEach(t => {
+    const btn = document.getElementById(t);
+    if(!btn) return;
+    btn.addEventListener('click', () => {
+      Object.keys(map).forEach(k => {
+        document.getElementById(k).classList.toggle('on', k === t);
+        document.getElementById(map[k]).classList.toggle('hidden', k !== t);
+      });
+    });
+  });
+  const imp = document.getElementById('btn-cat-import');
+  if(imp) imp.addEventListener('click', importerCatalogue);
+  const add = document.getElementById('btn-cat-add');
+  if(add) add.addEventListener('click', ajouterModele);
 }
 
 </script>
