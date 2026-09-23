@@ -253,14 +253,115 @@ let prix = [], catalogue = [];
 let tarifs = { deplacement: 60, premiereHeure: 167.20, heureSuivante: 107.20 };
 let ficheManuelle = null, kwDetecte = null;
 let transcriptFinal = '', transcriptInterim = '';
-let recog = null, wantRec = false, ecoute = false, debutMs = null;
-let recogActif = false, recogWatch = null, micStream = null;
+let ecoute = false, debutMs = null;
 let monEmail = '';
 
 const strip = (t) => (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
   .replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
 const eur = (n) => (n===null||n===undefined||n===''||isNaN(n)) ? null
   : Number(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+
+
+/* ===== moteur Whisper : transcription continue, 100 % locale ===== */
+const WH_SR = 16000;          // Whisper travaille en 16 kHz mono
+const WH_TRANCHE = 4500;      // on transcrit par tranches de 4,5 s
+const WH_RMS_MIN = 0.006;     // en dessous : silence, on n'envoie rien
+// Whisper "invente" ces phrases sur du silence ou du bruit : on les ignore.
+const WH_PARASITES = [
+  'sous-titrage','sous titrage','amara.org','merci d avoir regarde','merci de votre ecoute',
+  'abonnez-vous','a bientot','generique','musique','sous-titres realises'
+];
+
+let whWorker = null, whCtx = null, whSrc = null, whProc = null, whMute = null;
+let whStream = null, whBuf = [], whTimer = null, whPret = false, whActif = false;
+
+function whParasite(t){
+  const s = strip(t);
+  if(!s || s.length < 2) return true;
+  return WH_PARASITES.some(p => s.includes(strip(p)));
+}
+
+// evite de recoller un bout de phrase deja transcrit sur la tranche precedente
+function whColler(ancien, nouveau){
+  const a = ancien.trim().split(/\s+/), b = nouveau.trim().split(/\s+/);
+  for(let n = Math.min(6, a.length, b.length); n >= 2; n--){
+    if(a.slice(-n).join(' ').toLowerCase() === b.slice(0, n).join(' ').toLowerCase()){
+      return b.slice(n).join(' ');
+    }
+  }
+  return nouveau;
+}
+
+async function whDemarrer(modele, onTexte, onEtat){
+  if(whActif) return true;
+  try{
+    whStream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+  }catch(e){
+    onEtat("Micro refusé");
+    return false;
+  }
+  whActif = true; whPret = false; whBuf = [];
+
+  whWorker = new Worker('whisper-worker.js', { type: 'module' });
+  whWorker.onmessage = (ev) => {
+    const d = ev.data || {};
+    if(d.type === 'progress'){
+      if(d.p && d.p.status === 'progress' && d.p.progress != null){
+        onEtat('Téléchargement du moteur ' + Math.round(d.p.progress) + ' %');
+      }
+    } else if(d.type === 'ready'){
+      whPret = true;
+      onEtat("J'écoute" + (d.device === 'webgpu' ? '' : ''));
+    } else if(d.type === 'text'){
+      if(d.text && !whParasite(d.text)) onTexte(d.text);
+    } else if(d.type === 'error'){
+      onEtat("Moteur indisponible");
+      console.error('[whisper]', d.message);
+    }
+  };
+  whWorker.postMessage({ type: 'init', model: modele || 'onnx-community/whisper-base' });
+  onEtat('Chargement du moteur…');
+
+  whCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: WH_SR });
+  if(whCtx.state === 'suspended'){ try{ await whCtx.resume(); }catch(e){} }
+  whSrc  = whCtx.createMediaStreamSource(whStream);
+  whProc = whCtx.createScriptProcessor(4096, 1, 1);
+  whProc.onaudioprocess = (ev) => {
+    if(!whActif) return;
+    whBuf.push(new Float32Array(ev.inputBuffer.getChannelData(0)));
+  };
+  // sortie muette : on ne renvoie pas le micro dans les haut-parleurs
+  whMute = whCtx.createGain(); whMute.gain.value = 0;
+  whSrc.connect(whProc); whProc.connect(whMute); whMute.connect(whCtx.destination);
+
+  whTimer = setInterval(() => {
+    if(!whPret || !whBuf.length) return;
+    let n = 0; whBuf.forEach(b => n += b.length);
+    if(n < WH_SR) return;                       // moins d'une seconde : on patiente
+    const a = new Float32Array(n);
+    let o = 0; whBuf.forEach(b => { a.set(b, o); o += b.length; });
+    whBuf = [];
+    let somme = 0; for(let i = 0; i < a.length; i++) somme += a[i] * a[i];
+    if(Math.sqrt(somme / a.length) < WH_RMS_MIN) return;   // silence
+    whWorker.postMessage({ type: 'audio', audio: a }, [a.buffer]);
+  }, WH_TRANCHE);
+
+  return true;
+}
+
+function whArreter(){
+  whActif = false; whPret = false;
+  if(whTimer){ clearInterval(whTimer); whTimer = null; }
+  if(whProc){ try{ whProc.disconnect(); }catch(e){} whProc = null; }
+  if(whMute){ try{ whMute.disconnect(); }catch(e){} whMute = null; }
+  if(whSrc){ try{ whSrc.disconnect(); }catch(e){} whSrc = null; }
+  if(whCtx){ try{ whCtx.close(); }catch(e){} whCtx = null; }
+  if(whStream){ whStream.getTracks().forEach(t => t.stop()); whStream = null; }
+  if(whWorker){ try{ whWorker.terminate(); }catch(e){} whWorker = null; }
+  whBuf = [];
+}
 
 function tarifTexte(){
   const f=(n)=>Number(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -365,54 +466,41 @@ function majMic(){
   i.className = ecoute ? 'fas fa-stop' : 'fas fa-microphone';
   l.textContent = ecoute ? "J'écoute — appuie pour arrêter" : "Appuie pour écouter l'appel";
 }
-function demarrerEcoute(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ toast("Ce navigateur ne gère pas la transcription. Utilise Chrome."); return; }
+let moteurChoisi = 'onnx-community/whisper-base';
+let modeGoogle = false;
+
+async function demarrerEcoute(){
   transcriptFinal=''; transcriptInterim=''; kwDetecte=null; ficheManuelle=null; debutMs=Date.now();
   renderTr(); render();
-  wantRec=true; ecoute=true; majMic();
-  // micro maintenu ouvert : la reconnaissance peut se relancer sans coupure audible
-  navigator.mediaDevices.getUserMedia({ audio:true }).then(st=>{ micStream=st; }).catch(()=>{});
-  recog = new SR();
-  recog.lang='fr-FR'; recog.continuous=true; recog.interimResults=true;
-  recog.onstart=()=>{ recogActif=true; };
-  recog.onresult=(ev)=>{
-    let it='';
-    for(let i=ev.resultIndex;i<ev.results.length;i++){
-      const r=ev.results[i];
-      if(r.isFinal) transcriptFinal += r[0].transcript.trim()+' '; else it += r[0].transcript;
-    }
-    transcriptInterim=it;
-    const kw=detecterKw(fenetre()); if(kw!==null) kwDetecte=kw;
-    renderTr(); render();
-  };
-  recog.onerror=(e)=>{
-    // 'no-speech' et 'aborted' sont normaux, on ne coupe pas l'ecoute
-    if(e.error==='not-allowed'||e.error==='service-not-allowed'){
-      wantRec=false; ecoute=false; majMic();
-      toast("Micro refusé. Autorise le micro pour ce site.");
-    }
-  };
-  recog.onend=()=>{
-    recogActif=false;
-    if(!wantRec){ ecoute=false; majMic(); return; }
-    try{ recog.start(); }catch(e){}
-  };
-  try{ recog.start(); }catch(e){}
-  if(recogWatch) clearInterval(recogWatch);
-  recogWatch = setInterval(()=>{
-    if(!wantRec || recogActif || !recog) return;
-    try{ recog.start(); }catch(e){}
-  }, 3000);
+  ecoute=true; majMic();
+  $('mic-hint').textContent = "Premier démarrage : le moteur se télécharge une fois, puis il est gardé en mémoire.";
+
+  const ok = await whDemarrer(moteurChoisi,
+    (texte) => {
+      const t = whColler(transcriptFinal, texte);
+      if(!t.trim()) return;
+      transcriptFinal += t.trim() + ' ';
+      const kw = detecterKw(fenetre()); if(kw !== null) kwDetecte = kw;
+      renderTr(); render();
+    },
+    (etat) => { $('mic-lbl').textContent = ecoute ? etat : "Appuie pour écouter l'appel"; }
+  );
+
+  if(!ok){
+    ecoute=false; majMic();
+    toast("Micro refusé. Autorise le micro pour ce site.");
+    return;
+  }
+  modeGoogle = false;
 }
+
 function arreterEcoute(){
-  wantRec=false; ecoute=false; recogActif=false;
-  if(recogWatch){ clearInterval(recogWatch); recogWatch=null; }
-  if(recog){ try{ recog.abort(); }catch(e){} recog=null; }
-  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
-  majMic();
+  whArreter();
+  ecoute=false; majMic();
+  $('mic-hint').textContent = "Au téléphone, mets le haut-parleur : le micro doit entendre le client. Sur ordinateur, ce n'est pas nécessaire si le son sort des enceintes.";
   if((transcriptFinal||'').trim()) enregistrer(false);
 }
+
 $('btn-mic').addEventListener('click',()=>{ ecoute ? arreterEcoute() : demarrerEcoute(); });
 
 /* ---------- enregistrement ---------- */
@@ -450,11 +538,8 @@ function reinitialiser(){
   toast("Prêt pour l'appel suivant.");
 }
 function arreterEcouteSansSauver(){
-  wantRec=false; ecoute=false; recogActif=false;
-  if(recogWatch){ clearInterval(recogWatch); recogWatch=null; }
-  if(recog){ try{ recog.abort(); }catch(e){} recog=null; }
-  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
-  majMic();
+  whArreter();
+  ecoute=false; majMic();
 }
 $('btn-reset').addEventListener('click', reinitialiser);
 
