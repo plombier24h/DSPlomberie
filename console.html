@@ -1034,13 +1034,27 @@ function tarifTexte(){
   return `Déplacement ${f(tarifs.deplacement)} € TTC · 1ʳᵉ heure ${f(tarifs.premiereHeure)} € TTC · heure suivante ${f(tarifs.heureSuivante)} € TTC`;
 }
 
+// affichage : une seule fiche par identifiant, mots-cles dedoublonnes
+function uniquesFiches(liste){
+  const vus = new Set(), out = [];
+  liste.forEach(f => {
+    const k = (f.id || f.titre || '').toLowerCase();
+    if(!k || vus.has(k)) return;
+    vus.add(k);
+    const m = [], vm = new Set();
+    (f.mots || []).forEach(x => { const s = strip(x); if(s && !vm.has(s)){ vm.add(s); m.push(x); } });
+    out.push({ ...f, mots: m });
+  });
+  return out;
+}
+
 function ecouterFiches(){
   if(fichesUnsub) return;
   fichesUnsub = onSnapshot(collection(db, "fiches"), (snap) => {
     const docs = snap.docs.map(d => ({ docId: d.id, ...d.data() }))
       .sort((a,b) => (a.ordre||0) - (b.ordre||0));
     // tant que la collection est vide, on garde les fiches d'origine
-    fiches = docs.length ? docs.map(d => ({ ...d, id: d.docId })) : FICHES_DEFAUT.slice();
+    fiches = uniquesFiches(docs.length ? docs.map(d => ({ ...d, id: d.docId })) : FICHES_DEFAUT.slice());
     renderFiches();
     renderAssist();
   }, () => {});

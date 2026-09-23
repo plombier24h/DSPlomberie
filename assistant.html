@@ -103,6 +103,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <button class="mic" id="btn-mic" aria-label="Activer le micro"><i class="fas fa-microphone" id="mic-ico"></i></button>
       <div class="mic-lbl" id="mic-lbl">Appuie pour écouter l'appel</div>
       <div class="mic-hint" id="mic-hint">Au téléphone, mets le haut-parleur : le micro doit entendre le client. Sur ordinateur, ce n'est pas nécessaire si le son sort des enceintes.</div>
+      <button class="btn ghost small" id="btn-reset"><i class="fas fa-rotate-left"></i> Réinitialiser pour l'appel suivant</button>
     </div>
 
     <div class="tabs" id="tabs"></div>
@@ -247,7 +248,7 @@ const FAMILLES = [
   { id:'divers',      nom:'Divers & évacuation' }
 ];
 
-let fiches = FICHES_DEFAUT.slice();
+let fiches = FICHES_DEFAUT.slice();   // remplacees par la base, dedoublonnees
 let prix = [], catalogue = [];
 let tarifs = { deplacement: 60, premiereHeure: 167.20, heureSuivante: 107.20 };
 let ficheManuelle = null, kwDetecte = null;
@@ -283,8 +284,24 @@ function fenetre(){
 }
 function scoreFiches(txt){
   const t=strip(txt);
-  return fiches.map(f=>{ let n=0; (f.mots||[]).forEach(m=>{ if(t.includes(strip(m))) n++; }); return {f,n}; })
-    .filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  return fiches.map(f=>{
+    const vus=new Set(); let n=0;
+    (f.mots||[]).forEach(m=>{ const k=strip(m); if(!k||vus.has(k)) return; vus.add(k); if(t.includes(k)) n++; });
+    return {f,n};
+  }).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+}
+// une seule fiche par identifiant, meme si la base en contient plusieurs
+function uniques(liste){
+  const vus=new Set(), out=[];
+  liste.forEach(f=>{
+    const k=(f.id||f.titre||'').toLowerCase();
+    if(!k||vus.has(k)) return;
+    vus.add(k);
+    const m=[], vm=new Set();
+    (f.mots||[]).forEach(x=>{ const s=strip(x); if(s&&!vm.has(s)){ vm.add(s); m.push(x); } });
+    out.push({...f, mots:m});
+  });
+  return out;
 }
 function prixFamille(fam){
   return prix.filter(p=>p.famille===fam && p.actif!==false).sort((a,b)=>(a.prixHT||0)-(b.prixHT||0));
@@ -421,6 +438,26 @@ async function enregistrer(manuel){
 }
 $('btn-note').addEventListener('click',()=>enregistrer(true));
 
+/* ---------- remise a zero entre deux appels ---------- */
+function reinitialiser(){
+  const note=$('note').value.trim();
+  if((note || (transcriptFinal||'').trim()) &&
+     !confirm("Tout effacer pour l'appel suivant ? La transcription et les notes non enregistrées seront perdues.")) return;
+  if(ecoute) arreterEcouteSansSauver();
+  transcriptFinal=''; transcriptInterim=''; kwDetecte=null; ficheManuelle=null; debutMs=null;
+  $('note').value=''; $('note-etat').textContent='';
+  renderTr(); render();
+  toast("Prêt pour l'appel suivant.");
+}
+function arreterEcouteSansSauver(){
+  wantRec=false; ecoute=false; recogActif=false;
+  if(recogWatch){ clearInterval(recogWatch); recogWatch=null; }
+  if(recog){ try{ recog.abort(); }catch(e){} recog=null; }
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+  majMic();
+}
+$('btn-reset').addEventListener('click', reinitialiser);
+
 /* ---------- login ---------- */
 $('btn-login').addEventListener('click', async ()=>{
   $('login-err').textContent='';
@@ -454,7 +491,7 @@ function ecouterTout(){
   if(lance) return; lance=true;
   onSnapshot(collection(db,"fiches"),(s)=>{
     const d=s.docs.map(x=>({docId:x.id,...x.data()})).sort((a,b)=>(a.ordre||0)-(b.ordre||0));
-    fiches = d.length ? d.map(x=>({...x,id:x.id||x.docId})) : FICHES_DEFAUT.slice();
+    fiches = uniques(d.length ? d.map(x=>({...x,id:x.id||x.docId})) : FICHES_DEFAUT.slice());
     render();
   },()=>{});
   onSnapshot(collection(db,"prix"),(s)=>{ prix=s.docs.map(x=>({id:x.id,...x.data()})); render(); },()=>{});
