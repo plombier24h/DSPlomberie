@@ -196,6 +196,55 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .pxr-d{color:rgba(255,255,255,.85);flex:1}
 .pxr-p{color:#4CE28C;font-weight:700;white-space:nowrap}
 .pxr-u{color:rgba(255,255,255,.35);font-weight:400;font-size:.72rem}
+
+/* ===== sujets cumulés + devis ===== */
+.sujets{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.sujets-vide{font-size:.72rem;color:rgba(255,255,255,.35)}
+.suj{display:inline-flex;align-items:center;gap:5px;background:rgba(232,119,34,.16);border:1px solid rgba(232,119,34,.45);color:#ffc793;border-radius:999px;padding:3px 5px 3px 10px;font-size:.72rem;cursor:pointer}
+.suj.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.suj button{background:none;border:none;color:inherit;cursor:pointer;font-size:.95rem;line-height:1;padding:0 3px}
+.devis{display:flex;flex-direction:column;min-height:0}
+.devis h4{font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45);padding:12px 14px 8px;margin:0}
+.devis-corps{flex:1 1 auto;overflow-y:auto;padding:0 14px}
+.dl{display:grid;grid-template-columns:1fr auto auto auto auto auto;align-items:center;gap:7px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.76rem}
+.dl:first-child{border-top:none}
+.dl-d{min-width:0;line-height:1.3}
+.dl-u{color:rgba(255,255,255,.3);font-size:.64rem;margin-left:5px}
+.dl-q{display:flex;align-items:center;gap:4px}
+.dl-q button{width:18px;height:18px;border-radius:4px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#fff;cursor:pointer;font-size:.72rem;line-height:1;padding:0}
+.dl-q span{min-width:14px;text-align:center}
+.dl-pu{color:rgba(255,255,255,.5);white-space:nowrap;font-size:.7rem}
+.dl-tva{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:4px;color:rgba(255,255,255,.7);font-size:.66rem;padding:2px 3px}
+.dl-m{font-weight:700;white-space:nowrap}
+.dl-x{background:none;border:none;color:rgba(255,255,255,.28);cursor:pointer;padding:2px}
+.dl-x:hover{color:#FF6B6B}
+.devis-sugg{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px;border-top:1px solid var(--line)}
+.sg{background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.8);border-radius:6px;padding:5px 9px;font:400 .71rem 'Red Hat Display',sans-serif;cursor:pointer;text-align:left}
+.sg:hover{border-color:var(--orange);color:#fff}
+.sg i{color:var(--orange);font-size:.62rem;margin-right:3px}
+.sg em{color:#4CE28C;font-style:normal;font-weight:700;margin-left:5px}
+.devis-total{border-top:1px solid var(--line);padding:10px 14px;display:grid;gap:4px;font-size:.78rem}
+.devis-total div{display:flex;justify-content:space-between}
+.devis-total span{color:rgba(255,255,255,.5)}
+.devis-total .ttc{font-size:.95rem;padding-top:5px;border-top:1px solid rgba(255,255,255,.1)}
+.devis-total .ttc b{color:#4CE28C}
+
+/* panneau assistant : deux colonnes, plus compact */
+.assist{width:min(96vw,760px)}
+.assist-cols{flex:1 1 auto;display:flex;min-height:0}
+.assist-gauche{flex:1 1 auto;display:flex;flex-direction:column;min-width:0;min-height:0}
+.assist-droite{flex:0 0 288px;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:rgba(0,0,0,.18)}
+.fiche h3{font-size:.92rem}
+.fiche .blk b{font-size:.62rem}
+.fiche .blk li,.fiche .blk p{font-size:.79rem}
+.fiche .tarif,.fiche .flag{font-size:.76rem;padding:8px 10px}
+.assist-tabs button{padding:5px 10px;font-size:.69rem}
+.assist-tr{font-size:.75rem;max-height:22%}
+@media(max-width:860px){
+  .assist{width:auto}
+  .assist-cols{flex-direction:column}
+  .assist-droite{flex:0 0 auto;max-height:46%;border-left:none;border-top:1px solid var(--line)}
+}
 </style>
 </head>
 <body>
@@ -572,9 +621,20 @@ function handleIncoming(callId, data){
         </div>
         <div class="assist" id="assist">
           <div class="assist-head"><span class="rec off" id="assist-rec"></span><span id="assist-rec-lbl">Assistant diagnostic</span></div>
-          <div class="assist-tabs" id="assist-tabs"></div>
-          <div class="assist-body" id="assist-body"></div>
-          <div class="assist-tr" id="assist-tr"></div>
+          <div class="sujets" id="sujets"></div>
+          <div class="assist-cols">
+            <div class="assist-gauche">
+              <div class="assist-tabs" id="assist-tabs"></div>
+              <div class="assist-body" id="assist-body"></div>
+              <div class="assist-tr" id="assist-tr"></div>
+            </div>
+            <div class="assist-droite devis">
+              <h4>Devis en préparation</h4>
+              <div class="devis-corps" id="devis-lignes"></div>
+              <div class="devis-sugg" id="devis-sugg"></div>
+              <div class="devis-total" id="devis-total"></div>
+            </div>
+          </div>
         </div>
         <div class="call-top">
           <div class="call-avatar"><i class="fas fa-user"></i></div>
@@ -1363,6 +1423,127 @@ function ficheHtml(f){
     </div>`;
 }
 
+/* ===== sujets cumulés + devis en préparation ===== */
+const TVA_DEFAUT = 10;
+let sujets = [];        // ids des fiches reconnues pendant l'appel, dans l'ordre
+let devis  = [];        // lignes du devis
+
+function devisInit(){
+  devis = [
+    { des: 'Déplacement', unite: 'U', pu: tarifs.deplacement, tva: TVA_DEFAUT, qte: 1, fixe: true },
+    { des: "1ʳᵉ heure de main-d'œuvre", unite: 'h', pu: tarifs.heureSuivante, tva: TVA_DEFAUT, qte: 1, fixe: true }
+  ];
+}
+
+function ajouterSujet(id){
+  if(!id || sujets.includes(id)) return;
+  sujets.push(id);
+  renderSujets();
+}
+function retirerSujet(id){
+  sujets = sujets.filter(x => x !== id);
+  if(ficheManuelle && ficheManuelle.id === id) ficheManuelle = null;
+  renderSujets(); renderAssist(); renderDevis();
+}
+
+function devisAjouter(designation, unite, pu, tva){
+  const i = devis.findIndex(l => l.des === designation);
+  if(i >= 0) devis[i].qte++;
+  else devis.push({ des: designation, unite: unite || 'U', pu: Number(pu) || 0, tva: tva == null ? TVA_DEFAUT : tva, qte: 1 });
+  renderDevis();
+}
+
+function devisTotaux(){
+  let ht = 0, tva = 0;
+  devis.forEach(l => { const m = l.pu * l.qte; ht += m; tva += m * (l.tva / 100); });
+  return { ht, tva, ttc: ht + tva };
+}
+
+function devisSuggestions(){
+  const familles = [...new Set(sujets.map(id => {
+    const f = fiches.find(x => x.id === id);
+    return f && f.famille;
+  }).filter(Boolean))];
+  const dedans = new Set(devis.map(l => l.des));
+  const out = [];
+  familles.forEach(fam => prixFamille(fam).forEach(p => {
+    if(!dedans.has(p.designation)) out.push(p);
+  }));
+  return out;
+}
+
+function renderSujets(){
+  const box = document.getElementById('sujets');
+  if(!box) return;
+  if(!sujets.length){
+    box.innerHTML = '<span class="sujets-vide">Aucun sujet détecté pour l\'instant</span>';
+    return;
+  }
+  box.innerHTML = sujets.map(id => {
+    const f = fiches.find(x => x.id === id);
+    const nom = f ? f.court : id;
+    const on = (ficheManuelle && ficheManuelle.id === id) ? ' on' : '';
+    return `<span class="suj${on}" data-suj="${id}">${nom}<button data-rmsuj="${id}" title="Retirer">&times;</button></span>`;
+  }).join('');
+  box.querySelectorAll('[data-suj]').forEach(e => e.addEventListener('click', (ev) => {
+    if(ev.target.dataset.rmsuj) return;
+    ficheManuelle = fiches.find(f => f.id === e.dataset.suj) || null;
+    renderAssist(); renderSujets();
+  }));
+  box.querySelectorAll('[data-rmsuj]').forEach(b => b.addEventListener('click', (ev) => {
+    ev.stopPropagation(); retirerSujet(b.dataset.rmsuj);
+  }));
+}
+
+function renderDevis(){
+  const box = document.getElementById('devis-lignes');
+  if(!box) return;
+  box.innerHTML = devis.map((l, i) => `
+    <div class="dl">
+      <div class="dl-d">${l.des}<span class="dl-u">${l.unite}</span></div>
+      <div class="dl-q">
+        <button data-moins="${i}">−</button><span>${l.qte}</span><button data-plus="${i}">+</button>
+      </div>
+      <div class="dl-pu">${eur(l.pu)}</div>
+      <select class="dl-tva" data-tva="${i}">
+        <option value="10"${l.tva === 10 ? ' selected' : ''}>10 %</option>
+        <option value="20"${l.tva === 20 ? ' selected' : ''}>20 %</option>
+        <option value="0"${l.tva === 0 ? ' selected' : ''}>0 %</option>
+      </select>
+      <div class="dl-m">${eur(l.pu * l.qte)}</div>
+      <button class="dl-x" data-rm="${i}" title="Retirer"><i class="fas fa-xmark"></i></button>
+    </div>`).join('');
+
+  box.querySelectorAll('[data-plus]').forEach(b => b.addEventListener('click', () => { devis[+b.dataset.plus].qte++; renderDevis(); }));
+  box.querySelectorAll('[data-moins]').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.moins;
+    if(devis[i].qte > 1) devis[i].qte--; else devis.splice(i, 1);
+    renderDevis();
+  }));
+  box.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => { devis.splice(+b.dataset.rm, 1); renderDevis(); }));
+  box.querySelectorAll('[data-tva]').forEach(s => s.addEventListener('change', () => { devis[+s.dataset.tva].tva = parseInt(s.value, 10); renderDevis(); }));
+
+  const t = devisTotaux();
+  const tot = document.getElementById('devis-total');
+  if(tot) tot.innerHTML =
+    `<div><span>Total HT</span><b>${eur(t.ht)}</b></div>` +
+    `<div><span>TVA</span><b>${eur(t.tva)}</b></div>` +
+    `<div class="ttc"><span>Total TTC</span><b>${eur(t.ttc)}</b></div>`;
+
+  const sug = document.getElementById('devis-sugg');
+  if(sug){
+    const l = devisSuggestions();
+    sug.innerHTML = l.length
+      ? l.map(p => `<button class="sg" data-add='${encodeURIComponent(JSON.stringify({d:p.designation,u:p.unite,p:p.prixHT,t:p.tva}))}'>
+           <i class="fas fa-plus"></i> ${p.designation} <em>${eur(p.prixHT)}</em></button>`).join('')
+      : '<span class="sujets-vide">Les prestations proposées apparaîtront ici selon les sujets détectés.</span>';
+    sug.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
+      const o = JSON.parse(decodeURIComponent(b.dataset.add));
+      devisAjouter(o.d, o.u, o.p, o.t);
+    }));
+  }
+}
+
 function renderAssist(){
   const body = document.getElementById('assist-body');
   const tabs = document.getElementById('assist-tabs');
@@ -1370,7 +1551,7 @@ function renderAssist(){
 
   const ranked = scoreFiches(fenetre());
   const auto = ranked.length ? ranked[0].f : null;
-  if(auto) fichesVues.add(auto.id);
+  if(auto){ fichesVues.add(auto.id); ajouterSujet(auto.id); }
   const active = ficheManuelle || auto;
 
   const chips = [`<button class="${ficheManuelle ? '' : 'on'}" data-fiche="__auto">Auto</button>`]
@@ -1407,11 +1588,12 @@ function startAssistant(callId, data){
   assistStartedAt = Date.now();
   transcriptFinal = ''; transcriptInterim = ''; fichesVues = new Set();
   ficheManuelle = null; kwDetecte = null;
+  sujets = []; devisInit();
 
   const panel = document.getElementById('assist');
   const btn = document.getElementById('btn-assist');
   if(btn && panel) btn.addEventListener('click', () => panel.classList.toggle('open'));
-  renderAssist(); renderTranscript();
+  renderAssist(); renderTranscript(); renderSujets(); renderDevis();
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const dot = document.getElementById('assist-rec');
@@ -1478,6 +1660,10 @@ async function stopAssistant(){
     callerName: assistCallerName,
     transcript: texte,
     fichesDetectees: [...fichesVues],
+    sujets: [...sujets],
+    devis: devis.map(l => ({ designation: l.des, unite: l.unite, prixHT: l.pu, tva: l.tva, qte: l.qte })),
+    totalHT: Math.round(devisTotaux().ht * 100) / 100,
+    totalTTC: Math.round(devisTotaux().ttc * 100) / 100,
     kwDetecte: kwDetecte,
     startedAtMs: assistStartedAt,
     endedAtMs: Date.now(),
@@ -1500,9 +1686,20 @@ function ouvrirEcoute(){
     <div class="call-screen">
       <div class="assist open" id="assist">
         <div class="assist-head"><span class="rec off" id="assist-rec"></span><span id="assist-rec-lbl">Écoute — appel téléphone</span></div>
-        <div class="assist-tabs" id="assist-tabs"></div>
-        <div class="assist-body" id="assist-body"></div>
-        <div class="assist-tr" id="assist-tr"></div>
+        <div class="sujets" id="sujets"></div>
+        <div class="assist-cols">
+          <div class="assist-gauche">
+            <div class="assist-tabs" id="assist-tabs"></div>
+            <div class="assist-body" id="assist-body"></div>
+            <div class="assist-tr" id="assist-tr"></div>
+          </div>
+            <div class="assist-droite devis">
+              <h4>Devis en préparation</h4>
+              <div class="devis-corps" id="devis-lignes"></div>
+              <div class="devis-sugg" id="devis-sugg"></div>
+              <div class="devis-total" id="devis-total"></div>
+            </div>
+        </div>
       </div>
       <div class="call-top">
         <div class="call-avatar"><i class="fas fa-microphone"></i></div>
