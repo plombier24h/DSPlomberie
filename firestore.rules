@@ -2,52 +2,42 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Appels visio : un visiteur anonyme peut créer et mettre à jour son appel,
-    // la console (compte email/mot de passe) peut lire et répondre.
+    // Un compte email/mot de passe (console ou poste assistant).
+    function connecte() {
+      return request.auth != null
+             && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+    // Administrateurs : peuvent modifier fiches, tarifs, catalogue, réglages.
+    // Pour en ajouter un, ajouter son email à cette liste.
+    function admin() {
+      return connecte() && request.auth.token.email in ['plombierds24@gmail.com'];
+    }
+
+    // Appels visio : le visiteur anonyme crée son appel, la console répond.
     match /calls/{callId} {
       allow read, create, update: if request.auth != null;
-      allow delete: if request.auth != null
-                    && request.auth.token.firebase.sign_in_provider == 'password';
-
+      allow delete: if admin();
       match /{sub}/{candidateId} {
         allow read, create: if request.auth != null;
       }
     }
 
-    // Transcriptions et fiches de diagnostic : console uniquement.
+    // Référentiel métier : lecture par tous les comptes, écriture réservée aux admins.
+    match /fiches/{docId}    { allow read: if connecte(); allow write: if admin(); }
+    match /prix/{docId}      { allow read: if connecte(); allow write: if admin(); }
+    match /catalogue/{docId} { allow read: if connecte(); allow write: if admin(); }
+    match /reglages/{docId}  { allow read: if connecte(); allow write: if admin(); }
+
+    // Transcriptions et notes : chaque poste crée les siennes, l'admin seul corrige ou supprime.
     match /diagnostics/{docId} {
-      allow read, write: if request.auth != null
-                         && request.auth.token.firebase.sign_in_provider == 'password';
+      allow read, create: if connecte();
+      allow update, delete: if admin();
     }
 
-    // Catalogue chaudières : console uniquement.
-    match /catalogue/{docId} {
-      allow read, write: if request.auth != null
-                         && request.auth.token.firebase.sign_in_provider == 'password';
-    }
-
-    // Fiches metier et reglages (tarifs) : console uniquement.
-    match /fiches/{docId} {
-      allow read, write: if request.auth != null
-                         && request.auth.token.firebase.sign_in_provider == 'password';
-    }
-    match /reglages/{docId} {
-      allow read, write: if request.auth != null
-                         && request.auth.token.firebase.sign_in_provider == 'password';
-    }
-
-    // Tarifs de prestation : console uniquement.
-    match /prix/{docId} {
-      allow read, write: if request.auth != null
-                         && request.auth.token.firebase.sign_in_provider == 'password';
-    }
-
-    // Présence de la console : lisible par tous les connectés,
-    // écrivable uniquement par un compte email/mot de passe (la console).
+    // Présence de la console visio.
     match /presence/{docId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.auth.token.firebase.sign_in_provider == 'password';
+      allow write: if admin();
     }
   }
 }

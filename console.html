@@ -240,6 +240,11 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
     </div>
 
     <div id="pan-appels">
+    <div class="cat-actions" style="margin-bottom:16px">
+      <button class="btn small" id="btn-ecoute"><i class="fas fa-microphone"></i> Écoute — appel téléphone</button>
+      <a class="btn ghost small" href="assistant.html" target="_blank" rel="noopener"><i class="fas fa-up-right-from-square"></i> Ouvrir la page assistants</a>
+      <button class="btn ghost small" id="btn-lien-poste"><i class="fas fa-copy"></i> Copier le lien assistants</button>
+    </div>
     <div class="empty" id="waiting">
       <i class="fas fa-satellite-dish"></i>
       En attente d'un appel<br>
@@ -970,6 +975,9 @@ async function ajouterPrix(){
   const f = document.getElementById('px-new-fam').value;
   const t = parseInt(document.getElementById('px-new-tva').value, 10);
   if(!d || isNaN(p)){ toast("Désignation et prix obligatoires."); return; }
+  if(prix.some(x => x.famille === f && (x.designation||'').toLowerCase() === d.toLowerCase())){
+    toast("Ce tarif existe déjà dans cette famille."); return;
+  }
   try{
     await addDoc(collection(db, "prix"), {
       famille: f, designation: d, unite: u, prixHT: p,
@@ -1217,6 +1225,9 @@ async function importerFiches(){
 async function nouvelleFiche(){
   const titre = prompt("Titre de la nouvelle fiche (ex. Chauffe-eau)");
   if(!titre) return;
+  if(fiches.some(x => (x.titre||'').toLowerCase() === titre.trim().toLowerCase())){
+    toast("Une fiche porte déjà ce titre."); return;
+  }
   try{
     await addDoc(collection(db, "fiches"), {
       id: 'f' + Date.now().toString(36),
@@ -1451,6 +1462,41 @@ async function stopAssistant(){
   }
 }
 
+/* ---------- mode ECOUTE : assistant sans visio ---------- */
+function ouvrirEcoute(){
+  if(currentCallDocId){ toast("Un appel visio est en cours."); return; }
+  callRoot.innerHTML = `
+    <div class="call-screen">
+      <div class="assist open" id="assist">
+        <div class="assist-head"><span class="rec off" id="assist-rec"></span><span id="assist-rec-lbl">Écoute — appel téléphone</span></div>
+        <div class="assist-tabs" id="assist-tabs"></div>
+        <div class="assist-body" id="assist-body"></div>
+        <div class="assist-tr" id="assist-tr"></div>
+      </div>
+      <div class="call-top">
+        <div class="call-avatar"><i class="fas fa-microphone"></i></div>
+        <div class="call-name">Écoute en cours</div>
+        <div class="call-status">Mets le haut-parleur pour que le client soit entendu</div>
+      </div>
+      <div class="call-actions">
+        <div class="call-action">
+          <button class="call-btn" id="btn-assist"><i class="fas fa-clipboard-list"></i></button>
+          <span class="call-btn-label">Fiches</span>
+        </div>
+        <div class="call-action">
+          <button class="call-btn hangup" id="btn-stop-ecoute"><i class="fas fa-stop"></i></button>
+          <span class="call-btn-label">Arrêter</span>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('btn-stop-ecoute').addEventListener('click', fermerEcoute);
+  startAssistant('telephone-' + Date.now().toString(36), { callerName: 'Appel téléphone' });
+}
+function fermerEcoute(){
+  stopAssistant();
+  callRoot.innerHTML = '';
+}
+
 /* ---------- ecran CATALOGUE ---------- */
 function pctDe(m){
   if(m.margePct != null) return m.margePct;
@@ -1583,6 +1629,9 @@ async function ajouterModele(){
   const kmax = parseInt(document.getElementById('cat-new-kwmax').value, 10) || kmin;
   const pv = document.getElementById('cat-new-prix').value;
   if(!g || isNaN(kmin)){ toast("Gamme et puissance minimum obligatoires."); return; }
+  if(catalogue.some(x => (x.gamme||'').toLowerCase() === g.toLowerCase() && x.kwMin === kmin && x.kwMax === kmax)){
+    toast("Ce modèle existe déjà dans le catalogue."); return;
+  }
   try{
     await addDoc(collection(db, "catalogue"), {
       marque: 'Frisquet', gamme: g, variante: v, kwMin: kmin, kwMax: kmax,
@@ -1706,6 +1755,14 @@ function initOnglets(){
   if(fd) fd.addEventListener('click', () => dedoublonner('fiches', fiches.filter(x => x.docId), x => x.id, 'les fiches'));
   const pd = document.getElementById('btn-px-dedup');
   if(pd) pd.addEventListener('click', () => dedoublonner('prix', prix, x => (x.famille||'') + '|' + (x.designation||''), 'les tarifs'));
+  const ec = document.getElementById('btn-ecoute');
+  if(ec) ec.addEventListener('click', ouvrirEcoute);
+  const lp = document.getElementById('btn-lien-poste');
+  if(lp) lp.addEventListener('click', async () => {
+    const url = location.href.replace(/[^/]*$/, 'assistant.html');
+    try{ await navigator.clipboard.writeText(url); toast("Lien copié : " + url); }
+    catch(e){ toast(url); }
+  });
   const cd = document.getElementById('btn-cat-dedup');
   if(cd) cd.addEventListener('click', () => dedoublonner('catalogue', catalogue, x => x.refCedeo || x.gamme, 'le catalogue'));
 }
