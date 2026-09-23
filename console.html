@@ -740,7 +740,7 @@ function addLog(data, verdict){
    Tout est cote console. Le client ne voit rien.
    ========================================================= */
 
-const FENETRE_MOTS = 40;   // la fiche suit les 40 derniers mots prononces
+const FENETRE_MOTS = 25;   // la fiche suit les 25 derniers mots prononces
 
 const CATALOGUE_SEED = [{"gamme": "HYDROMOTRIX Condensation Visio","variante": "Murale, mixte instantanée","kwMin": 18,"kwMax": 25,"refCedeo": "3432055","refFab": "A4AB25020","prixCedeoTTC": 4987.2},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, mixte instantanée","kwMin": 18,"kwMax": 25,"refCedeo": "3432176","refFab": "A4AL25020","prixCedeoTTC": 4999.2},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, chauffage seul","kwMin": 18,"kwMax": 25,"refCedeo": "3432177","refFab": "A4AL25050","prixCedeoTTC": 4693.2},{"gamme": "HYDROMOTRIX Condensation Visio","variante": "Murale, chauffage seul","kwMin": 25,"kwMax": 32,"refCedeo": "3432061","refFab": "A4AB32050","prixCedeoTTC": 5355.6},{"gamme": "HYDROCONFORT Condensation Visio 50+R","variante": "ECS","kwMin": 20,"kwMax": 20,"refCedeo": "7822874","refFab": "A4AJ20160","prixCedeoTTC": 5683.2},{"gamme": "HYDROCONFORT Condensation Visio","variante": "Murale, mixte accumulée 80 L","kwMin": 14,"kwMax": 20,"refCedeo": "3432069","refFab": "A4AJ20020","prixCedeoTTC": 5976.0},{"gamme": "HYDROMOTRIX Compact Evolution Visio","variante": "Murale, basse température, mixte instantanée","kwMin": 25,"kwMax": 25,"refCedeo": "3655678","refFab": "","prixCedeoTTC": 3850.8},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale VMC, basse température, mixte instantanée","kwMin": 25,"kwMax": 25,"refCedeo": "3813426","refFab": "B4AA25030","prixCedeoTTC": 3646.8},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, mixte accumulée 80 L","kwMin": 14,"kwMax": 20,"refCedeo": "3432075","refFab": "A4AL20050","prixCedeoTTC": 6446.4},{"gamme": "HYDROMOTRIX Tradition Visio","variante": "Murale cheminée, mixte instantanée","kwMin": 23,"kwMax": 23,"refCedeo": "6149589","refFab": "","prixCedeoTTC": 3094.8},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale cheminée, chauffage seul","kwMin": 25,"kwMax": 25,"refCedeo": "3750778","refFab": "B4AA25050","prixCedeoTTC": 3397.2},{"gamme": "HYDROMOTRIX Compact Visio","variante": "Chauffage seul + VMC","kwMin": 25,"kwMax": 25,"refCedeo": "3655682","refFab": "","prixCedeoTTC": 3612.0},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale, basse température, mixte instantanée","kwMin": 30,"kwMax": 30,"refCedeo": "6151405","refFab": "","prixCedeoTTC": 4434.0}];
 
@@ -1309,10 +1309,20 @@ function fenetre(){
 function scoreFiches(txt){
   const t = strip(txt);
   return fiches.map(f => {
-    let n = 0;
-    f.mots.forEach(m => { if(t.includes(strip(m))) n++; });
-    return { f, n };
-  }).filter(x => x.n > 0).sort((a,b) => b.n - a.n);
+    const vus = new Set();
+    let n = 0, dernier = -1;
+    (f.mots || []).forEach(m => {
+      const k = strip(m);
+      if(!k || vus.has(k)) return;
+      vus.add(k);
+      const p = t.lastIndexOf(k);        // position du DERNIER emploi du mot-cle
+      if(p >= 0){ n++; if(p > dernier) dernier = p; }
+    });
+    return { f, n, dernier };
+  }).filter(x => x.n > 0)
+    // la fiche dont un mot-cle vient d'etre prononce passe devant ;
+    // le nombre de correspondances ne sert qu'a departager
+    .sort((a, b) => (b.dernier - a.dernier) || (b.n - a.n));
 }
 
 function blocCatalogue(){

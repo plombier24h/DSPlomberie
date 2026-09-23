@@ -136,7 +136,7 @@ const firebaseConfig = {
   appId: "1:1005022938633:web:c3546559f9a4231bc2dad8"
 };
 
-const FENETRE_MOTS = 40;
+const FENETRE_MOTS = 25;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
@@ -283,12 +283,22 @@ function fenetre(){
   return mots.slice(-FENETRE_MOTS).join(' ');
 }
 function scoreFiches(txt){
-  const t=strip(txt);
-  return fiches.map(f=>{
-    const vus=new Set(); let n=0;
-    (f.mots||[]).forEach(m=>{ const k=strip(m); if(!k||vus.has(k)) return; vus.add(k); if(t.includes(k)) n++; });
-    return {f,n};
-  }).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  const t = strip(txt);
+  return fiches.map(f => {
+    const vus = new Set();
+    let n = 0, dernier = -1;
+    (f.mots || []).forEach(m => {
+      const k = strip(m);
+      if(!k || vus.has(k)) return;
+      vus.add(k);
+      const p = t.lastIndexOf(k);        // position du DERNIER emploi du mot-cle
+      if(p >= 0){ n++; if(p > dernier) dernier = p; }
+    });
+    return { f, n, dernier };
+  }).filter(x => x.n > 0)
+    // la fiche dont un mot-cle vient d'etre prononce passe devant ;
+    // le nombre de correspondances ne sert qu'a departager
+    .sort((a, b) => (b.dernier - a.dernier) || (b.n - a.n));
 }
 // une seule fiche par identifiant, meme si la base en contient plusieurs
 function uniques(liste){
