@@ -26,6 +26,16 @@ service cloud.firestore {
                          && request.auth.token.firebase.sign_in_provider == 'password';
     }
 
+    // Fiches metier et reglages (tarifs) : console uniquement.
+    match /fiches/{docId} {
+      allow read, write: if request.auth != null
+                         && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+    match /reglages/{docId} {
+      allow read, write: if request.auth != null
+                         && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+
     // Présence de la console : lisible par tous les connectés,
     // écrivable uniquement par un compte email/mot de passe (la console).
     match /presence/{docId} {

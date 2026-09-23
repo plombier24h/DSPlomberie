@@ -143,6 +143,35 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .diag-del{background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:.85rem;padding:6px}
 .diag-del:hover{color:#FF6B6B}
 .diag-actions{display:flex;justify-content:flex-end;margin-bottom:12px}
+
+/* ===== editeur de fiches ===== */
+.fic{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:rgba(0,0,0,.18);overflow:hidden}
+.fic-head{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+.fic-head i{margin-left:auto;color:rgba(255,255,255,.35);transition:transform .18s}
+.fic-head.open i{transform:rotate(180deg)}
+.fic-t{font-weight:700;font-size:.88rem}
+.fic-n{font-size:.74rem;color:rgba(255,255,255,.45)}
+.fic-body{display:none;padding:4px 14px 16px;border-top:1px solid var(--line)}
+.fic-body.open{display:block}
+.fic-g{margin-top:14px;display:flex;flex-direction:column;gap:5px}
+.fic-g label{font-size:.62rem;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.42)}
+.fic-g input,.fic-g textarea{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:9px 11px;color:#fff;font:400 .85rem 'Red Hat Display',sans-serif;line-height:1.5;resize:vertical}
+.fic-g input:focus,.fic-g textarea:focus{outline:none;border-color:var(--blue-light)}
+.fic-g input.ok,.fic-g textarea.ok{border-color:#4CE28C;box-shadow:0 0 0 2px rgba(76,226,140,.18)}
+.fic-row{flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.chk{display:flex;align-items:center;gap:8px;font-size:.8rem;color:rgba(255,255,255,.8);text-transform:none;letter-spacing:0}
+.chk input{width:auto}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.tg{display:inline-flex;align-items:center;gap:6px;background:rgba(232,119,34,.16);border:1px solid rgba(232,119,34,.42);color:#ffc793;border-radius:999px;padding:4px 6px 4px 11px;font-size:.76rem}
+.tg button{background:none;border:none;color:#ffc793;cursor:pointer;font-size:1rem;line-height:1;padding:0 4px}
+.tg button:hover{color:#fff}
+.fic-del{color:#FF9C9C !important;border-color:rgba(255,107,107,.4) !important}
+.tarifs-box{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;padding:14px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.18);margin-bottom:16px}
+.tarifs-box .f{display:flex;flex-direction:column;gap:4px}
+.tarifs-box label{font-size:.6rem;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.4)}
+.tarifs-box input{width:120px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:9px 11px;color:#fff;font:600 .85rem 'Red Hat Display',sans-serif}
+.tarifs-box input:focus{outline:none;border-color:var(--blue-light)}
+.fic-etat{font-size:.78rem;color:rgba(255,255,255,.5);margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -181,6 +210,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
     <div class="ctabs">
       <button id="tab-appels" class="on">Appels</button>
       <button id="tab-catalogue">Catalogue</button>
+      <button id="tab-fiches">Fiches</button>
       <button id="tab-diagnostics">Diagnostics</button>
     </div>
 
@@ -218,6 +248,21 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <input class="w-sm" id="cat-new-prix" type="number" step="0.01" placeholder="Vente €">
         <button class="btn small" id="btn-cat-add"><i class="fas fa-plus"></i> Ajouter</button>
       </div>
+    </div>
+
+    <div id="pan-fiches" class="hidden">
+      <div class="tarifs-box">
+        <div class="f"><label>Déplacement € TTC</label><input type="number" step="0.01" id="tar-dep"></div>
+        <div class="f"><label>1ʳᵉ heure € TTC</label><input type="number" step="0.01" id="tar-h1"></div>
+        <div class="f"><label>Heure suivante € TTC</label><input type="number" step="0.01" id="tar-hs"></div>
+        <button class="btn small" id="btn-tar-save">Enregistrer les tarifs</button>
+      </div>
+      <div class="cat-actions">
+        <button class="btn ghost small" id="btn-fic-import">Importer les fiches actuelles</button>
+        <button class="btn small" id="btn-fic-new"><i class="fas fa-plus"></i> Nouvelle fiche</button>
+      </div>
+      <p class="fic-etat" id="fic-etat"></p>
+      <div id="fic-list"></div>
     </div>
 
     <div id="pan-diagnostics" class="hidden">
@@ -337,6 +382,8 @@ onAuthStateChanged(auth, (user) => {
     initOnglets();
     ecouterCatalogue();
     ecouterDiagnostics();
+    ecouterFiches();
+    ecouterTarifs();
   } else {
     $('view-desk').classList.add('hidden');
     $('view-login').classList.remove('hidden');
@@ -634,12 +681,11 @@ function addLog(data, verdict){
    Tout est cote console. Le client ne voit rien.
    ========================================================= */
 
-const TARIF = "Déplacement 60 € TTC · 1ʳᵉ heure 167,20 € TTC · heure suivante 107,20 € TTC";
 const FENETRE_MOTS = 40;   // la fiche suit les 40 derniers mots prononces
 
 const CATALOGUE_SEED = [{"gamme": "HYDROMOTRIX Condensation Visio","variante": "Murale, mixte instantanée","kwMin": 18,"kwMax": 25,"refCedeo": "3432055","refFab": "A4AB25020","prixCedeoTTC": 4987.2},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, mixte instantanée","kwMin": 18,"kwMax": 25,"refCedeo": "3432176","refFab": "A4AL25020","prixCedeoTTC": 4999.2},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, chauffage seul","kwMin": 18,"kwMax": 25,"refCedeo": "3432177","refFab": "A4AL25050","prixCedeoTTC": 4693.2},{"gamme": "HYDROMOTRIX Condensation Visio","variante": "Murale, chauffage seul","kwMin": 25,"kwMax": 32,"refCedeo": "3432061","refFab": "A4AB32050","prixCedeoTTC": 5355.6},{"gamme": "HYDROCONFORT Condensation Visio 50+R","variante": "ECS","kwMin": 20,"kwMax": 20,"refCedeo": "7822874","refFab": "A4AJ20160","prixCedeoTTC": 5683.2},{"gamme": "HYDROCONFORT Condensation Visio","variante": "Murale, mixte accumulée 80 L","kwMin": 14,"kwMax": 20,"refCedeo": "3432069","refFab": "A4AJ20020","prixCedeoTTC": 5976.0},{"gamme": "HYDROMOTRIX Compact Evolution Visio","variante": "Murale, basse température, mixte instantanée","kwMin": 25,"kwMax": 25,"refCedeo": "3655678","refFab": "","prixCedeoTTC": 3850.8},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale VMC, basse température, mixte instantanée","kwMin": 25,"kwMax": 25,"refCedeo": "3813426","refFab": "B4AA25030","prixCedeoTTC": 3646.8},{"gamme": "PRESTIGE Condensation Visio","variante": "Sol, mixte accumulée 80 L","kwMin": 14,"kwMax": 20,"refCedeo": "3432075","refFab": "A4AL20050","prixCedeoTTC": 6446.4},{"gamme": "HYDROMOTRIX Tradition Visio","variante": "Murale cheminée, mixte instantanée","kwMin": 23,"kwMax": 23,"refCedeo": "6149589","refFab": "","prixCedeoTTC": 3094.8},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale cheminée, chauffage seul","kwMin": 25,"kwMax": 25,"refCedeo": "3750778","refFab": "B4AA25050","prixCedeoTTC": 3397.2},{"gamme": "HYDROMOTRIX Compact Visio","variante": "Chauffage seul + VMC","kwMin": 25,"kwMax": 25,"refCedeo": "3655682","refFab": "","prixCedeoTTC": 3612.0},{"gamme": "HYDROMOTRIX Evolution Visio","variante": "Murale, basse température, mixte instantanée","kwMin": 30,"kwMax": 30,"refCedeo": "6151405","refFab": "","prixCedeoTTC": 4434.0}];
 
-const FICHES = [
+const FICHES_DEFAUT = [
   {
     id: 'bouchon', court: 'Bouchon', titre: 'Bouchon WC / évier / douche',
     mots: ['bouche','bouchee','bouchon','debouche','deboucher','descend plus','deborde','debordement','stagne','evacuation','siphon','wc','toilette','evier','lavabo','douche','baignoire'],
@@ -695,6 +741,218 @@ const FICHES = [
   }
 ];
 
+
+/* ---------- fiches & tarifs pilotes depuis Firestore ---------- */
+let fiches = FICHES_DEFAUT.slice();
+let fichesUnsub = null, tarifsUnsub = null;
+let tarifs = { deplacement: 60, premiereHeure: 167.20, heureSuivante: 107.20 };
+
+function tarifTexte(){
+  const f = (n) => Number(n).toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return `Déplacement ${f(tarifs.deplacement)} € TTC · 1ʳᵉ heure ${f(tarifs.premiereHeure)} € TTC · heure suivante ${f(tarifs.heureSuivante)} € TTC`;
+}
+
+function ecouterFiches(){
+  if(fichesUnsub) return;
+  fichesUnsub = onSnapshot(collection(db, "fiches"), (snap) => {
+    const docs = snap.docs.map(d => ({ docId: d.id, ...d.data() }))
+      .sort((a,b) => (a.ordre||0) - (b.ordre||0));
+    // tant que la collection est vide, on garde les fiches d'origine
+    fiches = docs.length ? docs.map(d => ({ ...d, id: d.docId })) : FICHES_DEFAUT.slice();
+    renderFiches();
+    renderAssist();
+  }, () => {});
+}
+
+function ecouterTarifs(){
+  if(tarifsUnsub) return;
+  tarifsUnsub = onSnapshot(doc(db, "reglages", "tarifs"), (snap) => {
+    const d = snap.data();
+    if(d){
+      if(d.deplacement != null) tarifs.deplacement = d.deplacement;
+      if(d.premiereHeure != null) tarifs.premiereHeure = d.premiereHeure;
+      if(d.heureSuivante != null) tarifs.heureSuivante = d.heureSuivante;
+    }
+    const set = (id, v) => { const e = document.getElementById(id); if(e && document.activeElement !== e) e.value = v; };
+    set('tar-dep', tarifs.deplacement);
+    set('tar-h1', tarifs.premiereHeure);
+    set('tar-hs', tarifs.heureSuivante);
+    renderAssist();
+  }, () => {});
+}
+
+async function enregistrerTarifs(){
+  const v = (id) => { const e = document.getElementById(id); const n = parseFloat(e.value); return isNaN(n) ? null : n; };
+  const payload = {};
+  if(v('tar-dep') !== null) payload.deplacement = v('tar-dep');
+  if(v('tar-h1') !== null) payload.premiereHeure = v('tar-h1');
+  if(v('tar-hs') !== null) payload.heureSuivante = v('tar-hs');
+  try{
+    await setDoc(doc(db, "reglages", "tarifs"), payload, { merge: true });
+    toast("Tarifs enregistrés.");
+  }catch(e){ toast("Enregistrement refusé : " + (e.code || e.message)); }
+}
+
+const ECHAP = (t) => String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+function renderFiches(){
+  const box = document.getElementById('fic-list');
+  if(!box) return;
+  const enBase = fiches.length && fiches[0].docId;
+  const bandeau = document.getElementById('fic-etat');
+  if(bandeau){
+    bandeau.textContent = enBase
+      ? `${fiches.length} fiche(s) modifiable(s).`
+      : "Fiches d'origine, non modifiables. Clique sur « Importer les fiches actuelles » pour pouvoir les éditer.";
+  }
+  if(!enBase){ box.innerHTML = ''; return; }
+
+  box.innerHTML = fiches.map(f => `
+    <div class="fic" data-f="${f.docId}">
+      <div class="fic-head" data-toggle="${f.docId}">
+        <span class="fic-t">${ECHAP(f.titre)}</span>
+        <span class="fic-n">${(f.mots||[]).length} mot(s)-clé(s)</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="fic-body" id="fic-${f.docId}">
+        <div class="fic-g">
+          <label>Titre affiché</label>
+          <input data-k="titre" value="${ECHAP(f.titre)}">
+        </div>
+        <div class="fic-g">
+          <label>Nom de l'onglet (court)</label>
+          <input data-k="court" value="${ECHAP(f.court)}">
+        </div>
+        <div class="fic-g">
+          <label>Mots-clés déclencheurs</label>
+          <div class="tags" data-tags>
+            ${(f.mots||[]).map((m,i) => `<span class="tg">${ECHAP(m)}<button data-rm="${i}">&times;</button></span>`).join('')}
+          </div>
+          <input class="tag-in" data-addtag placeholder="Ajouter un mot-clé puis Entrée">
+        </div>
+        <div class="fic-g">
+          <label>À faire montrer (une ligne par point)</label>
+          <textarea data-k="montrer" rows="3">${ECHAP((f.montrer||[]).join('\n'))}</textarea>
+        </div>
+        <div class="fic-g">
+          <label>Questions à poser (une par ligne)</label>
+          <textarea data-k="questions" rows="4">${ECHAP((f.questions||[]).join('\n'))}</textarea>
+        </div>
+        <div class="fic-g">
+          <label>Causes probables (une par ligne)</label>
+          <textarea data-k="causes" rows="3">${ECHAP((f.causes||[]).join('\n'))}</textarea>
+        </div>
+        <div class="fic-g">
+          <label>Encadré d'alerte (vide = pas d'encadré)</label>
+          <input data-k="flag" value="${ECHAP(f.flag)}">
+        </div>
+        <div class="fic-g">
+          <label>Ce qu'on annonce</label>
+          <textarea data-k="annonce" rows="2">${ECHAP(f.annonce)}</textarea>
+        </div>
+        <div class="fic-g">
+          <label>Lien de renvoi (vide = aucun)</label>
+          <input data-k="lien" value="${ECHAP(f.lien)}">
+        </div>
+        <div class="fic-g fic-row">
+          <label class="chk"><input type="checkbox" data-k="catalogue" ${f.catalogue ? 'checked' : ''}> Afficher les modèles de chaudières du catalogue</label>
+          <button class="btn ghost small fic-del" data-del="${f.docId}"><i class="fas fa-trash"></i> Supprimer la fiche</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  box.querySelectorAll('[data-toggle]').forEach(h => h.addEventListener('click', () => {
+    const b = document.getElementById('fic-' + h.dataset.toggle);
+    if(b) b.classList.toggle('open');
+    h.classList.toggle('open');
+  }));
+
+  const majChamp = async (docId, cle, valeur, el) => {
+    try{
+      await updateDoc(doc(db, "fiches", docId), { [cle]: valeur });
+      if(el){ el.classList.add('ok'); setTimeout(() => el.classList.remove('ok'), 900); }
+    }catch(e){ toast("Enregistrement refusé : " + (e.code || e.message)); }
+  };
+
+  box.querySelectorAll('.fic').forEach(card => {
+    const docId = card.dataset.f;
+    const f = fiches.find(x => x.docId === docId);
+
+    card.querySelectorAll('input[data-k], textarea[data-k]').forEach(el => {
+      const cle = el.dataset.k;
+      const evt = el.type === 'checkbox' ? 'change' : 'change';
+      el.addEventListener(evt, () => {
+        let v;
+        if(el.type === 'checkbox') v = el.checked;
+        else if(['montrer','questions','causes'].includes(cle)) v = el.value.split('\n').map(x => x.trim()).filter(Boolean);
+        else v = el.value.trim();
+        majChamp(docId, cle, v, el);
+      });
+    });
+
+    const tagIn = card.querySelector('[data-addtag]');
+    if(tagIn) tagIn.addEventListener('keydown', (ev) => {
+      if(ev.key !== 'Enter') return;
+      ev.preventDefault();
+      const m = tagIn.value.trim().toLowerCase();
+      if(!m) return;
+      const liste = (f.mots || []).slice();
+      if(liste.includes(m)){ tagIn.value = ''; return; }
+      liste.push(m);
+      tagIn.value = '';
+      majChamp(docId, 'mots', liste, null);
+    });
+
+    card.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+      const liste = (f.mots || []).slice();
+      liste.splice(parseInt(b.dataset.rm, 10), 1);
+      majChamp(docId, 'mots', liste, null);
+    }));
+
+    const del = card.querySelector('[data-del]');
+    if(del) del.addEventListener('click', async () => {
+      if(!confirm(`Supprimer la fiche « ${f.titre} » ?`)) return;
+      try{ await deleteDoc(doc(db, "fiches", docId)); }
+      catch(e){ toast("Suppression refusée : " + (e.code || e.message)); }
+    });
+  });
+}
+
+async function importerFiches(){
+  if(fiches.length && fiches[0].docId){
+    if(!confirm("Des fiches existent déjà. Ajouter quand même les 6 fiches d'origine ?")) return;
+  }
+  const btn = document.getElementById('btn-fic-import');
+  if(btn){ btn.disabled = true; btn.textContent = 'Import…'; }
+  try{
+    let i = 0;
+    for(const f of FICHES_DEFAUT){
+      await addDoc(collection(db, "fiches"), {
+        id: f.id, court: f.court, titre: f.titre, mots: f.mots,
+        montrer: f.montrer, questions: f.questions, causes: f.causes,
+        flag: f.flag || '', annonce: f.annonce, lien: f.lien || '',
+        catalogue: !!f.catalogue, ordre: i++, createdAt: serverTimestamp()
+      });
+    }
+    toast("Fiches importées, tu peux les modifier.");
+  }catch(e){ toast("Import refusé : " + (e.code || e.message)); }
+  if(btn){ btn.disabled = false; btn.textContent = "Importer les fiches actuelles"; }
+}
+
+async function nouvelleFiche(){
+  const titre = prompt("Titre de la nouvelle fiche (ex. Chauffe-eau)");
+  if(!titre) return;
+  try{
+    await addDoc(collection(db, "fiches"), {
+      id: 'f' + Date.now().toString(36),
+      court: titre.split(' ')[0].slice(0, 12),
+      titre: titre.trim(), mots: [], montrer: [], questions: [], causes: [],
+      flag: '', annonce: '', lien: '', catalogue: false,
+      ordre: fiches.length, createdAt: serverTimestamp()
+    });
+  }catch(e){ toast("Création refusée : " + (e.code || e.message)); }
+}
+
 /* ---------- utilitaires ---------- */
 const strip = (t) => (t||'').toLowerCase()
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -746,7 +1004,7 @@ function fenetre(){
 
 function scoreFiches(txt){
   const t = strip(txt);
-  return FICHES.map(f => {
+  return fiches.map(f => {
     let n = 0;
     f.mots.forEach(m => { if(t.includes(strip(m))) n++; });
     return { f, n };
@@ -786,7 +1044,7 @@ function ficheHtml(f){
       ${f.flag ? `<div class="blk"><div class="flag">${f.flag}</div></div>` : ''}
       <div class="blk"><b>Ce qu'on annonce</b><p>${f.annonce}</p></div>
       ${f.lien ? `<div class="blk"><b>Renvoi</b><p><a href="${f.lien}" target="_blank" rel="noopener" style="color:#f0a05a">Site chaudières Frisquet</a></p></div>` : ''}
-      <div class="blk"><div class="tarif">${TARIF}</div></div>
+      <div class="blk"><div class="tarif">${tarifTexte()}</div></div>
     </div>`;
 }
 
@@ -801,7 +1059,7 @@ function renderAssist(){
   const active = ficheManuelle || auto;
 
   const chips = [`<button class="${ficheManuelle ? '' : 'on'}" data-fiche="__auto">Auto</button>`]
-    .concat(FICHES.map(f => {
+    .concat(fiches.map(f => {
       const on = (ficheManuelle && f.id === ficheManuelle.id) ? ' on' : '';
       const hit = ranked.find(r => r.f.id === f.id);
       return `<button class="${on.trim()}" data-fiche="${f.id}">${hit ? '• ' : ''}${f.court}</button>`;
@@ -809,7 +1067,7 @@ function renderAssist(){
   tabs.innerHTML = chips.join('');
   tabs.querySelectorAll('button').forEach(b => {
     b.addEventListener('click', () => {
-      ficheManuelle = b.dataset.fiche === '__auto' ? null : FICHES.find(f => f.id === b.dataset.fiche);
+      ficheManuelle = b.dataset.fiche === '__auto' ? null : fiches.find(f => f.id === b.dataset.fiche);
       renderAssist();
       const a = document.getElementById('assist'); if(a) a.classList.add('open');
     });
@@ -1084,7 +1342,7 @@ function renderDiagnostics(){
     const quand = dt ? dt.toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
     const mn = d.dureeSec ? Math.floor(d.dureeSec/60) + ' min ' + (d.dureeSec%60) + ' s' : '—';
     const tags = (d.fichesDetectees || []).map(id => {
-      const f = FICHES.find(x => x.id === id);
+      const f = fiches.find(x => x.id === id);
       return `<span class="tag">${f ? f.court : id}</span>`;
     }).join('');
     return `
@@ -1132,7 +1390,7 @@ function renderDiagnostics(){
 
 /* ---------- onglets de la console ---------- */
 function initOnglets(){
-  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-diagnostics':'pan-diagnostics' };
+  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-fiches':'pan-fiches', 'tab-diagnostics':'pan-diagnostics' };
   Object.keys(map).forEach(t => {
     const btn = document.getElementById(t);
     if(!btn) return;
@@ -1151,6 +1409,12 @@ function initOnglets(){
   if(bulk) bulk.addEventListener('click', appliquerMargeGlobale);
   const purge = document.getElementById('btn-diag-purge');
   if(purge) purge.addEventListener('click', purgerDiagnostics);
+  const fimp = document.getElementById('btn-fic-import');
+  if(fimp) fimp.addEventListener('click', importerFiches);
+  const fnew = document.getElementById('btn-fic-new');
+  if(fnew) fnew.addEventListener('click', nouvelleFiche);
+  const tsave = document.getElementById('btn-tar-save');
+  if(tsave) tsave.addEventListener('click', enregistrerTarifs);
 }
 
 </script>
