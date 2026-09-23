@@ -172,6 +172,30 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .tarifs-box input{width:120px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:9px 11px;color:#fff;font:600 .85rem 'Red Hat Display',sans-serif}
 .tarifs-box input:focus{outline:none;border-color:var(--blue-light)}
 .fic-etat{font-size:.78rem;color:rgba(255,255,255,.5);margin-bottom:12px}
+
+/* ===== tarifs ===== */
+.pxfam{margin-bottom:22px}
+.pxfam h3{font-size:.74rem;text-transform:uppercase;letter-spacing:.11em;color:var(--orange);margin-bottom:8px}
+.pxfam h3 span{color:rgba(255,255,255,.35);margin-left:6px}
+.pxrow{display:flex;align-items:center;gap:14px;padding:11px 14px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:rgba(0,0,0,.18);flex-wrap:wrap}
+.pxrow-m{flex:1 1 240px;min-width:0}
+.pxrow-d{font-size:.85rem;font-weight:600}
+.pxrow-s{font-size:.72rem;color:rgba(255,255,255,.42);margin-top:2px}
+.coefs{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:14px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.18);margin-bottom:16px}
+.coefs .f{display:flex;flex-direction:column;gap:4px}
+.coefs label{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4)}
+.coefs input{width:82px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:9px 10px;color:#fff;font:600 .85rem 'Red Hat Display',sans-serif}
+.coefs input:focus{outline:none;border-color:var(--blue-light)}
+.px-new{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;padding:14px;border:1px dashed var(--line);border-radius:8px;margin-top:14px}
+.px-new input,.px-new select{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:9px 11px;color:#fff;font:400 .85rem 'Red Hat Display',sans-serif}
+.px-new .w-lg{flex:1 1 200px}
+.px-new .w-sm{width:88px}
+.pxl{margin-top:2px}
+.pxr{display:flex;justify-content:space-between;gap:10px;border-top:1px solid rgba(255,255,255,.08);padding:7px 0;font-size:.82rem}
+.pxr:first-child{border-top:none}
+.pxr-d{color:rgba(255,255,255,.85);flex:1}
+.pxr-p{color:#4CE28C;font-weight:700;white-space:nowrap}
+.pxr-u{color:rgba(255,255,255,.35);font-weight:400;font-size:.72rem}
 </style>
 </head>
 <body>
@@ -210,6 +234,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
     <div class="ctabs">
       <button id="tab-appels" class="on">Appels</button>
       <button id="tab-catalogue">Catalogue</button>
+      <button id="tab-tarifs">Tarifs</button>
       <button id="tab-fiches">Fiches</button>
       <button id="tab-diagnostics">Diagnostics</button>
     </div>
@@ -247,6 +272,30 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <input class="w-sm" id="cat-new-kwmax" type="number" placeholder="kW max">
         <input class="w-sm" id="cat-new-prix" type="number" step="0.01" placeholder="Vente €">
         <button class="btn small" id="btn-cat-add"><i class="fas fa-plus"></i> Ajouter</button>
+      </div>
+    </div>
+
+    <div id="pan-tarifs" class="hidden">
+      <div class="coefs">
+        <div class="f"><label>Achat &lt; 50 €</label><input type="number" step="0.01" id="co-petit"></div>
+        <div class="f"><label>50 – 300 €</label><input type="number" step="0.01" id="co-courant"></div>
+        <div class="f"><label>300 – 800 €</label><input type="number" step="0.01" id="co-moyen"></div>
+        <div class="f"><label>&gt; 800 €</label><input type="number" step="0.01" id="co-gros"></div>
+        <button class="btn small" id="btn-co-save">Enregistrer</button>
+        <button class="btn ghost small" id="btn-co-apply">Appliquer au catalogue chaudières</button>
+      </div>
+      <div class="cat-actions">
+        <button class="btn ghost small" id="btn-px-import">Importer mes 65 prix relevés</button>
+        <span class="fic-etat" id="px-count"></span>
+      </div>
+      <div id="px-list"></div>
+      <div class="px-new">
+        <input class="w-lg" id="px-new-des" placeholder="Désignation">
+        <select id="px-new-fam"><option value="deplacement">Déplacement & forfaits</option><option value="mo">Main-d'œuvre</option><option value="sanitaire">Sanitaire</option><option value="chauffage">Chauffage & chaudière</option><option value="ballon">Chauffe-eau & ballon</option><option value="colonne">Colonne & canalisation</option><option value="reno">Rénovation</option><option value="divers">Divers & évacuation</option></select>
+        <input class="w-sm" id="px-new-u" placeholder="Unité">
+        <input class="w-sm" id="px-new-prix" type="number" step="0.01" placeholder="Prix HT">
+        <input class="w-sm" id="px-new-tva" type="number" value="10" placeholder="TVA %">
+        <button class="btn small" id="btn-px-add"><i class="fas fa-plus"></i> Ajouter</button>
       </div>
     </div>
 
@@ -384,6 +433,8 @@ onAuthStateChanged(auth, (user) => {
     ecouterDiagnostics();
     ecouterFiches();
     ecouterTarifs();
+    ecouterPrix();
+    ecouterCoefs();
   } else {
     $('view-desk').classList.add('hidden');
     $('view-login').classList.remove('hidden');
@@ -687,59 +738,246 @@ const CATALOGUE_SEED = [{"gamme": "HYDROMOTRIX Condensation Visio","variante": "
 
 const FICHES_DEFAUT = [
   {
-    id: 'bouchon', court: 'Bouchon', titre: 'Bouchon WC / évier / douche',
-    mots: ['bouche','bouchee','bouchon','debouche','deboucher','descend plus','deborde','debordement','stagne','evacuation','siphon','wc','toilette','evier','lavabo','douche','baignoire'],
-    montrer: ["L'évacuation concernée et le niveau d'eau","Sous le lavabo : le siphon","Le regard s'il y en a un"],
-    questions: ["Un seul point ou plusieurs ?","Depuis quand ?","Déjà eu le problème ?","Maison ou appartement ?","Un produit a déjà été versé ?"],
-    causes: ["Un seul point → bouchon local (siphon, coude)","Plusieurs points → bouchon de colonne ou de collecteur"],
-    annonce: "Forfait de base. Furet manuel ou électrique selon l'accès, à confirmer sur place."
+    id: 'bouchon', court: 'Bouchon', famille: 'colonne', titre: 'Bouchon WC / évier / douche',
+    mots: ['bouche','bouchee','bouchon','debouche','deboucher','degorgement','descend plus','deborde','debordement','stagne','evacuation','siphon','wc','toilette','evier','lavabo','douche','baignoire','ca coule pas'],
+    montrer: ["L'évacuation concernée et le niveau d'eau qui stagne","Sous le lavabo ou l'évier : le siphon et son état","Le regard extérieur s'il y en a un","Les autres points d'eau du logement, en les faisant couler"],
+    questions: ["Un seul point est touché ou plusieurs ?","Depuis quand exactement ?","C'est déjà arrivé au même endroit ?","Maison individuelle ou appartement ? Quel étage ?","Un produit déboucheur a déjà été versé ? Lequel, quelle quantité ?","L'eau remonte-t-elle ailleurs quand vous tirez la chasse ?","Y a-t-il un accès au regard ou à la cave ?"],
+    causes: ["Un seul point touché → bouchon local : siphon, coude, pied de chute","Plusieurs points touchés → bouchon de colonne ou de collecteur, intervention plus lourde","Remontée dans un point bas quand on utilise un point haut → collecteur engorgé","Récidive au même endroit → défaut de pente ou dépôt structurel, inspection caméra à proposer"],
+    flag: "Produit déboucheur déjà versé : le signaler au technicien, risque de projection à l'ouverture.",
+    annonce: "Déplacement + première heure. Dégorgement manuel ou furet électrique selon l'accès. Si plusieurs points sont touchés, on bascule sur une intervention colonne, chiffrée après constat."
   },
   {
-    id: 'fuite', court: 'Fuite', titre: "Fuite d'eau",
-    mots: ['fuite','fuit','coule','goutte','degat des eaux','degat','tache','humidite','humide','compteur','infiltration','moisissure'],
-    montrer: ["Le point qui coule","Le plafond ou le mur touché","Le compteur d'eau","La vanne d'arrêt"],
-    questions: ["Goutte à goutte ou jet ?","As-tu coupé l'eau ?","Le compteur tourne robinets fermés ?","Y a-t-il un voisin au-dessus ?"],
-    causes: ["Joint ou raccord si le point est visible","Canalisation encastrée si tache sans point visible"],
-    flag: "Ne jamais affirmer l'origine d'une fuite encastrée avant la détection.",
-    annonce: "Détection de fuite au tarif standard."
+    id: 'fuite', court: 'Fuite', famille: 'colonne', titre: "Fuite d'eau",
+    mots: ['fuite','fuit','coule','goutte','degat des eaux','degat','tache','humidite','humide','compteur','infiltration','moisissure','plafond','gouttiere'],
+    montrer: ["Le point qui coule, robinet ouvert puis fermé","Le plafond ou le mur touché, en entier","Le compteur d'eau et ses chiffres","La vanne d'arrêt général et son accessibilité"],
+    questions: ["Goutte à goutte ou écoulement continu ?","Avez-vous coupé l'eau ? Savez-vous où est la vanne ?","Le compteur tourne-t-il, tous robinets fermés ?","Y a-t-il un voisin au-dessus ? L'avez-vous prévenu ?","Depuis combien de temps la tache est-elle là ?","Une déclaration d'assurance est-elle en cours ?","L'eau touche-t-elle une installation électrique ?"],
+    causes: ["Point visible qui goutte → joint, raccord, flexible : réparation directe","Tache sans point visible → canalisation encastrée, détection nécessaire","Compteur qui tourne robinets fermés → fuite sur le réseau privatif","Tache au plafond → origine souvent chez le voisin du dessus"],
+    flag: "Ne jamais affirmer l'origine d'une fuite encastrée avant détection. Si l'eau approche l'électricité, faire couper le disjoncteur immédiatement.",
+    annonce: "Déplacement + première heure pour le diagnostic et la mise en sécurité. La détection proprement dite et la réparation sont chiffrées après localisation."
   },
   {
-    id: 'odeur', court: 'Odeur', titre: "Odeur d'égout",
-    mots: ['odeur','sent mauvais','pue','puanteur','egout','remontee d odeur','mauvaise odeur'],
-    montrer: ["Le point d'où vient l'odeur","Les siphons","La ventilation","Le regard extérieur"],
-    questions: ["Permanent ou par moments ?","Pire après la pluie ?","Le logement a-t-il été inoccupé récemment ?"],
-    causes: ["Siphon désamorcé (absence prolongée)","Ventilation primaire bouchée","Défaut sur le réseau"],
-    annonce: "Diagnostic sur place, souvent couplé à une inspection caméra."
+    id: 'odeur', court: 'Odeur', famille: 'colonne', titre: "Odeur d'égout",
+    mots: ['odeur','sent mauvais','pue','puanteur','egout','remontee d odeur','mauvaise odeur','ca sent'],
+    montrer: ["Le point d'où vient l'odeur, au plus près","Tous les siphons, y compris ceux peu utilisés","La ventilation de la pièce et la sortie en toiture si visible","Le regard extérieur"],
+    questions: ["Permanent, ou par moments ? À quel moment de la journée ?","Est-ce pire après la pluie ?","Le logement ou une pièce sont-ils restés inoccupés récemment ?","Des travaux ont-ils été faits sur le réseau ?","L'odeur vient-elle d'un seul point ou de plusieurs ?"],
+    causes: ["Siphon désamorcé par évaporation — le plus fréquent après une absence","Ventilation primaire bouchée ou absente","Clapet équilibreur de pression défectueux","Défaut sur le réseau ou sur le collecteur — inspection caméra à proposer"],
+    annonce: "Déplacement + première heure pour le diagnostic. Souvent couplé à une inspection caméra si l'origine n'est pas un siphon."
   },
   {
-    id: 'refoulement', court: 'Refoulement', titre: 'Refoulement / colonne bouchée',
-    mots: ['refoule','refoulement','remonte dans','tous les wc','cave','inonde','inondation','sous-sol','sous sol','colonne','collecteur','plusieurs appartements','immeuble','copropriete','syndic'],
-    montrer: ["Tous les points touchés","La cave et le sous-sol","Le regard"],
-    questions: ["Combien de logements touchés ?","Tu es propriétaire, locataire ou syndic ?","La cave ou le rez-de-chaussée sont-ils touchés ?"],
-    causes: ["Bouchon de colonne ou de collecteur → curage haute pression"],
-    flag: "Copropriété : identifier qui commande et qui paie AVANT de partir.",
-    annonce: "Intervention urgente. Curage haute pression."
+    id: 'refoulement', court: 'Refoulement', famille: 'colonne', titre: 'Refoulement / colonne bouchée',
+    mots: ['refoule','refoulement','remonte dans','tous les wc','cave','inonde','inondation','sous-sol','sous sol','colonne','collecteur','plusieurs appartements','immeuble','copropriete','syndic','gerance'],
+    montrer: ["Tous les points touchés, un par un","La cave et le sous-sol","Le regard et le pied de colonne","L'étendue de l'eau au sol"],
+    questions: ["Combien de logements sont touchés ?","Vous êtes propriétaire, locataire, ou syndic ?","Qui donne l'accord pour l'intervention et qui règle ?","La cave ou le rez-de-chaussée sont-ils touchés ?","Y a-t-il un contrat d'entretien sur la colonne ?","L'eau continue-t-elle de monter ?"],
+    causes: ["Bouchon de colonne ou de collecteur → curage haute pression","Tronçon corrodé ou percé → changement de tronçon","Racines ou effondrement → inspection caméra obligatoire avant devis"],
+    flag: "Copropriété : identifier qui commande et qui paie AVANT de partir. Faire cesser l'usage de l'eau dans tous les logements le temps de l'intervention.",
+    annonce: "Intervention urgente. Déplacement + première heure. Le changement de tronçon de colonne se situe autour de 280 € HT hors raccords ; le chantier complet avec pièces et mise en service tourne entre 750 et 960 € TTC selon accès."
   },
   {
-    id: 'camera', court: 'Caméra', titre: 'Inspection caméra / assainissement',
-    mots: ['camera','inspection','diagnostic','vente','notaire','expertise','racine','assainissement','rapport','controle','conformite'],
-    montrer: ["Les regards accessibles","Le tracé supposé du réseau","Les documents existants"],
-    questions: ["C'est pour une vente ?","Un litige ?","Un sinistre assurance ?","Un rapport écrit est-il attendu ?"],
-    causes: ["Prestation de constat — pas de diagnostic à annoncer avant passage caméra"],
-    annonce: "Inspection caméra avec rapport, au tarif standard."
+    id: 'camera', court: 'Caméra', famille: 'colonne', titre: 'Inspection caméra / assainissement',
+    mots: ['camera','inspection','diagnostic','vente','notaire','expertise','racine','assainissement','rapport','controle','conformite','etat des lieux'],
+    montrer: ["Les regards accessibles et leur état","Le tracé supposé du réseau","Les documents existants : plans, rapports antérieurs","Les points d'entrée possibles pour la caméra"],
+    questions: ["C'est pour une vente, un litige, un sinistre assurance ?","Un rapport écrit est-il attendu ? Par qui ?","Y a-t-il un délai imposé, notaire ou expert ?","Le réseau a-t-il déjà été inspecté ?","Quelle longueur de réseau environ ?"],
+    causes: ["Prestation de constat — ne jamais annoncer de diagnostic avant le passage caméra"],
+    flag: "Si un rapport écrit est attendu par un notaire ou un expert, le préciser au devis : le livrable engage.",
+    annonce: "Déplacement + première heure pour l'inspection. Le rapport écrit est à chiffrer selon le niveau attendu."
   },
   {
-    id: 'chaudiere', court: 'Chaudière', titre: 'Chaudière — opportunité remplacement',
-    mots: ['chaudiere','chauffage','eau chaude','radiateur','frisquet','chauffe','pression','manometre','fioul','gaz','kw','kilowatt'],
-    montrer: ["La chaudière entière","La plaque signalétique : marque, modèle, année","L'emplacement","L'évacuation des fumées"],
-    questions: ["Quel âge a la chaudière ?","Gaz ou fioul ?","Des pannes à répétition ?","Propriétaire ou locataire ?","Combien de radiateurs, quelle surface ?"],
-    causes: ["Pas de dépannage chaudière → on renvoie","Entretien : ponctuellement","Remplacement : c'est la cible"],
-    flag: "Plus de 15 ans, pannes répétées ou fioul → pousser le remplacement.",
-    annonce: "Visite technique de remplacement au tarif standard, déduite du devis en cas de commande.",
+    id: 'chaudiere', court: 'Chaudière', famille: 'chauffage', titre: 'Chaudière — opportunité remplacement',
+    mots: ['chaudiere','chauffage','eau chaude','radiateur','frisquet','chauffe','pression','manometre','fioul','gaz','kw','kilowatt','condensation','remplacer ma chaudiere'],
+    montrer: ["La chaudière entière, de face et sur les côtés","La plaque signalétique : marque, modèle, année, puissance","L'emplacement et les dégagements autour","L'évacuation des fumées : ventouse ou cheminée","Le manomètre et sa pression","Le nombre et le type de radiateurs"],
+    questions: ["Quel âge a la chaudière ?","Gaz ou fioul ? Ventouse ou cheminée ?","Des pannes à répétition cette année ?","Vous êtes propriétaire ou locataire ?","Combien de radiateurs, quelle surface à chauffer ?","Chauffage seul ou chauffage + eau chaude ?","Un contrat d'entretien est-il en cours ?","Y a-t-il un projet d'aides ou de financement ?"],
+    causes: ["Pas de dépannage chaudière → on renvoie","Entretien : ponctuellement","Remplacement : c'est la cible commerciale"],
+    flag: "Plus de 15 ans, pannes répétées ou fioul → pousser le remplacement. Relever impérativement la puissance et le type d'évacuation avant tout chiffrage.",
+    annonce: "Pose forfaitaire à 710 € TTC : 60 € de déplacement et 650 € de main-d'œuvre couvrant la dépose de l'ancienne, la pose de la neuve et les raccordements. Rinçage et évacuation inclus. Le matériel s'ajoute selon le modèle retenu.",
     lien: "https://plombier24h.github.io/chaudiere-frisquet-installation/",
     catalogue: true
+  },
+  {
+    id: 'sanitaire', court: 'Sanitaire', famille: 'sanitaire', titre: 'WC, lavabo, vasque — pose et remplacement',
+    mots: ['wc a changer','remplacer le wc','lavabo','vasque','meuble','lave-mains','robinet','mitigeur','chasse','abattant','installer','poser','salle de bain','sanitaire'],
+    montrer: ["L'équipement actuel et son état","Les arrivées d'eau froide et chaude","L'évacuation et son diamètre","L'espace disponible et les accès","Le sol et le mur autour, pour anticiper les reprises"],
+    questions: ["Vous fournissez l'équipement ou je le fournis ?","L'équipement est-il déjà sur place ?","Faut-il déposer et évacuer l'ancien ?","Les alimentations sont-elles au bon endroit, ou faut-il les déplacer ?","Le logement a-t-il plus de deux ans ? (TVA 10 %)"],
+    causes: ["Remplacement à l'identique → pose seule","Changement d'implantation → création d'alimentations à prévoir","Meuble ou vasque encastrée → fixation et étanchéité à chiffrer"],
+    annonce: "Pose WC 105 € HT, pose meuble lave-mains 125 € HT, création d'une alimentation EF ou EC 105 € HT chacune, joints sanitaires 50,45 € HT, mise en eau et contrôle final 50 € HT. TVA 10 % en rénovation."
+  },
+  {
+    id: 'ballon', court: 'Chauffe-eau', famille: 'ballon', titre: "Chauffe-eau / ballon d'eau chaude",
+    mots: ['chauffe-eau','chauffe eau','ballon','cumulus','plus d eau chaude','eau tiede','resistance','anode','groupe de securite','fuite ballon'],
+    montrer: ["Le ballon entier, avec la plaque signalétique","Le groupe de sécurité et son écoulement","L'arrivée d'eau et le raccordement électrique","L'espace autour et l'accès pour la dépose","Les traces de calcaire ou de rouille"],
+    questions: ["Quelle capacité, quel âge ?","Plus d'eau chaude du tout, ou de l'eau tiède seulement ?","Le groupe de sécurité goutte-t-il en permanence ?","Électrique ou thermodynamique ?","Le ballon fuit-il, ou est-ce le raccordement ?","Vertical mural ou sur socle ?"],
+    causes: ["Eau tiède seulement → résistance entartrée ou thermostat","Plus d'eau du tout → résistance ou alimentation électrique","Fuite en partie basse → cuve percée, remplacement obligatoire","Goutte au groupe de sécurité → normal à la chauffe, anormal en continu"],
+    flag: "Cuve percée : ne pas promettre une réparation, c'est un remplacement.",
+    annonce: "Remplacement d'un ballon : forfait de 250 à 350 € selon accès, plus la fourniture. Ballon électrique à partir de 456,73 € HT. Groupe de sécurité et réducteur de pression en sus. Main-d'œuvre 120 € HT de l'heure sur ce type de chantier."
+  },
+  {
+    id: 'reno', court: 'Rénovation', famille: 'reno', titre: 'Rénovation après dégât — placo, isolation, toiture',
+    mots: ['placo','plafond','plaque de platre','ba13','isolation','isolant','peinture','velux','fenetre de toit','charpente','toiture','couverture','refaire','renovation','degat plafond'],
+    montrer: ["L'étendue de la zone abîmée, plafond et murs","L'isolant en place et son état","La charpente si elle est visible","La hauteur sous plafond et l'accès","Les fenêtres de toit s'il y en a"],
+    questions: ["Le sinistre est-il déclaré à l'assurance ? Un expert est-il passé ?","La cause de l'infiltration est-elle traitée ?","Quelle surface environ, en m² ?","Le logement est-il occupé pendant les travaux ?","Peinture de finition comprise ou non ?","Y a-t-il un accès pour une échelle ou faut-il un échafaudage ?"],
+    causes: ["Ne jamais refaire un plafond avant d'avoir traité l'origine de l'infiltration","Isolant mouillé → dépose complète obligatoire, pas de séchage sur place","Charpente touchée → traitement à chiffrer à part"],
+    flag: "Traiter la cause avant la réfection, sinon le chantier est à refaire et la responsabilité est engagée.",
+    annonce: "Dépose plafonds et isolant 400 € HT la journée, isolation 450 € HT, ossature métallique 600 € HT, plaques BA13 fournies et posées 750 € HT, joints et finitions 600 € HT, pose placo et peinture 720 € HT la journée. VELUX MK04 fourni et posé 1 000 € HT, dépose de l'ancien 350 € HT. Nettoyage et évacuation des gravats 350 € HT."
   }
 ];
+
+const PRIX_SEED = [{"famille":"deplacement","designation":"Frais de déplacement","unite":"U","prixHT":60.0,"tva":20,"source":"D-260005"},{"famille":"deplacement","designation":"Forfait déplacement + diagnostic sur site","unite":"forfait","prixHT":167.2,"tva":20,"source":"D-2026-09-8"},{"famille":"deplacement","designation":"Déplacement, transport et logistique d'intervention","unite":"U","prixHT":60.0,"tva":10,"source":"D-260012"},{"famille":"deplacement","designation":"Frais de déplacement technicien (ancien tarif)","unite":"U","prixHT":54.55,"tva":20,"source":"D-260011"},{"famille":"mo","designation":"Main-d'œuvre — forfait horaire","unite":"h","prixHT":107.2,"tva":10,"source":"D-2026-09-5"},{"famille":"mo","designation":"Main-d'œuvre qualifiée — colonne, brasure, soudure","unite":"h","prixHT":75.0,"tva":10,"source":"D-260012"},{"famille":"mo","designation":"Main-d'œuvre — chauffe-eau / sanitaire","unite":"h","prixHT":120.0,"tva":20,"source":"2026-01"},{"famille":"mo","designation":"Main-d'œuvre globale remplacement chaudière (dépose + pose + raccordements)","unite":"forfait","prixHT":650.0,"tva":10,"source":"DEV-2026-0904"},{"famille":"mo","designation":"Forfait prestation (unité)","unite":"u","prixHT":150.0,"tva":10,"source":"D-2026-09-5"},{"famille":"sanitaire","designation":"Pose WC fourni par le client","unite":"U","prixHT":105.0,"tva":10,"source":"D-260002"},{"famille":"sanitaire","designation":"Pose meuble lave-mains fourni par le client","unite":"U","prixHT":125.0,"tva":10,"source":"D-260002"},{"famille":"sanitaire","designation":"Création alimentation eau froide (EF)","unite":"U","prixHT":105.0,"tva":10,"source":"D-260002"},{"famille":"sanitaire","designation":"Création alimentation eau chaude (EC)","unite":"U","prixHT":105.0,"tva":10,"source":"D-260002"},{"famille":"sanitaire","designation":"Joints sanitaires — lavabo, vasque","unite":"U","prixHT":50.45,"tva":10,"source":"D-260002"},{"famille":"sanitaire","designation":"Mise en eau et contrôle final","unite":"U","prixHT":50.0,"tva":10,"source":"D-260002"},{"famille":"sanitaire","designation":"Préparation et protection du poste","unite":"U","prixHT":55.0,"tva":10,"source":"D-260002"},{"famille":"sanitaire","designation":"Vasque à encastrer (fourniture)","unite":"u","prixHT":135.0,"tva":10,"source":"D-2026-25"},{"famille":"sanitaire","designation":"Vasque 56 x 46 cm (fourniture)","unite":"u","prixHT":195.0,"tva":10,"source":"D-2026-26"},{"famille":"chauffage","designation":"Modification tuyauteries départ / retour chauffage","unite":"U","prixHT":95.0,"tva":10,"source":"D-260009"},{"famille":"chauffage","designation":"Modification piquage et ligne d'alimentation gaz","unite":"U","prixHT":95.0,"tva":10,"source":"D-260009"},{"famille":"chauffage","designation":"Modification alimentations EF / ECS","unite":"U","prixHT":95.0,"tva":10,"source":"D-260009"},{"famille":"chauffage","designation":"Kit de raccordement, groupe de sécurité et fixations","unite":"U","prixHT":95.0,"tva":10,"source":"D-260009"},{"famille":"chauffage","designation":"Kit de raccordement et petites fournitures","unite":"U","prixHT":80.0,"tva":10,"source":"D-260010"},{"famille":"chauffage","designation":"Nettoyage, rinçage et évacuation boucle chauffage","unite":"U","prixHT":120.0,"tva":10,"source":"D-260009"},{"famille":"chauffage","designation":"Protection de la zone de travail (balisage)","unite":"U","prixHT":90.0,"tva":10,"source":"D-260009"},{"famille":"chauffage","designation":"Dépose de radiateur","unite":"u","prixHT":150.0,"tva":10,"source":"D-2026-09-5"},{"famille":"chauffage","designation":"Vidange de radiateur","unite":"u","prixHT":150.0,"tva":10,"source":"D-2026-09-5"},{"famille":"chauffage","designation":"Vidange colonne centrale chauffage","unite":"u","prixHT":150.0,"tva":10,"source":"D-2026-09-5"},{"famille":"chauffage","designation":"Protection chantier","unite":"forfait","prixHT":150.0,"tva":10,"source":"D-2026-09-5"},{"famille":"ballon","designation":"Chauffe-eau électrique / ballon (fourniture)","unite":"U","prixHT":456.73,"tva":10,"source":"D-260010"},{"famille":"ballon","designation":"Chauffe-eau THERMOR (fourniture)","unite":"u","prixHT":547.2,"tva":20,"source":"2026-01"},{"famille":"ballon","designation":"Groupe de sécurité WATTS","unite":"u","prixHT":15.48,"tva":20,"source":"2026-01"},{"famille":"ballon","designation":"Réducteur de pression ALTECH","unite":"u","prixHT":38.41,"tva":20,"source":"2026-01"},{"famille":"ballon","designation":"Remplacement ballon 200 L — forfait bas","unite":"u","prixHT":250.0,"tva":0,"source":"F-2026-09-10"},{"famille":"ballon","designation":"Remplacement ballon — forfait haut","unite":"u","prixHT":350.0,"tva":0,"source":"FAC-2025-10-0010"},{"famille":"colonne","designation":"Changement de tronçon de colonne générale","unite":"U","prixHT":280.0,"tva":10,"source":"D-260012"},{"famille":"colonne","designation":"Changement de tronçon de colonne générale (variante)","unite":"ens","prixHT":380.0,"tva":10,"source":"Devis colonne générale"},{"famille":"colonne","designation":"Douille à souder laiton / acier","unite":"pte","prixHT":68.0,"tva":10,"source":"D-260012"},{"famille":"colonne","designation":"Raccord coude 90°","unite":"pte","prixHT":54.0,"tva":10,"source":"D-260012"},{"famille":"colonne","designation":"Té de raccordement DN22 réduit DN14","unite":"pte","prixHT":78.0,"tva":10,"source":"D-260012"},{"famille":"colonne","designation":"Mise en service complète, épreuve de pression","unite":"ftx","prixHT":145.0,"tva":10,"source":"Devis colonne générale"},{"famille":"colonne","designation":"Dégorgement manuel par pompe Ferrer + diagnostic","unite":"h","prixHT":225.0,"tva":20,"source":"D-2026-201"},{"famille":"colonne","designation":"Diagnostic et mise en sécurité (fuite)","unite":"h","prixHT":40.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Fourniture et pose fenêtre de toit VELUX MK04 78 x 98","unite":"U","prixHT":1000.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Dépose de 2 fenêtres de toit VELUX existantes","unite":"U","prixHT":350.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Travaux préparatoires charpente et chevêtres","unite":"U","prixHT":450.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Traitement de la charpente et des supports","unite":"J","prixHT":300.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Traitement des éléments de toiture dégradés","unite":"U","prixHT":350.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Remise en place de la couverture et contrôle","unite":"U","prixHT":200.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Dépose des plafonds endommagés et de l'isolant","unite":"J","prixHT":400.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Isolation thermique et acoustique (laine minérale)","unite":"U","prixHT":450.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Pose du nouvel isolant","unite":"J","prixHT":300.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Fourniture et pose de l'ossature métallique","unite":"U","prixHT":600.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Fourniture et pose des plaques de plâtre (BA13)","unite":"U","prixHT":750.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Pose des plaques de plâtre — placo","unite":"J","prixHT":793.33,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Pose des plaques de plâtre — placo et peinture","unite":"J","prixHT":720.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Traitement des joints et finitions","unite":"U","prixHT":600.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Joints et finitions (bande à joint, séchage)","unite":"J","prixHT":300.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Étude technique, traçage et préparation du chantier","unite":"U","prixHT":250.0,"tva":10,"source":"D-260013"},{"famille":"reno","designation":"Mise en place d'une échelle et du nécessaire","unite":"U","prixHT":151.98,"tva":10,"source":"D-260013"},{"famille":"divers","designation":"Nettoyage de fin de chantier et évacuation des gravats","unite":"U","prixHT":350.0,"tva":10,"source":"D-260013"},{"famille":"divers","designation":"Mise en déchèterie et évacuation des déchets","unite":"U","prixHT":122.4,"tva":10,"source":"D-260009"},{"famille":"divers","designation":"Nettoyage de la zone de travail après intervention","unite":"U","prixHT":120.0,"tva":10,"source":"D-260010"},{"famille":"divers","designation":"Évacuation et traitement des déchets","unite":"h","prixHT":150.0,"tva":10,"source":"D-2026-09-9"},{"famille":"divers","designation":"Fourniture de cuivre et divers","unite":"forfait","prixHT":60.0,"tva":10,"source":"D-2026-09-5"}];
+
+/* ---------- TARIFS : prix de prestation + coefficients ---------- */
+const FAMILLES = [
+  { id:'deplacement', nom:'Déplacement & forfaits' },
+  { id:'mo',          nom:"Main-d'œuvre" },
+  { id:'sanitaire',   nom:'Sanitaire' },
+  { id:'chauffage',   nom:'Chauffage & chaudière' },
+  { id:'ballon',      nom:'Chauffe-eau & ballon' },
+  { id:'colonne',     nom:'Colonne & canalisation' },
+  { id:'reno',        nom:'Rénovation' },
+  { id:'divers',      nom:'Divers & évacuation' }
+];
+
+const COEFS_DEFAUT = { petit: 2.2, courant: 1.7, moyen: 1.4, gros: 1.18 };
+let coefs = { ...COEFS_DEFAUT };
+
+function coefPour(achatHT){
+  if(achatHT == null || isNaN(achatHT)) return null;
+  if(achatHT < 50) return coefs.petit;
+  if(achatHT < 300) return coefs.courant;
+  if(achatHT < 800) return coefs.moyen;
+  return coefs.gros;
+}
+
+let prix = [], prixUnsub = null;
+
+function ecouterPrix(){
+  if(prixUnsub) return;
+  prixUnsub = onSnapshot(collection(db, "prix"), (snap) => {
+    prix = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderPrix();
+    renderAssist();
+  }, () => {});
+}
+
+function prixFamille(fam){
+  return prix.filter(p => p.famille === fam && p.actif !== false)
+             .sort((a,b) => (a.prixHT||0) - (b.prixHT||0));
+}
+
+function blocPrixFamille(fam){
+  const l = prixFamille(fam);
+  if(!l.length) return '';
+  const nom = (FAMILLES.find(f => f.id === fam) || {}).nom || fam;
+  const rows = l.map(p => `<div class="pxr">
+      <span class="pxr-d">${p.designation}</span>
+      <span class="pxr-p">${eur(p.prixHT)} HT<span class="pxr-u">/${p.unite}</span></span>
+    </div>`).join('');
+  return `<div class="blk"><b>Tes prix — ${nom}</b><div class="pxl">${rows}</div></div>`;
+}
+
+function renderPrix(){
+  const box = document.getElementById('px-list');
+  if(!box) return;
+  const c = document.getElementById('px-count');
+  if(c) c.textContent = prix.length ? `${prix.length} référence(s)` : '';
+  if(!prix.length){
+    box.innerHTML = `<p class="empty-txt">Aucun tarif. Clique sur « Importer mes 65 prix relevés » pour partir de tes devis existants.</p>`;
+    return;
+  }
+  box.innerHTML = FAMILLES.map(f => {
+    const l = prixFamille(f.id);
+    if(!l.length) return '';
+    return `<div class="pxfam"><h3>${f.nom} <span>${l.length}</span></h3>` + l.map(p => `
+      <div class="pxrow" data-p="${p.id}">
+        <div class="pxrow-m">
+          <div class="pxrow-d">${p.designation}</div>
+          <div class="pxrow-s">${p.unite} · TVA ${p.tva} %${p.source ? ' · ' + p.source : ''}</div>
+        </div>
+        <div class="cat-prix"><label>Prix HT</label>
+          <input type="number" step="0.01" value="${p.prixHT != null ? p.prixHT : ''}" data-px="${p.id}"></div>
+        <button class="cat-del" data-pxdel="${p.id}" title="Supprimer"><i class="fas fa-trash"></i></button>
+      </div>`).join('') + `</div>`;
+  }).join('');
+
+  box.querySelectorAll('input[data-px]').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const v = inp.value === '' ? null : parseFloat(inp.value);
+      try{
+        await updateDoc(doc(db, "prix", inp.dataset.px), { prixHT: v });
+        inp.classList.add('ok'); setTimeout(() => inp.classList.remove('ok'), 900);
+      }catch(e){ toast("Enregistrement refusé : " + (e.code || e.message)); }
+    });
+  });
+  box.querySelectorAll('[data-pxdel]').forEach(b => {
+    b.addEventListener('click', async () => {
+      if(!confirm("Supprimer cette ligne de tarif ?")) return;
+      try{ await deleteDoc(doc(db, "prix", b.dataset.pxdel)); }
+      catch(e){ toast("Suppression refusée : " + (e.code || e.message)); }
+    });
+  });
+}
+
+async function importerPrix(){
+  if(prix.length && !confirm("Des tarifs existent déjà. Ajouter quand même les 65 références ?")) return;
+  const btn = document.getElementById('btn-px-import');
+  if(btn){ btn.disabled = true; btn.textContent = 'Import…'; }
+  try{
+    for(const p of PRIX_SEED){
+      await addDoc(collection(db, "prix"), { ...p, actif: true, createdAt: serverTimestamp() });
+    }
+    toast("Tarifs importés.");
+  }catch(e){ toast("Import refusé : " + (e.code || e.message)); }
+  if(btn){ btn.disabled = false; btn.textContent = "Importer mes 65 prix relevés"; }
+}
+
+async function ajouterPrix(){
+  const d = document.getElementById('px-new-des').value.trim();
+  const u = document.getElementById('px-new-u').value.trim() || 'U';
+  const p = parseFloat(document.getElementById('px-new-prix').value);
+  const f = document.getElementById('px-new-fam').value;
+  const t = parseInt(document.getElementById('px-new-tva').value, 10);
+  if(!d || isNaN(p)){ toast("Désignation et prix obligatoires."); return; }
+  try{
+    await addDoc(collection(db, "prix"), {
+      famille: f, designation: d, unite: u, prixHT: p,
+      tva: isNaN(t) ? 10 : t, source: 'saisi console', actif: true, createdAt: serverTimestamp()
+    });
+    ['px-new-des','px-new-u','px-new-prix'].forEach(id => document.getElementById(id).value = '');
+  }catch(e){ toast("Ajout refusé : " + (e.code || e.message)); }
+}
+
+function ecouterCoefs(){
+  onSnapshot(doc(db, "reglages", "coefficients"), (snap) => {
+    const d = snap.data();
+    if(d) ['petit','courant','moyen','gros'].forEach(k => { if(d[k] != null) coefs[k] = d[k]; });
+    const set = (id, v) => { const e = document.getElementById(id); if(e && document.activeElement !== e) e.value = v; };
+    set('co-petit', coefs.petit); set('co-courant', coefs.courant);
+    set('co-moyen', coefs.moyen); set('co-gros', coefs.gros);
+    renderCatalogue();
+  }, () => {});
+}
+
+async function enregistrerCoefs(){
+  const v = (id) => { const n = parseFloat(document.getElementById(id).value); return isNaN(n) ? null : n; };
+  const p = {};
+  ['petit','courant','moyen','gros'].forEach(k => { const x = v('co-' + k); if(x !== null) p[k] = x; });
+  try{
+    await setDoc(doc(db, "reglages", "coefficients"), p, { merge: true });
+    toast("Coefficients enregistrés.");
+  }catch(e){ toast("Enregistrement refusé : " + (e.code || e.message)); }
+}
+
+async function appliquerCoefsCatalogue(){
+  const cibles = catalogue.filter(m => m.prixCedeoTTC);
+  if(!cibles.length){ toast("Aucune référence avec un prix d'achat."); return; }
+  if(!confirm(`Appliquer les coefficients par palier à ${cibles.length} référence(s) ? Les prix de vente seront écrasés.`)) return;
+  let ko = 0;
+  for(const m of cibles){
+    const c = coefPour(m.prixCedeoTTC);
+    const prixV = Math.round(m.prixCedeoTTC * c * 100) / 100;
+    const pct = Math.round((c - 1) * 1000) / 10;
+    try{ await updateDoc(doc(db, "catalogue", m.id), { prixVenteTTC: prixV, margePct: pct }); }
+    catch(e){ ko++; }
+  }
+  toast(ko ? `${cibles.length - ko} mis à jour, ${ko} en échec.` : `${cibles.length} prix recalculés.`);
+}
 
 
 /* ---------- fiches & tarifs pilotes depuis Firestore ---------- */
@@ -928,7 +1166,7 @@ async function importerFiches(){
     let i = 0;
     for(const f of FICHES_DEFAUT){
       await addDoc(collection(db, "fiches"), {
-        id: f.id, court: f.court, titre: f.titre, mots: f.mots,
+        id: f.id, court: f.court, titre: f.titre, mots: f.mots, famille: f.famille || '',
         montrer: f.montrer, questions: f.questions, causes: f.causes,
         flag: f.flag || '', annonce: f.annonce, lien: f.lien || '',
         catalogue: !!f.catalogue, ordre: i++, createdAt: serverTimestamp()
@@ -1038,6 +1276,7 @@ function ficheHtml(f){
     <div class="fiche">
       <h3>${f.titre}</h3>
       ${f.catalogue ? blocCatalogue() : ''}
+      ${f.famille ? blocPrixFamille(f.famille) : ''}
       <div class="blk"><b>À faire montrer</b><ul>${li(f.montrer)}</ul></div>
       <div class="blk"><b>Questions à poser</b><ul>${li(f.questions)}</ul></div>
       <div class="blk"><b>Causes probables</b><ul>${li(f.causes)}</ul></div>
@@ -1390,7 +1629,7 @@ function renderDiagnostics(){
 
 /* ---------- onglets de la console ---------- */
 function initOnglets(){
-  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-fiches':'pan-fiches', 'tab-diagnostics':'pan-diagnostics' };
+  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-tarifs':'pan-tarifs', 'tab-fiches':'pan-fiches', 'tab-diagnostics':'pan-diagnostics' };
   Object.keys(map).forEach(t => {
     const btn = document.getElementById(t);
     if(!btn) return;
@@ -1415,6 +1654,14 @@ function initOnglets(){
   if(fnew) fnew.addEventListener('click', nouvelleFiche);
   const tsave = document.getElementById('btn-tar-save');
   if(tsave) tsave.addEventListener('click', enregistrerTarifs);
+  const pxi = document.getElementById('btn-px-import');
+  if(pxi) pxi.addEventListener('click', importerPrix);
+  const pxa = document.getElementById('btn-px-add');
+  if(pxa) pxa.addEventListener('click', ajouterPrix);
+  const cos = document.getElementById('btn-co-save');
+  if(cos) cos.addEventListener('click', enregistrerCoefs);
+  const coa = document.getElementById('btn-co-apply');
+  if(coa) coa.addEventListener('click', appliquerCoefsCatalogue);
 }
 
 </script>
