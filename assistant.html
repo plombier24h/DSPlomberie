@@ -569,20 +569,11 @@ function retirerSujet(id){
   renderSujets(); renderAssist(); renderDevis();
 }
 // chaque sujet reconnu pose sa ligne dans le devis
+// Un sujet detecte ne remplit plus le devis tout seul : il alimente la zone
+// "propositions" sous le devis. C'est l'assistante qui choisit les lignes,
+// sinon le devis se remplit de prestations sans rapport avec la demande.
 function ligneDevisDuSujet(id){
-  const f = fiches.find(x => x.id === id);
-  if(!f || devis.some(l => l.sujet === id)) return;
-  const liste = prixFamille(f.famille);
-  if(liste.length){
-    const p = liste[0];
-    if(devis.some(l => l.des === p.designation)) return;
-    devis.push({ des: p.designation, unite: p.unite || 'U', pu: Number(p.prixHT) || 0,
-                 tva: p.tva == null ? TVA_DEFAUT : p.tva, qte: 1, sujet: id });
-  }else{
-    devis.push({ des: f.court + ' \u2014 \u00e0 chiffrer', unite: 'U', pu: 0,
-                 tva: TVA_DEFAUT, qte: 1, sujet: id, aChiffrer: true });
-  }
-  renderDevis();
+  renderDevis();   // rafraichit les propositions liees aux sujets detectes
 }
 
 function devisAjouter(designation, unite, pu, tva){
@@ -685,7 +676,7 @@ function renderDevis(){
     sug.innerHTML = l.length
       ? l.map(p => `<button class="sg" data-add='${encodeURIComponent(JSON.stringify({d:p.designation,u:p.unite,p:p.prixHT,t:p.tva}))}'>
            <i class="fas fa-plus"></i> ${p.designation} <em>${eur(p.prixHT)}</em></button>`).join('')
-      : '<span class="sujets-vide">Les prestations proposées apparaîtront ici selon les sujets détectés.</span>';
+      : '<span class="sujets-vide">Les prestations liées aux sujets détectés apparaîtront ici : clique dessus pour les ajouter au devis.</span>';
     sug.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
       const o = JSON.parse(decodeURIComponent(b.dataset.add));
       devisAjouter(o.d, o.u, o.p, o.t);
