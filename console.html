@@ -43,6 +43,10 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .call-avatar{width:78px;height:78px;border-radius:50%;background:linear-gradient(155deg,rgba(232,119,34,.45),rgba(14,107,168,.55));border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 30px rgba(0,0,0,.35);animation:call-pulse 2s ease-out infinite}
 @keyframes call-pulse{0%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 0 rgba(255,255,255,.18)}70%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 18px rgba(255,255,255,0)}100%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 0 rgba(255,255,255,0)}}
 .call-name{font-size:1.2rem;font-weight:900;margin-top:14px}
+.reglage-rec{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:12px 15px;margin-bottom:16px;cursor:pointer}
+.reglage-rec input{width:17px;height:17px;accent-color:var(--orange);cursor:pointer}
+.reglage-rec span{font-size:.85rem}
+.reglage-rec em{grid-column:2;font-style:normal;font-size:.75rem;color:rgba(255,255,255,.45);line-height:1.45}
 .rec-badge{display:inline-flex;align-items:center;gap:7px;margin-top:9px;background:rgba(255,75,75,.16);border:1px solid rgba(255,107,107,.55);color:#ffc0c0;border-radius:999px;padding:4px 12px;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em}
 .rec-badge .pt{width:8px;height:8px;border-radius:50%;background:#FF4B4B;animation:recpulse 1.6s infinite}
 @keyframes recpulse{0%{box-shadow:0 0 0 0 rgba(255,75,75,.6)}70%{box-shadow:0 0 0 8px rgba(255,75,75,0)}100%{box-shadow:0 0 0 0 rgba(255,75,75,0)}}
@@ -53,6 +57,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .call-btn{width:58px;height:58px;border-radius:15px;border:1.5px solid rgba(232,119,34,.6);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s ease;background:rgba(6,36,58,.55);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:#f0a05a;font-size:20px;box-shadow:0 0 0 1px rgba(232,119,34,.12),0 0 18px rgba(232,119,34,.22)}
 .call-btn:active{transform:scale(.9)}
 .call-btn.mute-btn.active{color:#FF9C9C;border-color:rgba(255,107,107,.6)}
+.call-btn.rec-on{color:#FF4B4B;border-color:rgba(255,107,107,.7);background:linear-gradient(155deg,rgba(255,107,107,.26),rgba(160,35,35,.35))}
 .call-btn.hangup{width:66px;height:66px;color:#FF4B4B;border-color:rgba(255,107,107,.7);background:linear-gradient(155deg,rgba(255,107,107,.28),rgba(160,35,35,.4));box-shadow:0 0 0 1px rgba(255,107,107,.3),0 0 28px rgba(255,70,70,.5)}
 .call-btn.accept{width:66px;height:66px;color:#4CE28C;border-color:rgba(79,216,146,.7);background:linear-gradient(155deg,rgba(79,216,146,.28),rgba(30,130,75,.4));box-shadow:0 0 0 1px rgba(79,216,146,.3),0 0 28px rgba(70,220,140,.5)}
 .call-videos{position:absolute;inset:0}
@@ -318,6 +323,11 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <a class="btn ghost small" href="assistant.html" target="_blank" rel="noopener"><i class="fas fa-up-right-from-square"></i> Ouvrir la page assistants</a>
       <button class="btn ghost small" id="btn-lien-poste"><i class="fas fa-copy"></i> Copier le lien assistants</button>
     </div>
+    <label class="reglage-rec" for="rec-auto">
+      <input type="checkbox" id="rec-auto">
+      <span>Démarrer l'enregistrement vidéo automatiquement quand je décroche</span>
+      <em>Décoché, l'enregistrement ne part que si tu appuies sur le bouton « Enregistrer » pendant l'appel.</em>
+    </label>
     <div class="empty" id="waiting">
       <i class="fas fa-satellite-dish"></i>
       En attente d'un appel<br>
@@ -452,6 +462,17 @@ let peerConnection = null, localStream = null, remoteStream = null, webrtcUnsubs
 
 /* ---------- enregistrement video de l'appel ---------- */
 let recorder = null, recMorceaux = [], recAudioCtx = null, nomFichierVideo = '';
+let recAuto = localStorage.getItem('ds-rec-auto') !== '0';   // automatique par defaut
+function majBoutonRec(){
+  const b = document.getElementById('btn-rec');
+  if(!b) return;
+  const actif = !!(recorder && recorder.state === 'recording');
+  b.classList.toggle('rec-on', actif);
+  b.innerHTML = actif ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-circle"></i>';
+  const l = b.closest('.call-action');
+  const t = l && l.querySelector('.call-btn-label');
+  if(t) t.textContent = actif ? 'Arrêter' : 'Enregistrer';
+}
 function nomVideo(appelant){
   const d = new Date(), p2 = (n) => String(n).padStart(2, '0');
   const qui = (appelant || 'visiteur').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -495,12 +516,24 @@ function demarrerEnregistrement(appelant){
       }
       recorder = null;
       if(recAudioCtx){ try{ recAudioCtx.close(); }catch(e){} recAudioCtx = null; }
+      majBoutonRec();
     };
     recorder.start(1000);
     const b = document.getElementById('rec-video'); if(b) b.classList.remove('hidden');
+    majBoutonRec();
   }catch(e){
     recorder = null;
     toast("Enregistrement vidéo impossible : " + (e.message || e));
+  }
+}
+function basculerEnregistrement(){
+  if(recorder && recorder.state === 'recording'){
+    arreterEnregistrement();
+    toast("Enregistrement arrêté, la vidéo part dans tes téléchargements.");
+  }else if(remoteStream){
+    demarrerEnregistrement(assistCallerName);
+  }else{
+    toast("La vidéo du client n'est pas encore arrivée.");
   }
 }
 function arreterEnregistrement(){
@@ -726,6 +759,10 @@ function handleIncoming(callId, data){
             <span class="call-btn-label">Devis</span>
           </div>
           <div class="call-action">
+            <button class="call-btn" id="btn-rec"><i class="fas fa-circle"></i></button>
+            <span class="call-btn-label">Enregistrer</span>
+          </div>
+          <div class="call-action">
             <button class="call-btn hangup" id="btn-hangup"><i class="fas fa-phone-slash"></i></button>
             <span class="call-btn-label">Raccrocher</span>
           </div>
@@ -753,7 +790,8 @@ async function connectCall(callId){
     const rv = $('remote-video');
     if(rv && rv.srcObject !== ev.streams[0]){
       rv.srcObject = ev.streams[0]; remoteStream = ev.streams[0]; rv.play().catch(()=>{});
-      demarrerEnregistrement(assistCallerName);
+      if(recAuto) demarrerEnregistrement(assistCallerName);
+      majBoutonRec();
     }
     const st = $('call-status'); if(st) st.textContent = "En communication";
   };
@@ -1749,6 +1787,9 @@ function startAssistant(callId, data){
   if(btnDev && pdev) btnDev.addEventListener('click', () => { pdev.classList.toggle('open'); majEcran(); });
   const fermeDev = document.getElementById('btn-devis-fermer');
   if(fermeDev && pdev) fermeDev.addEventListener('click', () => { pdev.classList.remove('open'); majEcran(); });
+  const btnRec = document.getElementById('btn-rec');
+  if(btnRec) btnRec.addEventListener('click', basculerEnregistrement);
+  majBoutonRec();
   renderAssist(); renderTranscript(); renderSujets(); renderDevis();
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2200,6 +2241,15 @@ function initOnglets(){
   if(bulk) bulk.addEventListener('click', appliquerMargeGlobale);
   const purge = document.getElementById('btn-diag-purge');
   if(purge) purge.addEventListener('click', purgerDiagnostics);
+  const ra = document.getElementById('rec-auto');
+  if(ra){
+    ra.checked = recAuto;
+    ra.addEventListener('change', () => {
+      recAuto = ra.checked;
+      localStorage.setItem('ds-rec-auto', recAuto ? '1' : '0');
+      toast(recAuto ? "Enregistrement automatique activé." : "Enregistrement manuel : appuie sur « Enregistrer » pendant l'appel.");
+    });
+  }
   const fimp = document.getElementById('btn-fic-import');
   if(fimp) fimp.addEventListener('click', importerFiches);
   const fnew = document.getElementById('btn-fic-new');
