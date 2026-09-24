@@ -267,6 +267,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <div class="dossier-grille">
         <div><label for="cli-nom">Nom du client</label><input type="text" id="cli-nom" placeholder="Mme Berger" autocomplete="off"></div>
         <div><label for="cli-tel">Téléphone</label><input type="tel" id="cli-tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
+        <div><label for="cli-mail">Email</label><input type="email" id="cli-mail" placeholder="client@exemple.fr" autocomplete="off" inputmode="email"></div>
         <div class="large"><label for="cli-adr">Adresse du chantier</label><input type="text" id="cli-adr" placeholder="14 rue de Lyon, 75012 Paris" autocomplete="off"></div>
       </div>
       <div class="pj">
@@ -818,6 +819,7 @@ async function enregistrer(manuel){
       callerName: ($('cli-nom').value.trim() || 'Appel téléphone'),
       client: $('cli-nom').value.trim(),
       clientTel: $('cli-tel').value.trim(),
+      clientEmail: $('cli-mail').value.trim(),
       clientAdresse: $('cli-adr').value.trim(),
       transcript:texte, note:note,
       fichesDetectees: ranked.slice(0,3).map(r=>r.f.id),
@@ -846,7 +848,7 @@ function reinitialiser(){
   transcriptFinal=''; transcriptInterim=''; kwDetecte=null; ficheManuelle=null; debutMs=null;
   sujets=[]; sujetsEcartes=new Set(); devisInit();
   $('note').value=''; $('note-etat').textContent='';
-  ['cli-nom','cli-tel','cli-adr'].forEach(id => { const e = $(id); if(e) e.value = ''; });
+  ['cli-nom','cli-tel','cli-mail','cli-adr'].forEach(id => { const e = $(id); if(e) e.value = ''; });
   pieces = []; renderPieces();
   $('fiche-etat').textContent = '';
   renderTr(); render(); renderSujets(); renderDevis(); majInfoOutils();
@@ -920,7 +922,7 @@ function renderHisto(){
         <div class="apercu">${esc(apercu)}${(d.note||d.transcript||'').length>150?'…':''}</div>
       </summary>
       <div class="detail">
-        ${(d.clientTel||d.clientAdresse)?`<div><b>Coordonnées</b><p>${esc([d.clientTel,d.clientAdresse].filter(Boolean).join(' · '))}</p></div>`:''}
+        ${(d.clientTel||d.clientEmail||d.clientAdresse)?`<div><b>Coordonnées</b><p>${esc([d.clientTel,d.clientEmail,d.clientAdresse].filter(Boolean).join(' · '))}</p></div>`:''}
         ${d.note?`<div><b>Ma note</b><p>${esc(d.note)}</p></div>`:''}
         ${lignes?`<div><b>Devis préparé</b>${lignes}<div class="dvl"><span>Total TTC</span><span style="color:#4CE28C;font-weight:700">${eur(d.totalTTC||0)}</span></div></div>`:''}
         ${d.transcript?`<div><b>Transcription</b><p class="brut">${esc(d.transcript)}</p></div>`:''}
@@ -1028,6 +1030,7 @@ $('btn-pj-envoi').addEventListener('click', async () => {
 function ficheTexte(){
   const nom = $('cli-nom').value.trim();
   const tel = $('cli-tel').value.trim();
+  const mail = $('cli-mail').value.trim();
   const adr = $('cli-adr').value.trim();
   const note = $('note').value.trim();
   const texte = (transcriptFinal || '').trim();
@@ -1040,6 +1043,7 @@ function ficheTexte(){
   l.push('CLIENT');
   l.push('Nom : ' + (nom || '—'));
   l.push('Téléphone : ' + (tel || '—'));
+  l.push('Email : ' + (mail || '—'));
   l.push('Adresse du chantier : ' + (adr || '—'));
   if(sujets.length){
     const titres = sujets.map(id => { const f = fiches.find(x => x.id === id); return f ? f.titre : id; });
