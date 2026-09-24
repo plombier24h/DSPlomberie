@@ -58,7 +58,6 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .outils{position:fixed;inset:0;z-index:800;background:rgba(2,12,22,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:flex;flex-direction:column;padding:16px 18px 20px}
 .outils-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px}
 .outils-tete h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);margin:0}
-.outils-ttc{margin-left:auto;font-size:.9rem;font-weight:900;color:#4CE28C}
 .outils-corps{flex:1 1 auto;overflow-y:auto;max-width:1200px;width:100%;margin:0 auto}
 
 /* dossier client */
@@ -97,7 +96,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .bloc-head h2{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.5);margin:0}
 .bloc-head input{flex:0 1 240px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:7px;color:#fff;font:400 .8rem 'Red Hat Display',sans-serif;padding:6px 10px}
 .bloc-head input:focus{outline:none;border-color:var(--blue-light)}
-#px-boutons{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+#px-boutons{max-height:230px;overflow-y:auto;background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .px-fam{font-size:.6rem;text-transform:uppercase;letter-spacing:.11em;color:var(--orange);margin:12px 0 6px}
 .px-fam:first-child{margin-top:0}
 .px-grille{display:flex;flex-wrap:wrap;gap:6px}
@@ -155,9 +154,9 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .suj{display:inline-flex;align-items:center;gap:5px;background:rgba(232,119,34,.16);border:1px solid rgba(232,119,34,.45);color:#ffc793;border-radius:999px;padding:3px 5px 3px 10px;font-size:.72rem;cursor:pointer}
 .suj.on{background:var(--orange);border-color:var(--orange);color:#fff}
 .suj button{background:none;border:none;color:inherit;cursor:pointer;font-size:.95rem;line-height:1;padding:0 3px}
-.devis{display:flex;flex-direction:column;min-height:0;background:var(--ink2);border:1px solid var(--line);border-radius:10px}
+.devis{display:flex;flex-direction:column;min-height:0;background:var(--ink2);border:1px solid var(--line);border-radius:10px;position:sticky;top:14px}
 .devis h4{font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45);padding:13px 16px 9px;margin:0}
-.devis-corps{flex:1 1 auto;padding:0 16px}
+.devis-corps{flex:1 1 auto;overflow-y:auto;padding:0 16px;max-height:340px}
 .dl{padding:10px 0;border-top:1px solid rgba(255,255,255,.09)}
 .dl:first-child{border-top:none}
 .dl-d{font-size:.88rem;line-height:1.35;color:#fff;margin-bottom:7px}
@@ -186,20 +185,8 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .devis-total .ttc b{color:#4CE28C}
 
 /* deux colonnes : fiche a gauche, devis a droite */
-/* onglets internes du panneau */
-.outils-onglets{display:flex;gap:8px;margin-bottom:14px;max-width:1200px;width:100%;margin-left:auto;margin-right:auto}
-.outils-onglets button{flex:1 1 0;background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.7);border-radius:10px;padding:11px 12px;font:700 .8rem 'Red Hat Display',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
-.outils-onglets button.on{background:var(--orange);border-color:var(--orange);color:#fff}
-.outils-onglets .pastille{background:rgba(0,0,0,.3);border-radius:999px;padding:1px 8px;font-size:.72rem}
-.outils-onglets .lbl-court{display:none}
-@media(max-width:600px){ .outils-onglets .lbl-long{display:none} .outils-onglets .lbl-court{display:inline} .outils{padding:12px 12px 16px} }
-#vue-devis{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
-@media(min-width:1120px){
-  #vue-devis{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-  #vue-devis .devis{order:2;position:sticky;top:0}
-  .devis-corps{overflow-y:auto;max-height:46vh}
-  #px-boutons{max-height:340px;overflow-y:auto}
-}
+.duo{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+@media(min-width:1120px){ .duo{grid-template-columns:minmax(0,1fr) 380px; align-items:start} }
 </style>
 </head>
 <body>
@@ -240,34 +227,29 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
     <div class="outils hidden" id="outils">
       <div class="outils-tete">
         <h2>Fiches &amp; devis</h2>
-        <span class="outils-ttc" id="outils-ttc"></span>
         <button class="btn ghost small" id="btn-outils-fermer"><i class="fas fa-xmark"></i> Fermer</button>
       </div>
-      <div class="outils-onglets" id="outils-onglets">
-        <button type="button" class="on" data-vue="devis"><i class="fas fa-file-invoice-dollar"></i> Devis <span class="pastille hidden" id="ong-devis-n"></span></button>
-        <button type="button" data-vue="fiches"><i class="fas fa-comments"></i> <span class="lbl-long">Éléments de langage</span><span class="lbl-court">Fiches</span></button>
-      </div>
       <div class="outils-corps">
-        <div class="vue" id="vue-devis">
+        <div class="bloc" id="bloc-tarifs">
+          <div class="bloc-head">
+            <h2>Ajouter au devis</h2>
+            <input type="search" id="px-filtre" placeholder="Filtrer une prestation…" autocomplete="off">
+          </div>
+          <div id="px-boutons"><p class="empty-txt">Chargement des tarifs…</p></div>
+        </div>
+        <div class="sujets" id="sujets"></div>
+        <div class="duo">
+          <div>
+            <div class="bloc-head"><h2>Éléments de langage</h2></div>
+            <div class="tabs" id="tabs"></div>
+            <div id="body"></div>
+          </div>
           <div class="devis">
             <h4>Devis en préparation</h4>
             <div class="devis-corps" id="devis-lignes"></div>
             <div class="devis-sugg" id="devis-sugg"></div>
             <div class="devis-total" id="devis-total"></div>
           </div>
-          <div class="bloc" id="bloc-tarifs">
-            <div class="bloc-head">
-              <h2>Ajouter au devis</h2>
-              <input type="search" id="px-filtre" placeholder="Filtrer une prestation…" autocomplete="off">
-            </div>
-            <div id="px-boutons"><p class="empty-txt">Chargement des tarifs…</p></div>
-          </div>
-        </div>
-        <div class="vue hidden" id="vue-fiches">
-          <div class="sujets" id="sujets"></div>
-          <div class="bloc-head"><h2>Éléments de langage</h2></div>
-          <div class="tabs" id="tabs"></div>
-          <div id="body"></div>
         </div>
       </div>
     </div>
@@ -1009,24 +991,10 @@ function majInfoOutils(){
   const n = devis.length, t = devisTotaux();
   const el = $('outils-info');
   if(el) el.textContent = n ? `${n} ligne${n > 1 ? 's' : ''} au devis · ${eur(t.ttc)} TTC` : '';
-  const ttc = $('outils-ttc');
-  if(ttc) ttc.textContent = n ? eur(t.ttc) + ' TTC' : '';
-  const pas = $('ong-devis-n');
-  if(pas){ pas.textContent = n; pas.classList.toggle('hidden', !n); }
 }
-function vueOutils(nom){
-  ['devis','fiches'].forEach(v => $('vue-' + v).classList.toggle('hidden', v !== nom));
-  $('outils-onglets').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.vue === nom));
-}
-$('outils-onglets').addEventListener('click', e => {
-  const b = e.target.closest('button[data-vue]');
-  if(b) vueOutils(b.dataset.vue);
-});
 $('btn-outils').addEventListener('click', () => {
   $('outils').classList.remove('hidden');
-  vueOutils('devis');
   renderPrixBoutons();
-  majInfoOutils();
 });
 $('btn-outils-fermer').addEventListener('click', () => {
   $('outils').classList.add('hidden');
