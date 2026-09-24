@@ -72,6 +72,22 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .dossier-aide{font-size:.76rem;color:rgba(255,255,255,.45);line-height:1.55;margin-top:8px}
 .dossier-aide b{color:#fff}
 
+/* pieces jointes */
+.pj{margin-top:16px}
+.pj h3{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);margin-bottom:8px;font-weight:600}
+.pj h3 span{color:var(--orange)}
+.pj-grille{display:flex;flex-wrap:wrap;gap:9px}
+.pj-plus{width:86px;height:86px;border-radius:10px;border:1.5px dashed rgba(255,255,255,.25);background:rgba(0,0,0,.22);color:rgba(255,255,255,.55);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font:600 .66rem 'Red Hat Display',sans-serif}
+.pj-plus i{font-size:17px}
+.pj-plus:hover{border-color:var(--orange);color:#fff}
+.pj-item{position:relative;width:86px;height:86px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:rgba(0,0,0,.35)}
+.pj-item img{width:100%;height:100%;object-fit:cover;display:block}
+.pj-video{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:rgba(255,255,255,.7);font-size:.6rem;text-align:center;padding:5px}
+.pj-video i{font-size:19px;color:var(--orange)}
+.pj-nom{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);color:rgba(255,255,255,.85);font-size:.56rem;padding:3px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj-x{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;font-size:.72rem;line-height:1;display:flex;align-items:center;justify-content:center}
+.pj-x:hover{background:#FF4B4B}
+
 /* bloc "ajouter au devis" : toutes les prestations chiffrees, en petits boutons */
 .bloc{margin-bottom:16px}
 .bloc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:9px}
@@ -253,11 +269,22 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <div><label for="cli-tel">Téléphone</label><input type="tel" id="cli-tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
         <div class="large"><label for="cli-adr">Adresse du chantier</label><input type="text" id="cli-adr" placeholder="14 rue de Lyon, 75012 Paris" autocomplete="off"></div>
       </div>
+      <div class="pj">
+        <h3>Pièces jointes <span id="pj-nb"></span></h3>
+        <div class="pj-grille" id="pj-grille">
+          <button class="pj-plus" id="pj-plus" type="button" title="Ajouter une photo ou une vidéo">
+            <i class="fas fa-plus"></i><span>Ajouter</span>
+          </button>
+        </div>
+        <input type="file" id="pj-input" accept="image/*,video/*" multiple hidden>
+      </div>
+
       <div class="dossier-bar">
         <button class="btn" id="btn-fiche"><i class="fas fa-envelope"></i> Copier la fiche et ouvrir le mail</button>
+        <button class="btn ghost hidden" id="btn-pj-envoi"><i class="fas fa-paperclip"></i> Joindre les pièces au mail</button>
         <span class="etat" id="fiche-etat"></span>
       </div>
-      <p class="dossier-aide">La fiche complète est copiée dans le presse-papier et ta boîte mail s'ouvre sur <b>dsplombier@gmx.fr</b>. Colle la fiche dans le message, ajoute tes photos si tu en as, et envoie.</p>
+      <p class="dossier-aide">La fiche est copiée dans le presse-papier et la boîte mail s'ouvre sur <b>dsplombier@gmx.fr</b> : il n'y a plus qu'à coller. Sur téléphone, le bouton <b>Joindre les pièces</b> envoie les photos et vidéos directement dans le mail.</p>
     </div>
 
     <div class="hist">
@@ -281,6 +308,7 @@ const firebaseConfig = {
 };
 
 const FENETRE_MOTS = 25;
+const MAIL_DEST = 'dsplombier@gmx.fr';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
@@ -819,6 +847,7 @@ function reinitialiser(){
   sujets=[]; sujetsEcartes=new Set(); devisInit();
   $('note').value=''; $('note-etat').textContent='';
   ['cli-nom','cli-tel','cli-adr'].forEach(id => { const e = $(id); if(e) e.value = ''; });
+  pieces = []; renderPieces();
   $('fiche-etat').textContent = '';
   renderTr(); render(); renderSujets(); renderDevis(); majInfoOutils();
   toast("Prêt pour l'appel suivant.");
@@ -937,6 +966,64 @@ $('btn-outils-fermer').addEventListener('click', () => {
   majInfoOutils();
 });
 
+/* ---------- pieces jointes (photos et videos recues du client) ---------- */
+let pieces = [];
+function octets(n){
+  if(n < 1024) return n + ' o';
+  if(n < 1048576) return Math.round(n / 1024) + ' Ko';
+  return (n / 1048576).toFixed(1).replace('.', ',') + ' Mo';
+}
+function renderPieces(){
+  const g = $('pj-grille');
+  [...g.querySelectorAll('.pj-item')].forEach(e => {
+    const u = e.dataset.url; if(u) URL.revokeObjectURL(u);
+    e.remove();
+  });
+  pieces.forEach((f, i) => {
+    const d = document.createElement('div');
+    d.className = 'pj-item';
+    if(f.type.startsWith('image/')){
+      const url = URL.createObjectURL(f);
+      d.dataset.url = url;
+      d.innerHTML = `<img src="${url}" alt=""><span class="pj-nom">${esc(f.name)}</span>`;
+    }else{
+      d.innerHTML = `<div class="pj-video"><i class="fas fa-film"></i>${octets(f.size)}</div><span class="pj-nom">${esc(f.name)}</span>`;
+    }
+    const x = document.createElement('button');
+    x.className = 'pj-x'; x.type = 'button'; x.title = 'Retirer';
+    x.innerHTML = '<i class="fas fa-xmark"></i>';
+    x.addEventListener('click', () => { pieces.splice(i, 1); renderPieces(); });
+    d.appendChild(x);
+    g.insertBefore(d, $('pj-plus'));
+  });
+  $('pj-nb').textContent = pieces.length ? '(' + pieces.length + ')' : '';
+  const b = $('btn-pj-envoi');
+  if(b) b.classList.toggle('hidden', !pieces.length);
+}
+$('pj-plus').addEventListener('click', () => $('pj-input').click());
+$('pj-input').addEventListener('change', (e) => {
+  [...e.target.files].forEach(f => { if(pieces.length < 12) pieces.push(f); });
+  e.target.value = '';
+  renderPieces();
+});
+$('btn-pj-envoi').addEventListener('click', async () => {
+  if(!pieces.length) return;
+  if(navigator.canShare && navigator.canShare({ files: pieces })){
+    try{
+      await navigator.share({ files: pieces, title: objetMail(), text: objetMail() });
+      return;
+    }catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  pieces.forEach(f => {
+    const url = URL.createObjectURL(f);
+    const a = document.createElement('a');
+    a.href = url; a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  });
+  toast("Partage non supporté : les fichiers ont été téléchargés, joins-les à la main.");
+});
+
 /* ---------- fiche a coller dans le mail ---------- */
 function ficheTexte(){
   const nom = $('cli-nom').value.trim();
@@ -970,8 +1057,25 @@ function ficheTexte(){
     l.push('Total TTC : ' + eur(t.ttc));
   }
   l.push('');
-  l.push('Pièces jointes : ajoute ici les photos ou vidéos reçues du client.');
+  if(pieces.length){
+    l.push('PIÈCES JOINTES (' + pieces.length + ')');
+    pieces.forEach(f => l.push('- ' + f.name + '  (' + octets(f.size) + ')'));
+  }else{
+    l.push('Pièces jointes : aucune.');
+  }
   return l.join('\n');
+}
+// sur telephone on ouvre l'application mail, sur ordinateur le webmail GMX
+function surTelephone(){
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') && (navigator.maxTouchPoints || 0) > 0;
+}
+function ouvrirMail(){
+  const sujet = encodeURIComponent(objetMail());
+  if(surTelephone()){
+    window.location.href = 'mailto:' + MAIL_DEST + '?subject=' + sujet;
+  }else{
+    window.open('https://www.gmx.fr/', '_blank', 'noopener');
+  }
 }
 function objetMail(){
   const nom = $('cli-nom').value.trim() || 'client à identifier';
@@ -994,7 +1098,7 @@ $('btn-fiche').addEventListener('click', async () => {
     : 'Copie impossible : sélectionne le texte à la main';
   if(copie) toast("Fiche copiée. Colle-la dans le mail.");
   else toast("Copie refusée par le navigateur.");
-  window.location.href = 'mailto:dsplombier@gmx.fr?subject=' + encodeURIComponent(objetMail());
+  ouvrirMail();
 });
 
 /* ---------- login ---------- */
