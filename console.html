@@ -215,7 +215,9 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .dl-q button{width:24px;height:24px;border-radius:5px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#fff;cursor:pointer;font-size:.86rem;line-height:1;padding:0}
 .dl-q button:hover{border-color:var(--orange)}
 .dl-q span{min-width:20px;text-align:center;font-size:.84rem;font-weight:700}
-.dl-pu{color:rgba(255,255,255,.5);white-space:nowrap;font-size:.76rem}
+.dl-pu{width:84px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:5px;color:rgba(255,255,255,.8);font:400 .78rem 'Red Hat Display',sans-serif;padding:3px 6px}
+.dl-pu:focus{outline:none;border-color:var(--orange);color:#fff}
+.dl-pu.vide{border-color:rgba(232,119,34,.6);color:#ffc793}
 .dl-tva{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:5px;color:rgba(255,255,255,.75);font-size:.74rem;padding:3px 4px}
 .dl-m{margin-left:auto;font-weight:900;white-space:nowrap;font-size:.94rem}
 .dl-x{flex:0 0 auto;background:none;border:none;color:rgba(255,255,255,.45);cursor:pointer;padding:3px;font-size:.92rem}
@@ -230,6 +232,15 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .devis-total span{color:rgba(255,255,255,.5)}
 .devis-total .ttc{font-size:1.05rem;padding-top:6px;border-top:1px solid rgba(255,255,255,.1)}
 .devis-total .ttc b{color:#4CE28C}
+
+/* la video se retrecit quand un panneau est ouvert : on garde le client a l'ecran */
+@media(min-width:1180px){
+  .call-screen.p-gauche .call-videos{left:452px;transform:none;width:auto}
+  .call-screen.p-droite .call-videos{right:432px;transform:none;width:auto}
+  .call-screen.p-gauche.p-droite .call-videos{left:452px;right:432px;transform:none;width:auto}
+  .call-screen.p-droite .call-videos .local-video,
+  .call-screen.p-droite .call-videos.swapped #remote-video{right:14px}
+}
 
 /* fiches a gauche, devis a droite de l'ecran */
 .assist-gauche{flex:1 1 auto;display:flex;flex-direction:column;min-width:0;min-height:0}
@@ -797,7 +808,7 @@ const CATALOGUE_SEED = [{"gamme": "HYDROMOTRIX Condensation Visio","variante": "
 const FICHES_DEFAUT = [
   {
     id: 'bouchon', court: 'Bouchon', famille: 'colonne', titre: 'Bouchon WC / évier / douche',
-    mots: ['bouche','bouchee','bouchon','debouche','deboucher','degorgement','descend plus','deborde','debordement','stagne','evacuation','siphon','wc','toilette','evier','lavabo','douche','baignoire','ca coule pas'],
+    mots: ['bouche','bouchee','bouchon','debouche','deboucher','degorgement','descend plus','deborde','debordement','stagne','evacuation','siphon','wc','toilette','evier','lavabo','douche','baignoire','ca coule pas','debouchage','debouchement','debouchages','curage','hydrocurage','furet','pompage','engorge','engorgement','canalisation bouchee','eau stagne','wc bouche','evier bouche','ca remonte'],
     montrer: ["L'évacuation concernée et le niveau d'eau qui stagne","Sous le lavabo ou l'évier : le siphon et son état","Le regard extérieur s'il y en a un","Les autres points d'eau du logement, en les faisant couler"],
     questions: ["Un seul point est touché ou plusieurs ?","Depuis quand exactement ?","C'est déjà arrivé au même endroit ?","Maison individuelle ou appartement ? Quel étage ?","Un produit déboucheur a déjà été versé ? Lequel, quelle quantité ?","L'eau remonte-t-elle ailleurs quand vous tirez la chasse ?","Y a-t-il un accès au regard ou à la cave ?"],
     causes: ["Un seul point touché → bouchon local : siphon, coude, pied de chute","Plusieurs points touchés → bouchon de colonne ou de collecteur, intervention plus lourde","Remontée dans un point bas quand on utilise un point haut → collecteur engorgé","Récidive au même endroit → défaut de pente ou dépôt structurel, inspection caméra à proposer"],
@@ -806,7 +817,7 @@ const FICHES_DEFAUT = [
   },
   {
     id: 'fuite', court: 'Fuite', famille: 'colonne', titre: "Fuite d'eau",
-    mots: ['fuite','fuit','coule','goutte','degat des eaux','degat','tache','humidite','humide','compteur','infiltration','moisissure','plafond','gouttiere'],
+    mots: ['fuite','fuit','coule','goutte','degat des eaux','degat','tache','humidite','humide','compteur','infiltration','moisissure','plafond','gouttiere','recherche de fuite','detection de fuite','recherche fuite','detection','fuite d eau','perte d eau'],
     montrer: ["Le point qui coule, robinet ouvert puis fermé","Le plafond ou le mur touché, en entier","Le compteur d'eau et ses chiffres","La vanne d'arrêt général et son accessibilité"],
     questions: ["Goutte à goutte ou écoulement continu ?","Avez-vous coupé l'eau ? Savez-vous où est la vanne ?","Le compteur tourne-t-il, tous robinets fermés ?","Y a-t-il un voisin au-dessus ? L'avez-vous prévenu ?","Depuis combien de temps la tache est-elle là ?","Une déclaration d'assurance est-elle en cours ?","L'eau touche-t-elle une installation électrique ?"],
     causes: ["Point visible qui goutte → joint, raccord, flexible : réparation directe","Tache sans point visible → canalisation encastrée, détection nécessaire","Compteur qui tourne robinets fermés → fuite sur le réseau privatif","Tache au plafond → origine souvent chez le voisin du dessus"],
@@ -815,7 +826,7 @@ const FICHES_DEFAUT = [
   },
   {
     id: 'odeur', court: 'Odeur', famille: 'colonne', titre: "Odeur d'égout",
-    mots: ['odeur','sent mauvais','pue','puanteur','egout','remontee d odeur','mauvaise odeur','ca sent'],
+    mots: ['odeur','sent mauvais','pue','puanteur','egout','remontee d odeur','mauvaise odeur','ca sent','odeurs','ca pue','remontee d odeurs','mauvaises odeurs'],
     montrer: ["Le point d'où vient l'odeur, au plus près","Tous les siphons, y compris ceux peu utilisés","La ventilation de la pièce et la sortie en toiture si visible","Le regard extérieur"],
     questions: ["Permanent, ou par moments ? À quel moment de la journée ?","Est-ce pire après la pluie ?","Le logement ou une pièce sont-ils restés inoccupés récemment ?","Des travaux ont-ils été faits sur le réseau ?","L'odeur vient-elle d'un seul point ou de plusieurs ?"],
     causes: ["Siphon désamorcé par évaporation — le plus fréquent après une absence","Ventilation primaire bouchée ou absente","Clapet équilibreur de pression défectueux","Défaut sur le réseau ou sur le collecteur — inspection caméra à proposer"],
@@ -823,7 +834,7 @@ const FICHES_DEFAUT = [
   },
   {
     id: 'refoulement', court: 'Refoulement', famille: 'colonne', titre: 'Refoulement / colonne bouchée',
-    mots: ['refoule','refoulement','remonte dans','tous les wc','cave','inonde','inondation','sous-sol','sous sol','colonne','collecteur','plusieurs appartements','immeuble','copropriete','syndic','gerance'],
+    mots: ['refoule','refoulement','remonte dans','tous les wc','cave','inonde','inondation','sous-sol','sous sol','colonne','collecteur','plusieurs appartements','immeuble','copropriete','syndic','gerance','refoulent','ca refoule','regard','fosse','fosse septique','chute'],
     montrer: ["Tous les points touchés, un par un","La cave et le sous-sol","Le regard et le pied de colonne","L'étendue de l'eau au sol"],
     questions: ["Combien de logements sont touchés ?","Vous êtes propriétaire, locataire, ou syndic ?","Qui donne l'accord pour l'intervention et qui règle ?","La cave ou le rez-de-chaussée sont-ils touchés ?","Y a-t-il un contrat d'entretien sur la colonne ?","L'eau continue-t-elle de monter ?"],
     causes: ["Bouchon de colonne ou de collecteur → curage haute pression","Tronçon corrodé ou percé → changement de tronçon","Racines ou effondrement → inspection caméra obligatoire avant devis"],
@@ -832,7 +843,7 @@ const FICHES_DEFAUT = [
   },
   {
     id: 'camera', court: 'Caméra', famille: 'colonne', titre: 'Inspection caméra / assainissement',
-    mots: ['camera','inspection','diagnostic','vente','notaire','expertise','racine','assainissement','rapport','controle','conformite','etat des lieux'],
+    mots: ['camera','inspection','diagnostic','vente','notaire','expertise','racine','assainissement','rapport','controle','conformite','etat des lieux','inspection camera','passage camera','camera d inspection','video canalisation','endoscopie'],
     montrer: ["Les regards accessibles et leur état","Le tracé supposé du réseau","Les documents existants : plans, rapports antérieurs","Les points d'entrée possibles pour la caméra"],
     questions: ["C'est pour une vente, un litige, un sinistre assurance ?","Un rapport écrit est-il attendu ? Par qui ?","Y a-t-il un délai imposé, notaire ou expert ?","Le réseau a-t-il déjà été inspecté ?","Quelle longueur de réseau environ ?"],
     causes: ["Prestation de constat — ne jamais annoncer de diagnostic avant le passage caméra"],
@@ -841,7 +852,7 @@ const FICHES_DEFAUT = [
   },
   {
     id: 'chaudiere', court: 'Chaudière', famille: 'chauffage', titre: 'Chaudière — opportunité remplacement',
-    mots: ['chaudiere','chauffage','eau chaude','radiateur','frisquet','chauffe','pression','manometre','fioul','gaz','kw','kilowatt','condensation','remplacer ma chaudiere'],
+    mots: ['chaudiere','chauffage','eau chaude','radiateur','frisquet','chauffe','pression','manometre','fioul','gaz','kw','kilowatt','condensation','remplacer ma chaudiere','entretien chaudiere','remplacement chaudiere','chaudieres','revision'],
     montrer: ["La chaudière entière, de face et sur les côtés","La plaque signalétique : marque, modèle, année, puissance","L'emplacement et les dégagements autour","L'évacuation des fumées : ventouse ou cheminée","Le manomètre et sa pression","Le nombre et le type de radiateurs"],
     questions: ["Quel âge a la chaudière ?","Gaz ou fioul ? Ventouse ou cheminée ?","Des pannes à répétition cette année ?","Vous êtes propriétaire ou locataire ?","Combien de radiateurs, quelle surface à chauffer ?","Chauffage seul ou chauffage + eau chaude ?","Un contrat d'entretien est-il en cours ?","Y a-t-il un projet d'aides ou de financement ?"],
     causes: ["Pas de dépannage chaudière → on renvoie","Entretien : ponctuellement","Remplacement : c'est la cible commerciale"],
@@ -860,7 +871,7 @@ const FICHES_DEFAUT = [
   },
   {
     id: 'ballon', court: 'Chauffe-eau', famille: 'ballon', titre: "Chauffe-eau / ballon d'eau chaude",
-    mots: ['chauffe-eau','chauffe eau','ballon','cumulus','plus d eau chaude','eau tiede','resistance','anode','groupe de securite','fuite ballon'],
+    mots: ['chauffe-eau','chauffe eau','ballon','cumulus','plus d eau chaude','eau tiede','resistance','anode','groupe de securite','fuite ballon','ballon d eau chaude','chauffe eau electrique','detartrage ballon'],
     montrer: ["Le ballon entier, avec la plaque signalétique","Le groupe de sécurité et son écoulement","L'arrivée d'eau et le raccordement électrique","L'espace autour et l'accès pour la dépose","Les traces de calcaire ou de rouille"],
     questions: ["Quelle capacité, quel âge ?","Plus d'eau chaude du tout, ou de l'eau tiède seulement ?","Le groupe de sécurité goutte-t-il en permanence ?","Électrique ou thermodynamique ?","Le ballon fuit-il, ou est-ce le raccordement ?","Vertical mural ou sur socle ?"],
     causes: ["Eau tiède seulement → résistance entartrée ou thermostat","Plus d'eau du tout → résistance ou alimentation électrique","Fuite en partie basse → cuve percée, remplacement obligatoire","Goutte au groupe de sécurité → normal à la chauffe, anormal en continu"],
@@ -869,7 +880,7 @@ const FICHES_DEFAUT = [
   },
   {
     id: 'reno', court: 'Rénovation', famille: 'reno', titre: 'Rénovation après dégât — placo, isolation, toiture',
-    mots: ['placo','plafond','plaque de platre','ba13','isolation','isolant','peinture','velux','fenetre de toit','charpente','toiture','couverture','refaire','renovation','degat plafond'],
+    mots: ['placo','plafond','plaque de platre','ba13','isolation','isolant','peinture','velux','fenetre de toit','charpente','toiture','couverture','refaire','renovation','degat plafond','platre','enduit','carrelage','faience','parquet'],
     montrer: ["L'étendue de la zone abîmée, plafond et murs","L'isolant en place et son état","La charpente si elle est visible","La hauteur sous plafond et l'accès","Les fenêtres de toit s'il y en a"],
     questions: ["Le sinistre est-il déclaré à l'assurance ? Un expert est-il passé ?","La cause de l'infiltration est-elle traitée ?","Quelle surface environ, en m² ?","Le logement est-il occupé pendant les travaux ?","Peinture de finition comprise ou non ?","Y a-t-il un accès pour une échelle ou faut-il un échafaudage ?"],
     causes: ["Ne jamais refaire un plafond avant d'avoir traité l'origine de l'infiltration","Isolant mouillé → dépose complète obligatoire, pas de séchage sur place","Charpente touchée → traitement à chiffrer à part"],
@@ -1445,15 +1456,37 @@ function devisInit(){
   ];
 }
 
+let sujetsEcartes = new Set();   // sujets retires a la main : on ne les remet pas
 function ajouterSujet(id){
-  if(!id || sujets.includes(id)) return;
+  if(!id || sujets.includes(id) || sujetsEcartes.has(id)) return;
   sujets.push(id);
+  ligneDevisDuSujet(id);
   renderSujets();
 }
 function retirerSujet(id){
   sujets = sujets.filter(x => x !== id);
+  sujetsEcartes.add(id);
+  const f = fiches.find(x => x.id === id);
+  if(f) devis = devis.filter(l => l.sujet !== id);
   if(ficheManuelle && ficheManuelle.id === id) ficheManuelle = null;
   renderSujets(); renderAssist(); renderDevis();
+}
+// chaque sujet reconnu pose sa ligne dans le devis : la prestation chiffree
+// de sa famille si elle existe, sinon une ligne a chiffrer
+function ligneDevisDuSujet(id){
+  const f = fiches.find(x => x.id === id);
+  if(!f || devis.some(l => l.sujet === id)) return;
+  const liste = prixFamille(f.famille);
+  if(liste.length){
+    const p = liste[0];
+    if(devis.some(l => l.des === p.designation)) return;
+    devis.push({ des: p.designation, unite: p.unite || 'U', pu: Number(p.prixHT) || 0,
+                 tva: p.tva == null ? TVA_DEFAUT : p.tva, qte: 1, sujet: id });
+  }else{
+    devis.push({ des: f.court + ' \u2014 \u00e0 chiffrer', unite: 'U', pu: 0,
+                 tva: TVA_DEFAUT, qte: 1, sujet: id, aChiffrer: true });
+  }
+  renderDevis();
 }
 
 function devisAjouter(designation, unite, pu, tva){
@@ -1515,7 +1548,7 @@ function renderDevis(){
         <div class="dl-q">
           <button data-moins="${i}">−</button><span>${l.qte}</span><button data-plus="${i}">+</button>
         </div>
-        <div class="dl-pu">${eur(l.pu)}</div>
+        <input class="dl-pu${l.aChiffrer && !l.pu ? ' vide' : ''}" type="number" step="0.01" min="0" inputmode="decimal" value="${l.pu}" data-pu="${i}" title="Prix unitaire HT">
         <select class="dl-tva" data-tva="${i}">
           <option value="10"${l.tva === 10 ? ' selected' : ''}>10 %</option>
           <option value="20"${l.tva === 20 ? ' selected' : ''}>20 %</option>
@@ -1534,6 +1567,12 @@ function renderDevis(){
   }));
   box.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => { devis.splice(+b.dataset.rm, 1); renderDevis(); }));
   box.querySelectorAll('[data-tva]').forEach(s => s.addEventListener('change', () => { devis[+s.dataset.tva].tva = parseInt(s.value, 10); renderDevis(); }));
+  box.querySelectorAll('[data-pu]').forEach(inp => inp.addEventListener('change', () => {
+    const l = devis[+inp.dataset.pu];
+    l.pu = Math.max(0, Number(inp.value) || 0);
+    if(l.pu > 0){ l.aChiffrer = false; l.des = l.des.replace(' \u2014 \u00e0 chiffrer', ''); }
+    renderDevis();
+  }));
 
   const t = devisTotaux();
   const tot = document.getElementById('devis-total');
@@ -1563,7 +1602,8 @@ function renderAssist(){
 
   const ranked = scoreFiches(fenetre());
   const auto = ranked.length ? ranked[0].f : null;
-  if(auto){ fichesVues.add(auto.id); ajouterSujet(auto.id); }
+  // tous les sujets entendus s'ajoutent, du plus ancien au plus recent
+  [...ranked].reverse().forEach(r => { fichesVues.add(r.f.id); ajouterSujet(r.f.id); });
   const active = ficheManuelle || auto;
 
   const chips = [`<button class="${ficheManuelle ? '' : 'on'}" data-fiche="__auto">Auto</button>`]
@@ -1600,16 +1640,25 @@ function startAssistant(callId, data){
   assistStartedAt = Date.now();
   transcriptFinal = ''; transcriptInterim = ''; fichesVues = new Set();
   ficheManuelle = null; kwDetecte = null;
-  sujets = []; devisInit(); dernierDiagId = null;
+  sujets = []; sujetsEcartes = new Set(); devisInit(); dernierDiagId = null;
 
   const panel = document.getElementById('assist');
+  const pdev  = document.getElementById('devis-panneau');
+  const ecran = callRoot.querySelector('.call-screen');
+  const majEcran = () => {
+    if(!ecran) return;
+    ecran.classList.toggle('p-gauche', !!(panel && panel.classList.contains('open')));
+    ecran.classList.toggle('p-droite', !!(pdev && pdev.classList.contains('open')));
+  };
+  // sur grand ecran les deux panneaux sont ouverts d'emblee, la video reste entre les deux
+  if(window.innerWidth >= 1180 && panel) panel.classList.add('open');
+  majEcran();
   const btn = document.getElementById('btn-assist');
-  if(btn && panel) btn.addEventListener('click', () => panel.classList.toggle('open'));
-  const pdev = document.getElementById('devis-panneau');
+  if(btn && panel) btn.addEventListener('click', () => { panel.classList.toggle('open'); majEcran(); });
   const btnDev = document.getElementById('btn-devis');
-  if(btnDev && pdev) btnDev.addEventListener('click', () => pdev.classList.toggle('open'));
+  if(btnDev && pdev) btnDev.addEventListener('click', () => { pdev.classList.toggle('open'); majEcran(); });
   const fermeDev = document.getElementById('btn-devis-fermer');
-  if(fermeDev && pdev) fermeDev.addEventListener('click', () => pdev.classList.remove('open'));
+  if(fermeDev && pdev) fermeDev.addEventListener('click', () => { pdev.classList.remove('open'); majEcran(); });
   renderAssist(); renderTranscript(); renderSujets(); renderDevis();
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1725,7 +1774,7 @@ function ecranRecap(){
   document.getElementById('btn-recap-save').addEventListener('click', enregistrerDevisRecap);
   document.getElementById('btn-recap-close').addEventListener('click', () => {
     callRoot.innerHTML = '';
-    sujets = []; devisInit(); dernierDiagId = null;
+    sujets = []; sujetsEcartes = new Set(); devisInit(); dernierDiagId = null;
   });
 }
 async function enregistrerDevisRecap(){
