@@ -1050,7 +1050,9 @@ $('btn-pj-envoi').addEventListener('click', async () => {
   if(!pieces.length) return;
   if(navigator.canShare && navigator.canShare({ files: pieces })){
     try{
-      await navigator.share({ files: pieces, title: objetMail(), text: ficheTexte() });
+      // texte court : un texte long fait echouer le partage sans rien afficher.
+      // La fiche complete part par le bouton "Copier la fiche et ouvrir le mail".
+      await navigator.share({ files: pieces, title: objetMail(), text: objetMail() });
       return;
     }catch(e){ if(e && e.name === 'AbortError') return; }
   }
