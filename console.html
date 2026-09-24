@@ -43,6 +43,9 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .call-avatar{width:78px;height:78px;border-radius:50%;background:linear-gradient(155deg,rgba(232,119,34,.45),rgba(14,107,168,.55));border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 30px rgba(0,0,0,.35);animation:call-pulse 2s ease-out infinite}
 @keyframes call-pulse{0%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 0 rgba(255,255,255,.18)}70%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 18px rgba(255,255,255,0)}100%{box-shadow:0 8px 30px rgba(0,0,0,.35),0 0 0 0 rgba(255,255,255,0)}}
 .call-name{font-size:1.2rem;font-weight:900;margin-top:14px}
+.rec-badge{display:inline-flex;align-items:center;gap:7px;margin-top:9px;background:rgba(255,75,75,.16);border:1px solid rgba(255,107,107,.55);color:#ffc0c0;border-radius:999px;padding:4px 12px;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em}
+.rec-badge .pt{width:8px;height:8px;border-radius:50%;background:#FF4B4B;animation:recpulse 1.6s infinite}
+@keyframes recpulse{0%{box-shadow:0 0 0 0 rgba(255,75,75,.6)}70%{box-shadow:0 0 0 8px rgba(255,75,75,0)}100%{box-shadow:0 0 0 0 rgba(255,75,75,0)}}
 .call-status{font-size:.72rem;opacity:.7;margin-top:5px;text-transform:uppercase;letter-spacing:.1em}
 .call-actions{display:flex;align-items:flex-start;gap:24px;position:relative;z-index:2}
 .call-action{display:flex;flex-direction:column;align-items:center;gap:9px}
@@ -438,6 +441,64 @@ const callRoot = $('call-root');
 let online = true, heartbeatTimer = null, incomingUnsub = null;
 let currentCallDocId = null, handledCalls = new Set();
 let peerConnection = null, localStream = null, remoteStream = null, webrtcUnsubs = [];
+
+/* ---------- enregistrement video de l'appel ---------- */
+let recorder = null, recMorceaux = [], recAudioCtx = null, nomFichierVideo = '';
+function nomVideo(appelant){
+  const d = new Date(), p2 = (n) => String(n).padStart(2, '0');
+  const qui = (appelant || 'visiteur').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'visiteur';
+  return `DS-appel_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}_${p2(d.getHours())}h${p2(d.getMinutes())}_${qui}.webm`;
+}
+function demarrerEnregistrement(appelant){
+  if(recorder || !remoteStream) return;
+  if(typeof MediaRecorder === 'undefined'){ toast("Ce navigateur n'enregistre pas la vidéo."); return; }
+  try{
+    // image du client + les deux voix melangees
+    const pistes = [];
+    const v = remoteStream.getVideoTracks()[0];
+    if(v) pistes.push(v);
+    recAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const melange = recAudioCtx.createMediaStreamDestination();
+    [remoteStream, localStream].forEach(st => {
+      if(st && st.getAudioTracks().length){
+        try{ recAudioCtx.createMediaStreamSource(st).connect(melange); }catch(e){}
+      }
+    });
+    melange.stream.getAudioTracks().forEach(t => pistes.push(t));
+    if(!pistes.length) return;
+
+    const types = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    const type = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+    recMorceaux = [];
+    nomFichierVideo = nomVideo(appelant);
+    recorder = new MediaRecorder(new MediaStream(pistes), type ? { mimeType: type } : undefined);
+    recorder.ondataavailable = (e) => { if(e.data && e.data.size) recMorceaux.push(e.data); };
+    recorder.onstop = () => {
+      const blob = new Blob(recMorceaux, { type: recorder.mimeType || 'video/webm' });
+      recMorceaux = [];
+      if(blob.size > 0){
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = nomFichierVideo;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        toast("Vidéo enregistrée : " + nomFichierVideo);
+      }
+      recorder = null;
+      if(recAudioCtx){ try{ recAudioCtx.close(); }catch(e){} recAudioCtx = null; }
+    };
+    recorder.start(1000);
+    const b = document.getElementById('rec-video'); if(b) b.classList.remove('hidden');
+  }catch(e){
+    recorder = null;
+    toast("Enregistrement vidéo impossible : " + (e.message || e));
+  }
+}
+function arreterEnregistrement(){
+  const b = document.getElementById('rec-video'); if(b) b.classList.add('hidden');
+  if(recorder && recorder.state !== 'inactive'){ try{ recorder.stop(); }catch(e){ recorder = null; } }
+}
 let ringAudioCtx = null, ringInterval = null, missedTimeout = null;
 let localAudioMuted = false, currentFacingMode = 'user';
 
@@ -637,6 +698,7 @@ function handleIncoming(callId, data){
           <div class="call-avatar"><i class="fas fa-user"></i></div>
           <div class="call-name">${data.callerName || 'Visiteur'}</div>
           <div class="call-status" id="call-status">Connexion…</div>
+          <div class="rec-badge hidden" id="rec-video"><span class="pt"></span> Enregistrement</div>
         </div>
         <div class="call-actions">
           <div class="call-action">
@@ -683,6 +745,7 @@ async function connectCall(callId){
     const rv = $('remote-video');
     if(rv && rv.srcObject !== ev.streams[0]){
       rv.srcObject = ev.streams[0]; remoteStream = ev.streams[0]; rv.play().catch(()=>{});
+      demarrerEnregistrement(assistCallerName);
     }
     const st = $('call-status'); if(st) st.textContent = "En communication";
   };
@@ -773,6 +836,7 @@ function setupControls(){
 }
 
 function endCall(clearRoot = true, updateStatus = true){
+  arreterEnregistrement();
   stopAssistant();
   clearTimeout(missedTimeout); stopRingtone();
   if(peerConnection){ try{ peerConnection.close(); }catch(e){} peerConnection = null; }
@@ -1476,6 +1540,7 @@ let sujetsEcartes = new Set();   // sujets retires a la main : on ne les remet p
 function ajouterSujet(id){
   if(!id || sujets.includes(id) || sujetsEcartes.has(id)) return;
   sujets.push(id);
+  ficheManuelle = null;   // un nouveau sujet reprend la main : la fiche suit la conversation
   ligneDevisDuSujet(id);
   renderSujets();
 }
@@ -1546,7 +1611,8 @@ function renderSujets(){
   }).join('');
   box.querySelectorAll('[data-suj]').forEach(e => e.addEventListener('click', (ev) => {
     if(ev.target.dataset.rmsuj) return;
-    ficheManuelle = fiches.find(f => f.id === e.dataset.suj) || null;
+    const choisie = fiches.find(f => f.id === e.dataset.suj) || null;
+    ficheManuelle = (ficheManuelle && choisie && ficheManuelle.id === choisie.id) ? null : choisie;
     renderAssist(); renderSujets();
   }));
   box.querySelectorAll('[data-rmsuj]').forEach(b => b.addEventListener('click', (ev) => {
@@ -1749,6 +1815,7 @@ async function stopAssistant(){
     totalHT: Math.round(devisTotaux().ht * 100) / 100,
     totalTTC: Math.round(devisTotaux().ttc * 100) / 100,
     kwDetecte: kwDetecte,
+    videoFichier: nomFichierVideo || '',
     startedAtMs: assistStartedAt,
     endedAtMs: Date.now(),
     dureeSec: Math.round((Date.now() - assistStartedAt) / 1000),

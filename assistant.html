@@ -432,6 +432,7 @@ let sujetsEcartes = new Set();   // sujets retires a la main : on ne les remet p
 function ajouterSujet(id){
   if(!id || sujets.includes(id) || sujetsEcartes.has(id)) return;
   sujets.push(id);
+  ficheManuelle = null;   // un nouveau sujet reprend la main : la fiche suit la conversation
   ligneDevisDuSujet(id);
   renderSujets();
 }
@@ -500,7 +501,8 @@ function renderSujets(){
   }).join('');
   box.querySelectorAll('[data-suj]').forEach(e => e.addEventListener('click', (ev) => {
     if(ev.target.dataset.rmsuj) return;
-    ficheManuelle = fiches.find(f => f.id === e.dataset.suj) || null;
+    const choisie = fiches.find(f => f.id === e.dataset.suj) || null;
+    ficheManuelle = (ficheManuelle && choisie && ficheManuelle.id === choisie.id) ? null : choisie;
     renderAssist(); renderSujets();
   }));
   box.querySelectorAll('[data-rmsuj]').forEach(b => b.addEventListener('click', (ev) => {
