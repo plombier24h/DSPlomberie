@@ -529,7 +529,10 @@ let sujets = [];        // ids des fiches reconnues pendant l'appel, dans l'ordr
 let devis  = [];        // lignes du devis
 
 function devisInit(){
-  devis = [];   // le devis part vide : aucune ligne pre-etablie
+  devis = [
+    { des: 'Déplacement', unite: 'U', pu: tarifs.deplacement, tva: TVA_DEFAUT, qte: 1, fixe: true },
+    { des: "1ʳᵉ heure de main-d'œuvre", unite: 'h', pu: tarifs.heureSuivante, tva: TVA_DEFAUT, qte: 1, fixe: true }
+  ];
 }
 
 let sujetsEcartes = new Set();   // sujets retires a la main : on ne les remet pas
