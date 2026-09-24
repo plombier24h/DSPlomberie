@@ -78,6 +78,8 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .pj h3{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);margin-bottom:8px;font-weight:600}
 .pj h3 span{color:var(--orange)}
 .pj-grille{display:flex;flex-wrap:wrap;gap:9px}
+.pj-memo{margin-top:9px;font-size:.76rem;line-height:1.5;color:rgba(255,255,255,.5)}
+.pj-memo b{color:rgba(255,255,255,.85)}
 .pj-plus{width:86px;height:86px;border-radius:10px;border:1.5px dashed rgba(255,255,255,.25);background:rgba(0,0,0,.22);color:rgba(255,255,255,.55);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font:600 .66rem 'Red Hat Display',sans-serif}
 .pj-plus i{font-size:17px}
 .pj-plus:hover{border-color:var(--orange);color:#fff}
@@ -296,6 +298,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
           </button>
         </div>
         <input type="file" id="pj-input" accept="image/*,video/*" multiple hidden>
+        <p class="pj-memo hidden" id="pj-memo"></p>
       </div>
 
       <div class="dossier-bar">
@@ -824,10 +827,23 @@ async function enregistrer(manuel){
   const note=$('note').value.trim();
   const texte=(transcriptFinal||'').trim();
   if(noteEnEdition){
-    if(!note){ toast("La note est vide."); return; }
+    if(!note && !texte){ toast("Le dossier est vide."); return; }
     try{
-      await updateDoc(doc(db,"diagnostics",noteEnEdition),{ note:note, modifieAtMs: Date.now() });
-      toast("Note modifiée.");
+      await updateDoc(doc(db,"diagnostics",noteEnEdition),{
+        note:note,
+        client: $('cli-nom').value.trim(),
+        clientTel: $('cli-tel').value.trim(),
+        clientEmail: $('cli-mail').value.trim(),
+        clientAdresse: $('cli-adr').value.trim(),
+        callerName: ($('cli-nom').value.trim() || 'Appel téléphone'),
+        sujets:[...sujets],
+        devis: devis.map(l=>({designation:l.des, unite:l.unite, prixHT:l.pu, tva:l.tva, qte:l.qte})),
+        totalHT: Math.round(devisTotaux().ht*100)/100,
+        totalTTC: Math.round(devisTotaux().ttc*100)/100,
+        piecesNoms: pieces.length ? pieces.map(f=>f.name) : piecesMemo,
+        modifieAtMs: Date.now()
+      });
+      toast("Dossier modifié.");
       sortirEdition();
     }catch(e){ toast("Modification refusée : " + (e.code||e.message)); }
     return;
@@ -843,6 +859,7 @@ async function enregistrer(manuel){
       clientEmail: $('cli-mail').value.trim(),
       clientAdresse: $('cli-adr').value.trim(),
       transcript:texte, note:note,
+      piecesNoms: pieces.map(f=>f.name),
       fichesDetectees: ranked.slice(0,3).map(r=>r.f.id),
       sujets:[...sujets],
       devis: devis.map(l=>({designation:l.des, unite:l.unite, prixHT:l.pu, tva:l.tva, qte:l.qte})),
@@ -873,7 +890,7 @@ function reinitialiser(){
   sujets=[]; sujetsEcartes=new Set(); devisInit();
   $('note').value=''; $('note-etat').textContent='';
   ['cli-nom','cli-tel','cli-mail','cli-adr'].forEach(id => { const e = $(id); if(e) e.value = ''; });
-  pieces = []; renderPieces();
+  pieces = []; piecesMemo = []; renderPieces();
   $('fiche-etat').textContent = '';
   renderTr(); render(); renderSujets(); renderDevis(); majInfoOutils();
   toast("Prêt pour l'appel suivant.");
@@ -893,6 +910,7 @@ let noteEnEdition=null;
 function sortirEdition(){
   noteEnEdition=null;
   $('note').value='';
+  piecesMemo = []; renderPieces();
   $('btn-note-annuler').classList.add('hidden');
   $('btn-note').innerHTML='<i class="fas fa-floppy-disk"></i> Enregistrer la note';
   $('note-etat').textContent='';
@@ -900,9 +918,29 @@ function sortirEdition(){
 function entrerEdition(d){
   noteEnEdition=d.docId;
   $('note').value=d.note||'';
+  // dossier client
+  $('cli-nom').value = d.client || '';
+  $('cli-tel').value = d.clientTel || '';
+  $('cli-mail').value = d.clientEmail || '';
+  $('cli-adr').value = d.clientAdresse || '';
+  // transcription et sujets de l'appel
+  transcriptFinal = d.transcript || ''; transcriptInterim='';
+  sujets = Array.isArray(d.sujets) ? [...d.sujets] : [];
+  sujetsEcartes = new Set();
+  ficheManuelle = null;
+  // devis enregistre
+  if(Array.isArray(d.devis) && d.devis.length){
+    devis = d.devis.map(l => ({ des:l.designation, unite:l.unite||'U', pu:Number(l.prixHT)||0, tva:Number(l.tva)||0, qte:Number(l.qte)||1 }));
+  }else{
+    devisInit();
+  }
+  // pieces jointes : seuls les noms sont conserves, les fichiers ne sont pas stockes
+  piecesMemo = Array.isArray(d.piecesNoms) ? [...d.piecesNoms] : [];
+  pieces = []; renderPieces();
+  renderTr(); renderAssist(); renderSujets(); renderDevis(); majInfoOutils();
   $('btn-note-annuler').classList.remove('hidden');
   $('btn-note').innerHTML='<i class="fas fa-check"></i> Valider la modification';
-  $('note-etat').textContent='Modification de la note du '+dateFr(d.endedAtMs);
+  $('note-etat').textContent='Modification du dossier du '+dateFr(d.endedAtMs);
   $('note').focus();
   $('note').scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -1008,6 +1046,7 @@ $('btn-outils-fermer').addEventListener('click', () => {
 
 /* ---------- pieces jointes (photos et videos recues du client) ---------- */
 let pieces = [];
+let piecesMemo = [];   // noms des pieces envoyees lors d'un appel deja enregistre
 function octets(n){
   if(n < 1024) return n + ' o';
   if(n < 1048576) return Math.round(n / 1024) + ' Ko';
@@ -1037,6 +1076,16 @@ function renderPieces(){
     g.insertBefore(d, $('pj-plus'));
   });
   $('pj-nb').textContent = pieces.length ? '(' + pieces.length + ')' : '';
+  const memo = $('pj-memo');
+  if(memo){
+    if(piecesMemo.length){
+      memo.classList.remove('hidden');
+      memo.innerHTML = 'Pièces envoyées lors de cet appel : <b>' + piecesMemo.map(esc).join('</b>, <b>') +
+        '</b> — les fichiers ne sont pas conservés sur le site, seuls leurs noms sont gardés.';
+    }else{
+      memo.classList.add('hidden'); memo.innerHTML='';
+    }
+  }
   const b = $('btn-pj-envoi');
   if(b) b.classList.toggle('hidden', !pieces.length);
 }
