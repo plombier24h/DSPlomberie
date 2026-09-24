@@ -130,6 +130,22 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .diag-edit input,.diag-edit textarea{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:7px;color:#fff;font:400 .85rem 'Red Hat Display',sans-serif;padding:8px 11px;line-height:1.5}
 .diag-edit textarea{min-height:72px;resize:vertical}
 .diag-edit input:focus,.diag-edit textarea:focus{outline:none;border-color:var(--orange)}
+.diag-ttc{color:#4CE28C;font-weight:700;font-size:.82rem;margin-left:2px}
+.diag-estim{border:1px solid var(--line);border-radius:9px;background:rgba(0,0,0,.2);padding:13px 15px;margin-bottom:13px}
+.de-titre{font-size:.62rem;text-transform:uppercase;letter-spacing:.11em;color:var(--orange);margin-bottom:9px}
+.de-tab{width:100%;border-collapse:collapse;font-size:.8rem}
+.de-tab th{text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);font-weight:600;padding:0 8px 6px 0;border-bottom:1px solid var(--line)}
+.de-tab th:nth-child(2),.de-tab th:nth-child(4){text-align:center}
+.de-tab th:nth-child(3),.de-tab th:nth-child(5){text-align:right}
+.de-tab td{padding:6px 8px 6px 0;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}
+.de-tab td.c{text-align:center;white-space:nowrap}
+.de-tab td.r{text-align:right;white-space:nowrap}
+.de-u{color:rgba(255,255,255,.3);font-size:.68rem;margin-left:6px}
+.de-tot{display:grid;gap:4px;margin-top:10px;font-size:.82rem}
+.de-tot div{display:flex;justify-content:space-between}
+.de-tot span{color:rgba(255,255,255,.5)}
+.de-tot .ttc{font-size:.98rem;padding-top:6px;border-top:1px solid rgba(255,255,255,.12)}
+.de-tot .ttc b{color:#4CE28C}
 .diag-video{font-size:.76rem;color:rgba(255,255,255,.5)}
 .diag-video i{color:var(--orange);margin-right:6px}
 .diag-edit-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
@@ -2137,6 +2153,30 @@ function ecouterDiagnostics(){
 
 function esc(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+function blocEstimation(d){
+  const lignes = d.devis || [];
+  if(!lignes.length) return '';
+  const ht = lignes.reduce((s, l) => s + (l.prixHT || 0) * (l.qte || 1), 0);
+  const tva = lignes.reduce((s, l) => s + (l.prixHT || 0) * (l.qte || 1) * ((l.tva == null ? 10 : l.tva) / 100), 0);
+  return `<div class="diag-estim hidden" id="estim-${d.id}">
+    <div class="de-titre">Estimation établie pendant l'appel</div>
+    <table class="de-tab">
+      <thead><tr><th>Désignation</th><th>Qté</th><th>PU HT</th><th>TVA</th><th>Montant HT</th></tr></thead>
+      <tbody>${lignes.map(l => `<tr>
+        <td>${esc(l.designation)}${l.unite ? `<span class="de-u">${esc(l.unite)}</span>` : ''}</td>
+        <td class="c">${l.qte || 1}</td>
+        <td class="r">${eur(l.prixHT)}</td>
+        <td class="c">${l.tva == null ? 10 : l.tva} %</td>
+        <td class="r">${eur((l.prixHT || 0) * (l.qte || 1))}</td></tr>`).join('')}</tbody>
+    </table>
+    <div class="de-tot">
+      <div><span>Total HT</span><b>${eur(d.totalHT != null ? d.totalHT : ht)}</b></div>
+      <div><span>TVA</span><b>${eur(tva)}</b></div>
+      <div class="ttc"><span>Total TTC</span><b>${eur(d.totalTTC != null ? d.totalTTC : ht + tva)}</b></div>
+    </div>
+  </div>`;
+}
+
 function renderDiagnostics(){
   const box = document.getElementById('diag-list');
   if(!box) return;
@@ -2158,6 +2198,7 @@ function renderDiagnostics(){
         <div class="diag-head" data-open="${d.id}" style="flex:1">
           <span class="diag-when">${quand}</span>
           <span class="diag-meta">${esc(d.client || d.callerName || 'Visiteur')} · ${mn}${d.kwDetecte ? ' · ' + d.kwDetecte + ' kW' : ''}${d.videoFichier ? ' · vidéo' : ''}</span>
+          ${d.totalTTC ? `<span class="diag-ttc">${eur(d.totalTTC)} TTC</span>` : ''}
           <span class="diag-tags">${tags}</span>
           <i class="fas fa-chevron-down"></i>
         </div>
@@ -2172,9 +2213,11 @@ function renderDiagnostics(){
             ${d.videoFichier ? `<p class="diag-video"><i class="fas fa-film"></i> ${esc(d.videoFichier)}</p>` : ''}
             <div class="diag-edit-actions">
               <button class="btn small" data-save="${d.id}"><i class="fas fa-floppy-disk"></i> Enregistrer</button>
+              ${(d.devis || []).length ? `<button class="btn ghost small" data-estim="${d.id}"><i class="fas fa-file-invoice"></i> Voir l'estimation</button>` : ''}
               <button class="btn ghost small" data-copy="${d.id}"><i class="fas fa-copy"></i> Copier la transcription</button>
             </div>
           </div>
+          ${blocEstimation(d)}
           <p>${(d.transcript || '').replace(/</g,'&lt;')}</p>
         </div>
       </div>`;
@@ -2193,6 +2236,16 @@ function renderDiagnostics(){
       if(!confirm("Supprimer définitivement cette transcription ?")) return;
       try{ await deleteDoc(doc(db, "diagnostics", b.dataset.suppr)); toast("Transcription supprimée."); }
       catch(e){ toast("Suppression refusée : " + (e.code || e.message)); }
+    });
+  });
+  box.querySelectorAll('[data-estim]').forEach(b => {
+    b.addEventListener('click', () => {
+      const e = document.getElementById('estim-' + b.dataset.estim);
+      if(!e) return;
+      const ouvert = !e.classList.toggle('hidden');
+      b.innerHTML = ouvert
+        ? '<i class="fas fa-chevron-up"></i> Masquer l\'estimation'
+        : '<i class="fas fa-file-invoice"></i> Voir l\'estimation';
     });
   });
   box.querySelectorAll('[data-save]').forEach(b => {
