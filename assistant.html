@@ -763,10 +763,8 @@ function majMic(){
 function demarrerEcoute(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ toast("Ce navigateur ne gère pas la transcription. Utilise Chrome."); return; }
-  // on ne remet rien a zero ici : relancer le micro pendant un appel doit
-  // conserver la transcription, les sujets et le devis deja construits.
-  // Le vrai effacement se fait avec le bouton "Reinitialiser pour l'appel suivant".
-  transcriptInterim=''; if(!debutMs) debutMs=Date.now();
+  transcriptFinal=''; transcriptInterim=''; kwDetecte=null; ficheManuelle=null; debutMs=Date.now();
+  sujets=[]; sujetsEcartes=new Set(); devisInit();
   renderTr(); render(); renderSujets(); renderDevis();
   wantRec=true; ecoute=true; majMic();
   // micro maintenu ouvert : la reconnaissance peut se relancer sans coupure audible
