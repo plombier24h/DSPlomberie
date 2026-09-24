@@ -120,6 +120,14 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .diag-head.open i{transform:rotate(180deg)}
 .diag-when{font-weight:700;font-size:.84rem}
 .diag-meta{font-size:.76rem;color:rgba(255,255,255,.5)}
+.diag-edit{display:grid;gap:6px;padding:12px 0 14px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.diag-edit label{font-size:.6rem;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.45)}
+.diag-edit input,.diag-edit textarea{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:7px;color:#fff;font:400 .85rem 'Red Hat Display',sans-serif;padding:8px 11px;line-height:1.5}
+.diag-edit textarea{min-height:72px;resize:vertical}
+.diag-edit input:focus,.diag-edit textarea:focus{outline:none;border-color:var(--orange)}
+.diag-video{font-size:.76rem;color:rgba(255,255,255,.5)}
+.diag-video i{color:var(--orange);margin-right:6px}
+.diag-edit-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .diag-tags{display:flex;gap:5px;flex-wrap:wrap}
 .tag{font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;background:rgba(232,119,34,.18);border:1px solid rgba(232,119,34,.4);color:#ffc793;border-radius:999px;padding:3px 8px}
 .diag-body{display:none;padding:0 14px 14px;border-top:1px solid var(--line)}
@@ -2086,6 +2094,8 @@ function ecouterDiagnostics(){
   });
 }
 
+function esc(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
 function renderDiagnostics(){
   const box = document.getElementById('diag-list');
   if(!box) return;
@@ -2106,15 +2116,25 @@ function renderDiagnostics(){
         <div style="display:flex;align-items:center">
         <div class="diag-head" data-open="${d.id}" style="flex:1">
           <span class="diag-when">${quand}</span>
-          <span class="diag-meta">${d.callerName || 'Visiteur'} · ${mn}${d.kwDetecte ? ' · ' + d.kwDetecte + ' kW' : ''}</span>
+          <span class="diag-meta">${esc(d.client || d.callerName || 'Visiteur')} · ${mn}${d.kwDetecte ? ' · ' + d.kwDetecte + ' kW' : ''}${d.videoFichier ? ' · vidéo' : ''}</span>
           <span class="diag-tags">${tags}</span>
           <i class="fas fa-chevron-down"></i>
         </div>
         <button class="diag-del" data-suppr="${d.id}" title="Supprimer"><i class="fas fa-trash"></i></button>
         </div>
         <div class="diag-body" id="diag-${d.id}">
+          <div class="diag-edit">
+            <label>Client / chantier</label>
+            <input type="text" data-client="${d.id}" value="${esc(d.client || '')}" placeholder="Nom du client, adresse, référence du chantier">
+            <label>Note sur cet appel</label>
+            <textarea data-dnote="${d.id}" placeholder="Ce qui a été annoncé, le rendez-vous pris, le montant…">${esc(d.note || '')}</textarea>
+            ${d.videoFichier ? `<p class="diag-video"><i class="fas fa-film"></i> ${esc(d.videoFichier)}</p>` : ''}
+            <div class="diag-edit-actions">
+              <button class="btn small" data-save="${d.id}"><i class="fas fa-floppy-disk"></i> Enregistrer</button>
+              <button class="btn ghost small" data-copy="${d.id}"><i class="fas fa-copy"></i> Copier la transcription</button>
+            </div>
+          </div>
           <p>${(d.transcript || '').replace(/</g,'&lt;')}</p>
-          <button class="btn ghost small" data-copy="${d.id}"><i class="fas fa-copy"></i> Copier</button>
         </div>
       </div>`;
   }).join('');
@@ -2132,6 +2152,21 @@ function renderDiagnostics(){
       if(!confirm("Supprimer définitivement cette transcription ?")) return;
       try{ await deleteDoc(doc(db, "diagnostics", b.dataset.suppr)); toast("Transcription supprimée."); }
       catch(e){ toast("Suppression refusée : " + (e.code || e.message)); }
+    });
+  });
+  box.querySelectorAll('[data-save]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const id = b.dataset.save;
+      const ci = box.querySelector(`[data-client="${id}"]`);
+      const ni = box.querySelector(`[data-dnote="${id}"]`);
+      try{
+        await updateDoc(doc(db, "diagnostics", id), {
+          client: ci ? ci.value.trim() : '',
+          note:   ni ? ni.value.trim() : '',
+          modifieAtMs: Date.now()
+        });
+        toast("Appel attribué.");
+      }catch(e){ toast("Enregistrement refusé : " + (e.code || e.message)); }
     });
   });
   box.querySelectorAll('[data-copy]').forEach(b => {

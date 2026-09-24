@@ -51,6 +51,21 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .fiche .flag{background:rgba(232,119,34,.14);border:1px solid rgba(232,119,34,.42);border-radius:6px;padding:8px 11px;font-size:.78rem;color:#ffd7ae}
 .fiche .tarif{background:rgba(255,255,255,.07);border-radius:6px;padding:8px 11px;font-size:.78rem}
 .empty-txt{color:rgba(255,255,255,.45);font-size:.85rem;padding:12px 0}
+
+/* bloc "ajouter au devis" : toutes les prestations chiffrees, en petits boutons */
+.bloc{margin-bottom:16px}
+.bloc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:9px}
+.bloc-head h2{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.5);margin:0}
+.bloc-head input{flex:0 1 240px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:7px;color:#fff;font:400 .8rem 'Red Hat Display',sans-serif;padding:6px 10px}
+.bloc-head input:focus{outline:none;border-color:var(--blue-light)}
+#px-boutons{max-height:230px;overflow-y:auto;background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.px-fam{font-size:.6rem;text-transform:uppercase;letter-spacing:.11em;color:var(--orange);margin:12px 0 6px}
+.px-fam:first-child{margin-top:0}
+.px-grille{display:flex;flex-wrap:wrap;gap:6px}
+.px-b{display:inline-flex;align-items:baseline;gap:7px;background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.85);border-radius:7px;padding:5px 10px;font:400 .74rem 'Red Hat Display',sans-serif;cursor:pointer;text-align:left;transition:border-color .12s,background .12s}
+.px-b:hover{border-color:var(--orange);color:#fff}
+.px-b em{color:#4CE28C;font-style:normal;font-weight:700;white-space:nowrap}
+.px-b.ok{background:rgba(76,226,140,.18);border-color:rgba(76,226,140,.6)}
 .pxl{margin-top:2px}
 .pxr{display:flex;justify-content:space-between;gap:10px;border-top:1px solid rgba(255,255,255,.08);padding:7px 0;font-size:.83rem}
 .pxr:first-child{border-top:none}
@@ -161,9 +176,18 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <button class="btn ghost small" id="btn-reset"><i class="fas fa-rotate-left"></i> Réinitialiser pour l'appel suivant</button>
     </div>
 
+    <div class="bloc" id="bloc-tarifs">
+      <div class="bloc-head">
+        <h2>Ajouter au devis</h2>
+        <input type="search" id="px-filtre" placeholder="Filtrer une prestation…" autocomplete="off">
+      </div>
+      <div id="px-boutons"><p class="empty-txt">Chargement des tarifs…</p></div>
+    </div>
+
     <div class="sujets" id="sujets"></div>
     <div class="duo">
       <div>
+        <div class="bloc-head"><h2>Éléments de langage</h2></div>
         <div class="tabs" id="tabs"></div>
         <div id="body"></div>
         <div class="tr" id="tr"></div>
@@ -588,6 +612,49 @@ function render(){
   $('body').innerHTML = active ? ficheHtml(active)
     : `<div class="fiche"><p class="empty-txt">Aucun cas détecté. Lance le micro, ou choisis une fiche ci-dessus.</p></div>`;
 }
+function renderPrixBoutons(){
+  const box = $('px-boutons');
+  if(!box) return;
+  const q = strip(($('px-filtre') && $('px-filtre').value) || '');
+  const actifs = prix.filter(p => p.actif !== false && p.designation
+                  && (!q || strip(p.designation + ' ' + (p.famille || '')).includes(q)));
+  if(!actifs.length){
+    box.innerHTML = prix.length
+      ? '<p class="empty-txt">Aucune prestation ne correspond.</p>'
+      : '<p class="empty-txt">Aucun tarif enregistré. Ajoute-les depuis la console centrale, onglet Tarifs.</p>';
+    return;
+  }
+  const parFam = new Map();
+  actifs.forEach(p => {
+    const f = p.famille || 'divers';
+    if(!parFam.has(f)) parFam.set(f, []);
+    parFam.get(f).push(p);
+  });
+  let html = '';
+  FAMILLES.concat([{id:'divers',nom:'Divers'}]).forEach(fam => {
+    const liste = parFam.get(fam.id);
+    if(!liste || !liste.length) return;
+    parFam.delete(fam.id);
+    html += `<div class="px-fam">${esc(fam.nom)}</div><div class="px-grille">` +
+      liste.sort((a,b) => (a.prixHT||0) - (b.prixHT||0))
+           .map(p => `<button class="px-b" data-px="${esc(p.id)}">${esc(p.designation)}<em>${eur(p.prixHT)} HT</em></button>`).join('') +
+      `</div>`;
+  });
+  parFam.forEach((liste, fam) => {
+    html += `<div class="px-fam">${esc(fam)}</div><div class="px-grille">` +
+      liste.map(p => `<button class="px-b" data-px="${esc(p.id)}">${esc(p.designation)}<em>${eur(p.prixHT)} HT</em></button>`).join('') +
+      `</div>`;
+  });
+  box.innerHTML = html;
+  box.querySelectorAll('[data-px]').forEach(b => b.addEventListener('click', () => {
+    const p = prix.find(x => x.id === b.dataset.px);
+    if(!p) return;
+    devisAjouter(p.designation, p.unite, p.prixHT, p.tva);
+    b.classList.add('ok');
+    setTimeout(() => b.classList.remove('ok'), 650);
+  }));
+}
+
 function renderTr(){
   $('tr').innerHTML = (transcriptFinal||'') + (transcriptInterim?`<span class="interim"> ${transcriptInterim}</span>`:'');
   $('tr').scrollTop = $('tr').scrollHeight;
@@ -795,6 +862,7 @@ $('hist-list').addEventListener('click',(e)=>{
   if(x){ const d=histo[+x.dataset.suppr]; if(d) supprimerNote(d); }
 });
 $('btn-note-annuler').addEventListener('click',sortirEdition);
+$('px-filtre').addEventListener('input', renderPrixBoutons);
 
 /* ---------- login ---------- */
 $('btn-login').addEventListener('click', async ()=>{
@@ -832,7 +900,7 @@ function ecouterTout(){
     fiches = uniques(d.length ? d.map(x=>({...x,id:x.id||x.docId})) : FICHES_DEFAUT.slice());
     render();
   },()=>{});
-  onSnapshot(collection(db,"prix"),(s)=>{ prix=s.docs.map(x=>({id:x.id,...x.data()})); render(); },()=>{});
+  onSnapshot(collection(db,"prix"),(s)=>{ prix=s.docs.map(x=>({id:x.id,...x.data()})); render(); renderPrixBoutons(); },()=>{});
   onSnapshot(collection(db,"catalogue"),(s)=>{ catalogue=s.docs.map(x=>({id:x.id,...x.data()})); render(); },()=>{});
   onSnapshot(doc(db,"reglages","tarifs"),(s)=>{
     const d=s.data(); if(d){ ['deplacement','premiereHeure','heureSuivante'].forEach(k=>{ if(d[k]!=null) tarifs[k]=d[k]; }); }
