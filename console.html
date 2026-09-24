@@ -1283,11 +1283,17 @@ async function importerFiches(){
   const btn = document.getElementById('btn-fic-import');
   if(btn){ btn.disabled = true; btn.textContent = 'Import…'; }
   try{
-    const parId = new Map(fiches.filter(x => x.docId).map(x => [x.id, x]));
+    // on compare sur les documents bruts : leur champ "id" est l'identifiant metier
+    // (dans `fiches`, id a ete remplace par l'identifiant Firestore)
+    const parId = new Map(), parTitre = new Map();
+    (fichesBrutes || []).forEach(x => {
+      if(x.id) parId.set(x.id, x);
+      if(x.titre) parTitre.set(strip(x.titre), x);
+    });
     let i = 0, ajoutes = 0, completes = 0, ignores = 0;
     for(const f of FICHES_DEFAUT){
       i++;
-      const dejaLa = parId.get(f.id);
+      const dejaLa = parId.get(f.id) || parTitre.get(strip(f.titre));
       if(dejaLa){
         // fiche deja en base : on complete seulement les mots-cles manquants
         const actuels = (dejaLa.mots || []).map(m => strip(m));
