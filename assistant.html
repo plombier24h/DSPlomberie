@@ -52,6 +52,26 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .fiche .tarif{background:rgba(255,255,255,.07);border-radius:6px;padding:8px 11px;font-size:.78rem}
 .empty-txt{color:rgba(255,255,255,.45);font-size:.85rem;padding:12px 0}
 
+/* barre du haut + panneau outils */
+.barre-outils{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.outils-info{font-size:.76rem;color:rgba(255,255,255,.45)}
+.outils{position:fixed;inset:0;z-index:800;background:rgba(2,12,22,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:flex;flex-direction:column;padding:16px 18px 20px}
+.outils-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.outils-tete h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);margin:0}
+.outils-corps{flex:1 1 auto;overflow-y:auto;max-width:1200px;width:100%;margin:0 auto}
+
+/* dossier client */
+.dossier{margin-top:20px}
+.dossier h2{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.5);margin-bottom:10px}
+.dossier-grille{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:680px){ .dossier-grille{grid-template-columns:1fr 1fr} .dossier-grille .large{grid-column:1 / -1} }
+.dossier-grille label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);margin-bottom:4px}
+.dossier-grille input{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .9rem 'Red Hat Display',sans-serif;padding:10px 13px}
+.dossier-grille input:focus{outline:none;border-color:var(--blue-light)}
+.dossier-bar{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.dossier-aide{font-size:.76rem;color:rgba(255,255,255,.45);line-height:1.55;margin-top:8px}
+.dossier-aide b{color:#fff}
+
 /* bloc "ajouter au devis" : toutes les prestations chiffrees, en petits boutons */
 .bloc{margin-bottom:16px}
 .bloc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:9px}
@@ -99,6 +119,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .hitem[open]>summary{border-bottom:1px solid var(--line)}
 .hitem .q{font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:3px;display:flex;gap:10px;flex-wrap:wrap}
 .hitem .q .ttc{color:#4CE28C;font-weight:700}
+.hitem .q .cli-nom{color:#fff;font-weight:700;font-size:.8rem}
 .hitem .apercu{color:rgba(255,255,255,.85);line-height:1.5}
 .hitem .detail{padding:12px 14px;display:grid;gap:12px}
 .hitem .detail b{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin-bottom:4px}
@@ -169,6 +190,11 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <button class="btn ghost small" id="btn-logout"><i class="fas fa-power-off"></i></button>
     </div>
 
+    <div class="barre-outils">
+      <button class="btn ghost small" id="btn-outils"><i class="fas fa-clipboard-list"></i> Fiches &amp; devis</button>
+      <span class="outils-info" id="outils-info"></span>
+    </div>
+
     <div class="mic-box">
       <button class="mic" id="btn-mic" aria-label="Activer le micro"><i class="fas fa-microphone" id="mic-ico"></i></button>
       <div class="mic-lbl" id="mic-lbl">Appuie pour écouter l'appel</div>
@@ -176,27 +202,37 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <button class="btn ghost small" id="btn-reset"><i class="fas fa-rotate-left"></i> Réinitialiser pour l'appel suivant</button>
     </div>
 
-    <div class="bloc" id="bloc-tarifs">
-      <div class="bloc-head">
-        <h2>Ajouter au devis</h2>
-        <input type="search" id="px-filtre" placeholder="Filtrer une prestation…" autocomplete="off">
-      </div>
-      <div id="px-boutons"><p class="empty-txt">Chargement des tarifs…</p></div>
-    </div>
+    <div class="bloc-head" style="margin-top:4px"><h2>Conversation</h2></div>
+    <div class="tr" id="tr"></div>
 
-    <div class="sujets" id="sujets"></div>
-    <div class="duo">
-      <div>
-        <div class="bloc-head"><h2>Éléments de langage</h2></div>
-        <div class="tabs" id="tabs"></div>
-        <div id="body"></div>
-        <div class="tr" id="tr"></div>
+    <!-- outils repliables : tarifs, fiches, devis -->
+    <div class="outils hidden" id="outils">
+      <div class="outils-tete">
+        <h2>Fiches &amp; devis</h2>
+        <button class="btn ghost small" id="btn-outils-fermer"><i class="fas fa-xmark"></i> Fermer</button>
       </div>
-      <div class="devis">
-        <h4>Devis en préparation</h4>
-        <div class="devis-corps" id="devis-lignes"></div>
-        <div class="devis-sugg" id="devis-sugg"></div>
-        <div class="devis-total" id="devis-total"></div>
+      <div class="outils-corps">
+        <div class="bloc" id="bloc-tarifs">
+          <div class="bloc-head">
+            <h2>Ajouter au devis</h2>
+            <input type="search" id="px-filtre" placeholder="Filtrer une prestation…" autocomplete="off">
+          </div>
+          <div id="px-boutons"><p class="empty-txt">Chargement des tarifs…</p></div>
+        </div>
+        <div class="sujets" id="sujets"></div>
+        <div class="duo">
+          <div>
+            <div class="bloc-head"><h2>Éléments de langage</h2></div>
+            <div class="tabs" id="tabs"></div>
+            <div id="body"></div>
+          </div>
+          <div class="devis">
+            <h4>Devis en préparation</h4>
+            <div class="devis-corps" id="devis-lignes"></div>
+            <div class="devis-sugg" id="devis-sugg"></div>
+            <div class="devis-total" id="devis-total"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -208,6 +244,20 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <button class="btn ghost small hidden" id="btn-note-annuler"><i class="fas fa-xmark"></i> Annuler la modification</button>
         <span class="etat" id="note-etat"></span>
       </div>
+    </div>
+
+    <div class="dossier">
+      <h2>Dossier client</h2>
+      <div class="dossier-grille">
+        <div><label for="cli-nom">Nom du client</label><input type="text" id="cli-nom" placeholder="Mme Berger" autocomplete="off"></div>
+        <div><label for="cli-tel">Téléphone</label><input type="tel" id="cli-tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
+        <div class="large"><label for="cli-adr">Adresse du chantier</label><input type="text" id="cli-adr" placeholder="14 rue de Lyon, 75012 Paris" autocomplete="off"></div>
+      </div>
+      <div class="dossier-bar">
+        <button class="btn" id="btn-fiche"><i class="fas fa-envelope"></i> Copier la fiche et ouvrir le mail</button>
+        <span class="etat" id="fiche-etat"></span>
+      </div>
+      <p class="dossier-aide">La fiche complète est copiée dans le presse-papier et ta boîte mail s'ouvre sur <b>dsplombier@gmx.fr</b>. Colle la fiche dans le message, ajoute tes photos si tu en as, et envoie.</p>
     </div>
 
     <div class="hist">
@@ -571,6 +621,7 @@ function renderDevis(){
   }));
 
   const t = devisTotaux();
+  if(typeof majInfoOutils === 'function') majInfoOutils();
   const tot = document.getElementById('devis-total');
   if(tot) tot.innerHTML =
     `<div><span>Total HT</span><b>${eur(t.ht)}</b></div>` +
@@ -735,7 +786,11 @@ async function enregistrer(manuel){
   const ranked=scoreFiches(texte);
   try{
     await addDoc(collection(db,"diagnostics"),{
-      source:'poste', auteur:monEmail, callerName:'Appel téléphone',
+      source:'poste', auteur:monEmail,
+      callerName: ($('cli-nom').value.trim() || 'Appel téléphone'),
+      client: $('cli-nom').value.trim(),
+      clientTel: $('cli-tel').value.trim(),
+      clientAdresse: $('cli-adr').value.trim(),
       transcript:texte, note:note,
       fichesDetectees: ranked.slice(0,3).map(r=>r.f.id),
       sujets:[...sujets],
@@ -763,7 +818,9 @@ function reinitialiser(){
   transcriptFinal=''; transcriptInterim=''; kwDetecte=null; ficheManuelle=null; debutMs=null;
   sujets=[]; sujetsEcartes=new Set(); devisInit();
   $('note').value=''; $('note-etat').textContent='';
-  renderTr(); render(); renderSujets(); renderDevis();
+  ['cli-nom','cli-tel','cli-adr'].forEach(id => { const e = $(id); if(e) e.value = ''; });
+  $('fiche-etat').textContent = '';
+  renderTr(); render(); renderSujets(); renderDevis(); majInfoOutils();
   toast("Prêt pour l'appel suivant.");
 }
 function arreterEcouteSansSauver(){
@@ -830,10 +887,11 @@ function renderHisto(){
     const lignes=(d.devis||[]).map(x=>`<div class="dvl"><span>${esc(x.designation)} <span style="opacity:.5">x${x.qte||1}</span></span><span>${eur((x.prixHT||0)*(x.qte||1))} HT</span></div>`).join('');
     return `<details class="hitem" data-i="${i}">
       <summary>
-        <div class="q"><span>${dateFr(d.endedAtMs)}</span>${duree?`<span>${duree}</span>`:''}${titres.length?`<span>${esc(titres.join(' · '))}</span>`:''}${d.totalTTC?`<span class="ttc">${eur(d.totalTTC)} TTC</span>`:''}</div>
+        <div class="q">${d.client?`<span class="cli-nom">${esc(d.client)}</span>`:''}<span>${dateFr(d.endedAtMs)}</span>${duree?`<span>${duree}</span>`:''}${titres.length?`<span>${esc(titres.join(' · '))}</span>`:''}${d.totalTTC?`<span class="ttc">${eur(d.totalTTC)} TTC</span>`:''}</div>
         <div class="apercu">${esc(apercu)}${(d.note||d.transcript||'').length>150?'…':''}</div>
       </summary>
       <div class="detail">
+        ${(d.clientTel||d.clientAdresse)?`<div><b>Coordonnées</b><p>${esc([d.clientTel,d.clientAdresse].filter(Boolean).join(' · '))}</p></div>`:''}
         ${d.note?`<div><b>Ma note</b><p>${esc(d.note)}</p></div>`:''}
         ${lignes?`<div><b>Devis préparé</b>${lignes}<div class="dvl"><span>Total TTC</span><span style="color:#4CE28C;font-weight:700">${eur(d.totalTTC||0)}</span></div></div>`:''}
         ${d.transcript?`<div><b>Transcription</b><p class="brut">${esc(d.transcript)}</p></div>`:''}
@@ -863,6 +921,81 @@ $('hist-list').addEventListener('click',(e)=>{
 });
 $('btn-note-annuler').addEventListener('click',sortirEdition);
 $('px-filtre').addEventListener('input', renderPrixBoutons);
+
+/* ---------- panneau fiches & devis ---------- */
+function majInfoOutils(){
+  const n = devis.length, t = devisTotaux();
+  const el = $('outils-info');
+  if(el) el.textContent = n ? `${n} ligne${n > 1 ? 's' : ''} au devis · ${eur(t.ttc)} TTC` : '';
+}
+$('btn-outils').addEventListener('click', () => {
+  $('outils').classList.remove('hidden');
+  renderPrixBoutons();
+});
+$('btn-outils-fermer').addEventListener('click', () => {
+  $('outils').classList.add('hidden');
+  majInfoOutils();
+});
+
+/* ---------- fiche a coller dans le mail ---------- */
+function ficheTexte(){
+  const nom = $('cli-nom').value.trim();
+  const tel = $('cli-tel').value.trim();
+  const adr = $('cli-adr').value.trim();
+  const note = $('note').value.trim();
+  const texte = (transcriptFinal || '').trim();
+  const t = devisTotaux();
+  const l = [];
+  l.push('FICHE D\'APPEL — DS PLOMBERIE');
+  l.push('Reçu par : ' + monEmail);
+  l.push('Date : ' + new Date().toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}));
+  l.push('');
+  l.push('CLIENT');
+  l.push('Nom : ' + (nom || '—'));
+  l.push('Téléphone : ' + (tel || '—'));
+  l.push('Adresse du chantier : ' + (adr || '—'));
+  if(sujets.length){
+    const titres = sujets.map(id => { const f = fiches.find(x => x.id === id); return f ? f.titre : id; });
+    l.push('');
+    l.push('SUJETS IDENTIFIÉS');
+    titres.forEach(x => l.push('- ' + x));
+  }
+  if(note){ l.push(''); l.push('NOTES'); l.push(note); }
+  if(texte){ l.push(''); l.push('CONVERSATION'); l.push(texte); }
+  if(devis.length){
+    l.push('');
+    l.push('ESTIMATION ÉTABLIE PENDANT L\'APPEL');
+    devis.forEach(x => l.push('- ' + x.des + '  x' + x.qte + '  ' + eur(x.pu) + ' HT  (TVA ' + x.tva + ' %)'));
+    l.push('Total HT : ' + eur(t.ht));
+    l.push('Total TTC : ' + eur(t.ttc));
+  }
+  l.push('');
+  l.push('Pièces jointes : ajoute ici les photos ou vidéos reçues du client.');
+  return l.join('\n');
+}
+function objetMail(){
+  const nom = $('cli-nom').value.trim() || 'client à identifier';
+  const d = new Date(), p2 = (n) => String(n).padStart(2, '0');
+  return `Fiche appel — ${nom} — ${p2(d.getDate())}/${p2(d.getMonth()+1)} ${p2(d.getHours())}h${p2(d.getMinutes())}`;
+}
+$('btn-fiche').addEventListener('click', async () => {
+  const txt = ficheTexte();
+  let copie = false;
+  try{ await navigator.clipboard.writeText(txt); copie = true; }
+  catch(e){
+    const z = document.createElement('textarea');
+    z.value = txt; z.style.position = 'fixed'; z.style.opacity = '0';
+    document.body.appendChild(z); z.select();
+    try{ copie = document.execCommand('copy'); }catch(e2){}
+    z.remove();
+  }
+  $('fiche-etat').textContent = copie
+    ? 'Fiche copiée — colle-la dans le message'
+    : 'Copie impossible : sélectionne le texte à la main';
+  if(copie) toast("Fiche copiée. Colle-la dans le mail.");
+  else toast("Copie refusée par le navigateur.");
+  window.location.href = 'mailto:dsplombier@gmx.fr?subject=' + encodeURIComponent(objetMail());
+});
 
 /* ---------- login ---------- */
 $('btn-login').addEventListener('click', async ()=>{
