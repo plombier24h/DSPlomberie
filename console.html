@@ -1283,11 +1283,21 @@ async function importerFiches(){
   const btn = document.getElementById('btn-fic-import');
   if(btn){ btn.disabled = true; btn.textContent = 'Import…'; }
   try{
-    const existants = new Set(fiches.filter(x => x.docId).map(x => x.id));
-    let i = 0, ajoutes = 0, ignores = 0;
+    const parId = new Map(fiches.filter(x => x.docId).map(x => [x.id, x]));
+    let i = 0, ajoutes = 0, completes = 0, ignores = 0;
     for(const f of FICHES_DEFAUT){
       i++;
-      if(existants.has(f.id)){ ignores++; continue; }
+      const dejaLa = parId.get(f.id);
+      if(dejaLa){
+        // fiche deja en base : on complete seulement les mots-cles manquants
+        const actuels = (dejaLa.mots || []).map(m => strip(m));
+        const manquants = (f.mots || []).filter(m => !actuels.includes(strip(m)));
+        if(manquants.length){
+          await updateDoc(doc(db, "fiches", dejaLa.docId), { mots: [...(dejaLa.mots || []), ...manquants] });
+          completes++;
+        }else ignores++;
+        continue;
+      }
       ajoutes++;
       await addDoc(collection(db, "fiches"), {
         id: f.id, court: f.court, titre: f.titre, mots: f.mots, famille: f.famille || '',
@@ -1296,7 +1306,7 @@ async function importerFiches(){
         catalogue: !!f.catalogue, ordre: i, createdAt: serverTimestamp()
       });
     }
-    toast(ignores ? `${ajoutes} fiche(s) ajoutée(s), ${ignores} déjà présente(s).` : `${ajoutes} fiche(s) importée(s).`);
+    toast(`${ajoutes} fiche(s) ajoutée(s), ${completes} complétée(s) en mots-clés, ${ignores} déjà à jour.`);
   }catch(e){ toast("Import refusé : " + (e.code || e.message)); }
   if(btn){ btn.disabled = false; btn.textContent = "Importer les fiches actuelles"; }
 }
