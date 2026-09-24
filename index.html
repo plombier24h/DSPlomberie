@@ -682,6 +682,47 @@ let currentUser = null;
 let deskOnline = false;
 let currentCallDocId = null, currentCallUnsub = null;
 let peerConnection = null, localStream = null, remoteStream = null, webrtcUnsubs = [];
+
+/* ---------- transcription cote visiteur ----------
+   Le micro de la console n'entend pas le client : l'annulation d'echo de Chrome
+   supprime du micro tout ce qui sort des haut-parleurs. Chacun transcrit donc son
+   propre micro et depose le texte dans la sous-collection "paroles" de l'appel. */
+let recogVisiteur = null, wantRecVisiteur = false, recogVisiteurWatch = null;
+function demarrerTranscriptionVisiteur(callId){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(currentCallDocId) updateDoc(doc(db, "calls", currentCallDocId), { transcriptionClient: !!SR }).catch(()=>{});
+  if(!SR || recogVisiteur) return;
+  try{
+    wantRecVisiteur = true;
+    recogVisiteur = new SR();
+    recogVisiteur.lang = 'fr-FR';
+    recogVisiteur.continuous = true;
+    recogVisiteur.interimResults = false;
+    recogVisiteur.onresult = (ev) => {
+      for(let i = ev.resultIndex; i < ev.results.length; i++){
+        const r = ev.results[i];
+        if(!r.isFinal) continue;
+        const texte = (r[0].transcript || '').trim();
+        if(!texte) continue;
+        addDoc(collection(db, "calls", callId, "paroles"),
+               { qui: 'client', texte: texte, ms: Date.now(), at: serverTimestamp() }).catch(()=>{});
+      }
+    };
+    recogVisiteur.onerror = () => {};
+    recogVisiteur.onend = () => { if(wantRecVisiteur && recogVisiteur){ try{ recogVisiteur.start(); }catch(e){} } };
+    try{ recogVisiteur.start(); }catch(e){}
+    if(recogVisiteurWatch) clearInterval(recogVisiteurWatch);
+    recogVisiteurWatch = setInterval(() => {
+      if(!wantRecVisiteur || !recogVisiteur) return;
+      try{ recogVisiteur.start(); }catch(e){}
+    }, 4000);
+  }catch(e){ recogVisiteur = null; }
+}
+function arreterTranscriptionVisiteur(){
+  wantRecVisiteur = false;
+  if(recogVisiteurWatch){ clearInterval(recogVisiteurWatch); recogVisiteurWatch = null; }
+  if(recogVisiteur){ try{ recogVisiteur.abort(); }catch(e){} recogVisiteur = null; }
+}
 let ringTimeout = null, ringAudioCtx = null, ringInterval = null;
 let localAudioMuted = false, currentFacingMode = 'environment';
 
@@ -828,6 +869,7 @@ async function connectCall(){
   }
   videosBox.classList.remove('hidden');
   document.getElementById('local-video').srcObject = localStream;
+  if(currentCallDocId) demarrerTranscriptionVisiteur(currentCallDocId);
   setupControls();
   document.getElementById('call-status').textContent = "Connexion...";
 
@@ -934,6 +976,7 @@ function setupControls(){
 
 /* ---------- raccrocher / nettoyage ---------- */
 function endCall(clearRoot = true, updateStatus = true){
+  arreterTranscriptionVisiteur();
   clearTimeout(ringTimeout); stopRingtone();
   if(peerConnection){ try{ peerConnection.close(); }catch(e){} peerConnection = null; }
   if(localStream){ localStream.getTracks().forEach(t => t.stop()); localStream = null; }

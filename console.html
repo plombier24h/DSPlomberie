@@ -89,6 +89,10 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .assist-empty{font-size:.83rem;color:rgba(255,255,255,.45);padding:10px 0}
 .assist-tr{flex:0 0 auto;max-height:22%;overflow-y:auto;border-top:1px solid var(--line);padding:12px 16px;font-size:.75rem;color:rgba(255,255,255,.7);line-height:1.5}
 .assist-tr .interim{color:rgba(255,255,255,.4);font-style:italic}
+.assist-tr .ln{display:block;margin-bottom:3px}
+.assist-tr .ln b{font-size:.64rem;text-transform:uppercase;letter-spacing:.08em;margin-right:5px}
+.assist-tr .ln b.moi{color:var(--orange)}
+.assist-tr .ln b.cli{color:#7FD1FF}
 @media(max-width:759px){
   .assist{left:0;right:0;top:auto;bottom:0;width:auto;height:74vh;border-right:none;border-top:1px solid var(--line);border-radius:16px 16px 0 0;transform:translateY(102%)}
   .assist.open{transform:translateY(0)}
@@ -1505,6 +1509,17 @@ function panneauAssistant(titre, ouvert){
 
 let recog = null, wantRec = false, recogActif = false, recogWatch = null, micStream = null;
 let transcriptFinal = '', transcriptInterim = '';
+/* chaque phrase est horodatee et attribuee : 'moi' (micro de la console)
+   ou 'client' (transcrit par son propre appareil, via Firestore) */
+let segments = [], parolesUnsub = null, clientTranscrit = null;
+function recomposer(){
+  segments.sort((a, b) => a.t - b.t);
+  transcriptFinal = segments.map(x => x.txt).join(' ') + (segments.length ? ' ' : '');
+}
+function transcriptLisible(){
+  if(!segments.some(x => x.qui === 'client')) return (transcriptFinal || '').trim();
+  return segments.map(x => (x.qui === 'client' ? 'CLIENT : ' : 'MOI : ') + x.txt).join('\n');
+}
 let assistCallId = null, assistCallerName = '';
 let assistStartedAt = null, fichesVues = new Set(), ficheManuelle = null, kwDetecte = null;
 
@@ -1757,7 +1772,11 @@ function renderAssist(){
 function renderTranscript(){
   const tr = document.getElementById('assist-tr');
   if(!tr) return;
-  tr.innerHTML = (transcriptFinal || '') + (transcriptInterim ? `<span class="interim"> ${transcriptInterim}</span>` : '');
+  const deuxVoix = segments.some(x => x.qui === 'client');
+  tr.innerHTML = (deuxVoix
+      ? segments.map(x => `<span class="ln"><b class="${x.qui === 'client' ? 'cli' : 'moi'}">${x.qui === 'client' ? 'Client' : 'Moi'}</b> ${x.txt}</span>`).join('')
+      : (transcriptFinal || ''))
+    + (transcriptInterim ? `<span class="interim"> ${transcriptInterim}</span>` : '');
   tr.scrollTop = tr.scrollHeight;
 }
 
@@ -1767,6 +1786,8 @@ function startAssistant(callId, data){
   assistCallerName = (data && data.callerName) || 'Visiteur';
   assistStartedAt = Date.now();
   transcriptFinal = ''; transcriptInterim = ''; fichesVues = new Set();
+  segments = []; clientTranscrit = null;
+  if(parolesUnsub){ try{ parolesUnsub(); }catch(e){} parolesUnsub = null; }
   ficheManuelle = null; kwDetecte = null;
   sujets = []; sujetsEcartes = new Set(); devisInit(); dernierDiagId = null;
 
@@ -1792,6 +1813,29 @@ function startAssistant(callId, data){
   majBoutonRec();
   renderAssist(); renderTranscript(); renderSujets(); renderDevis();
 
+  // ce que le client dit, transcrit par son propre appareil
+  parolesUnsub = onSnapshot(collection(db, "calls", callId, "paroles"), (snap) => {
+    let nouveau = false;
+    snap.docChanges().forEach(c => {
+      if(c.type !== 'added') return;
+      const d = c.doc.data() || {};
+      const txt = (d.texte || '').trim();
+      if(!txt) return;
+      segments.push({ qui: 'client', t: d.ms || Date.now(), txt: txt });
+      nouveau = true;
+    });
+    if(nouveau){ recomposer(); renderTranscript(); renderAssist(); }
+  }, () => {});
+  // l'appareil du client sait-il transcrire ?
+  const lbl = document.getElementById('assist-rec-lbl');
+  const etatUnsub = onSnapshot(doc(db, "calls", callId), (snap) => {
+    const d = snap.data(); if(!d || d.transcriptionClient === undefined) return;
+    clientTranscrit = !!d.transcriptionClient;
+    const l = document.getElementById('assist-rec-lbl');
+    if(l && !clientTranscrit) l.textContent = "Assistant diagnostic — client non transcrit";
+    etatUnsub();
+  }, () => {});
+
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const dot = document.getElementById('assist-rec');
   if(!SR){
@@ -1814,8 +1858,10 @@ function startAssistant(callId, data){
     let interim = '';
     for(let i = ev.resultIndex; i < ev.results.length; i++){
       const r = ev.results[i];
-      if(r.isFinal) transcriptFinal += r[0].transcript.trim() + ' ';
-      else interim += r[0].transcript;
+      if(r.isFinal){
+        const txt = (r[0].transcript || '').trim();
+        if(txt){ segments.push({ qui: 'moi', t: Date.now(), txt: txt }); recomposer(); }
+      }else interim += r[0].transcript;
     }
     transcriptInterim = interim;
     const kw = detecterKw(fenetre());
@@ -1847,10 +1893,11 @@ function startAssistant(callId, data){
 
 async function stopAssistant(){
   wantRec = false; recogActif = false;
+  if(parolesUnsub){ try{ parolesUnsub(); }catch(e){} parolesUnsub = null; }
   if(recogWatch){ clearInterval(recogWatch); recogWatch = null; }
   if(recog){ try{ recog.abort(); }catch(e){} recog = null; }
   if(micStream){ micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-  const texte = (transcriptFinal || '').trim();
+  const texte = transcriptLisible();
   if(!assistCallId || !texte){ assistCallId = null; return; }
   const payload = {
     source: 'console',
@@ -1925,7 +1972,7 @@ async function enregistrerDevisRecap(){
         source: 'console',
         auteur: (auth.currentUser && auth.currentUser.email) || '',
         callerName: assistCallerName || 'Appel',
-        transcript: (transcriptFinal || '').trim(),
+        transcript: transcriptLisible(),
         fichesDetectees: [...fichesVues],
         kwDetecte: kwDetecte,
         startedAtMs: assistStartedAt || Date.now(),
