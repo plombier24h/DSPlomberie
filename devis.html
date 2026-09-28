@@ -424,14 +424,16 @@ forfaitaire de 40 € pour frais de recouvrement.</textarea>
     firebase.auth().onAuthStateChanged(function(user) {
         authPret = true;
         utilisateurActuel = user;
-        debloquerBoutonEnregistrer(!!user);
         const modeClient = document.documentElement.classList.contains('mode-client-attente');
+        // Une session anonyme traîne souvent sur ce domaine : elle vient de la page
+        // visio et ne vaut pas identification pour établir un devis ou une facture.
+        const identifie = !!user && !user.isAnonymous;
+        debloquerBoutonEnregistrer(identifie);
         if (!user && modeClient) {
             firebase.auth().signInAnonymously().catch(function() {});
             return;
         }
-        // Le poste doit être identifié pour créer ou relire ses documents.
-        afficherLogin(!user && !modeClient);
+        afficherLogin(!identifie && !modeClient);
     });
 
     // Filet de sécurité : si Firebase ne répond jamais en 5 secondes,
