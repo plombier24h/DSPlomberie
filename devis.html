@@ -1186,12 +1186,14 @@ function valeursParDefautEntreprise() {
 }
 
 // Reprise d'un devis préparé pendant l'appel (console ou poste assistant).
-const CLE_TRANSFERT = 'ds-devis-transfert';
 function importerDevisDepuisConsole() {
+    // clé écrite en clair : cette fonction est appelée avant la fin du script,
+    // une constante déclarée plus bas ne serait pas encore initialisée.
     let data = null;
-    try { data = JSON.parse(localStorage.getItem(CLE_TRANSFERT) || 'null'); } catch (e) { return; }
+    try { data = JSON.parse(localStorage.getItem('ds-devis-transfert') || 'null'); }
+    catch (e) { console.warn('Transfert illisible', e); return; }
     if (!data) return;
-    localStorage.removeItem(CLE_TRANSFERT);
+    localStorage.removeItem('ds-devis-transfert');
 
     choisirTypeDocument('DEVIS');
 
