@@ -1194,8 +1194,10 @@ function renderSuivi(){
 
   tbl.innerHTML = entete + (lignes || '<tr><td colspan="9" style="padding:16px;color:rgba(255,255,255,.45)">Aucun client. Clique sur « Nouveau client ».</td></tr>');
 
-  tbl.querySelectorAll('textarea').forEach(t => { t.style.height='auto'; t.style.height=t.scrollHeight+'px';
-      t.addEventListener('input', () => { t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }); });
+  const ajuster = () => tbl.querySelectorAll('textarea').forEach(t => { t.style.height = 'auto'; t.style.height = Math.max(38, t.scrollHeight) + 'px'; });
+  tbl.querySelectorAll('textarea').forEach(t => t.addEventListener('input', ajuster));
+  // le panneau peut être encore masqué au moment du rendu : on mesure à l'affichage
+  ajuster(); requestAnimationFrame(ajuster); setTimeout(ajuster, 120);
 
   tbl.querySelectorAll('[data-ch]').forEach(el => {
     el.addEventListener('focus', () => { el.dataset.avant = el.value; });
