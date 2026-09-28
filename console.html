@@ -293,6 +293,27 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .px-b em{color:#4CE28C;font-style:normal;font-weight:700;white-space:nowrap}
 .px-b.ok{background:rgba(76,226,140,.18);border-color:rgba(76,226,140,.6)}
 .px-vide{color:rgba(255,255,255,.45);font-size:.78rem;padding:6px 0;margin:0}
+.ct-form{background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.ct-grille{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:720px){ .ct-grille{grid-template-columns:1fr 1fr} .ct-grille .large{grid-column:1 / -1} }
+.ct-grille label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);margin-bottom:4px}
+.ct-grille input,.ct-grille textarea{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .9rem 'Red Hat Display',sans-serif;padding:10px 13px;resize:vertical}
+.ct-grille input:focus,.ct-grille textarea:focus{outline:none;border-color:var(--blue-light)}
+.ct-bar{display:flex;align-items:center;gap:12px;margin-top:13px;flex-wrap:wrap}
+.ct-etat{font-size:.78rem;color:rgba(255,255,255,.45)}
+#ct-recherche{flex:1 1 260px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .88rem 'Red Hat Display',sans-serif;padding:9px 13px}
+#ct-recherche:focus{outline:none;border-color:var(--orange)}
+.ct-nb{font-size:.78rem;color:rgba(255,255,255,.4);margin:2px 0 10px}
+.ct-c{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:9px}
+.ct-c-tete{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ct-c-nom{font-weight:900;font-size:.98rem}
+.ct-c-l{font-size:.82rem;color:rgba(255,255,255,.7);margin-top:4px}
+.ct-c-l i{color:var(--orange);width:15px;font-size:.76rem}
+.ct-c-notes{font-size:.8rem;color:rgba(255,255,255,.55);margin-top:6px;white-space:pre-wrap}
+.ct-c-act{display:flex;gap:8px;margin-top:10px}
+.ct-c-act button{background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.7);border-radius:7px;padding:5px 11px;font:600 .74rem 'Red Hat Display',sans-serif;cursor:pointer}
+.ct-c-act button:hover{border-color:var(--orange);color:#fff}
+.ct-c-act .sup:hover{border-color:#FF6B6B;color:#FF6B6B}
 .devis-pied .btn{width:100%;justify-content:center}
 
 /* recapitulatif garde a l'ecran apres le raccrochage */
@@ -344,6 +365,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <button id="tab-tarifs">Tarifs</button>
       <button id="tab-fiches">Fiches</button>
       <button id="tab-diagnostics">Diagnostics</button>
+      <button id="tab-contacts">Contacts</button>
       <button id="tab-outil-devis">Fiches &amp; devis</button>
       <button id="tab-devis" onclick="location.href='devis.html'">Devis &amp; factures</button>
     </div>
@@ -441,6 +463,28 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <button class="btn ghost small" id="btn-diag-purge"><i class="fas fa-broom"></i> Vider les plus de 30 jours</button>
       </div>
       <div id="diag-list"></div>
+    </div>
+
+    <div id="pan-contacts" class="hidden">
+      <div class="ct-form" id="ct-form">
+        <div class="ct-grille">
+          <div class="f"><label>Nom du client</label><input type="text" id="ct-nom" placeholder="Mme Berger" autocomplete="off"></div>
+          <div class="f"><label>Téléphone</label><input type="tel" id="ct-tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
+          <div class="f"><label>Email</label><input type="email" id="ct-mail" placeholder="client@exemple.fr" autocomplete="off"></div>
+          <div class="f large"><label>Adresse</label><input type="text" id="ct-adr" placeholder="14 rue de Lyon, 75012 Paris" autocomplete="off"></div>
+          <div class="f large"><label>Notes</label><textarea id="ct-notes" rows="2" placeholder="Code d'accès, étage, historique…"></textarea></div>
+        </div>
+        <div class="ct-bar">
+          <button class="btn small" id="btn-ct-save"><i class="fas fa-floppy-disk"></i> Enregistrer le contact</button>
+          <button class="btn ghost small hidden" id="btn-ct-annuler"><i class="fas fa-xmark"></i> Annuler</button>
+          <span class="ct-etat" id="ct-etat"></span>
+        </div>
+      </div>
+      <div class="cat-actions">
+        <input type="search" id="ct-recherche" placeholder="Rechercher un client — nom, téléphone, adresse…" autocomplete="off">
+      </div>
+      <p class="ct-nb" id="ct-nb"></p>
+      <div id="ct-list"></div>
     </div>
   </section>
 </div>
@@ -638,6 +682,7 @@ onAuthStateChanged(auth, (user) => {
     ecouterTarifs();
     ecouterPrix();
     ecouterCoefs();
+    ecouterContacts();
   } else {
     $('view-desk').classList.add('hidden');
     $('view-login').classList.remove('hidden');
@@ -2352,6 +2397,139 @@ function renderDiagnostics(){
   });
 }
 
+/* =========================================================
+   CONTACTS — fiches clients partagées par la console,
+   la page assistant et la page devis & factures.
+   ========================================================= */
+let contacts = [], contactsUnsub = null, contactEnEdition = null;
+
+function ecouterContacts(){
+  if(contactsUnsub) return;
+  contactsUnsub = onSnapshot(collection(db, "clients"), (snap) => {
+    contacts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    contacts.sort((a, b) => strip(a.nom || '').localeCompare(strip(b.nom || '')));
+    renderContacts();
+  }, (e) => { const l = document.getElementById('ct-list'); if(l) l.innerHTML = '<p class="px-vide">Lecture refusée : ' + (e.code || e.message) + '</p>'; });
+}
+
+function renderContacts(){
+  const box = document.getElementById('ct-list');
+  if(!box) return;
+  const champ = document.getElementById('ct-recherche');
+  const q = strip((champ && champ.value) || '');
+  const liste = contacts.filter(c => !q ||
+      strip([c.nom, c.tel, c.email, c.adresse, c.notes].join(' ')).includes(q));
+  const nb = document.getElementById('ct-nb');
+  if(nb) nb.textContent = contacts.length
+      ? (liste.length === contacts.length
+          ? contacts.length + ' contact' + (contacts.length > 1 ? 's' : '')
+          : liste.length + ' sur ' + contacts.length)
+      : '';
+  if(!liste.length){
+    box.innerHTML = contacts.length
+      ? '<p class="px-vide">Aucun contact ne correspond.</p>'
+      : '<p class="px-vide">Aucun contact pour l\'instant. Ils se créent aussi tout seuls quand un dossier client est enregistré depuis la console ou la page assistant.</p>';
+    return;
+  }
+  box.innerHTML = liste.map(c => `
+    <div class="ct-c">
+      <div class="ct-c-tete"><span class="ct-c-nom">${esc(c.nom || '(sans nom)')}</span></div>
+      ${c.tel     ? `<div class="ct-c-l"><i class="fas fa-phone"></i> ${esc(c.tel)}</div>` : ''}
+      ${c.email   ? `<div class="ct-c-l"><i class="fas fa-envelope"></i> ${esc(c.email)}</div>` : ''}
+      ${c.adresse ? `<div class="ct-c-l"><i class="fas fa-location-dot"></i> ${esc(c.adresse)}</div>` : ''}
+      ${c.notes   ? `<div class="ct-c-notes">${esc(c.notes)}</div>` : ''}
+      <div class="ct-c-act">
+        <button data-ct-mod="${esc(c.id)}"><i class="fas fa-pen"></i> Modifier</button>
+        <button data-ct-devis="${esc(c.id)}"><i class="fas fa-file-invoice"></i> Faire un devis</button>
+        <button class="sup" data-ct-sup="${esc(c.id)}"><i class="fas fa-trash"></i> Supprimer</button>
+      </div>
+    </div>`).join('');
+
+  box.querySelectorAll('[data-ct-mod]').forEach(b => b.addEventListener('click', () => editerContact(b.dataset.ctMod)));
+  box.querySelectorAll('[data-ct-sup]').forEach(b => b.addEventListener('click', () => supprimerContact(b.dataset.ctSup)));
+  box.querySelectorAll('[data-ct-devis]').forEach(b => b.addEventListener('click', () => devisPourContact(b.dataset.ctDevis)));
+}
+
+function editerContact(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  contactEnEdition = id;
+  document.getElementById('ct-nom').value   = c.nom || '';
+  document.getElementById('ct-tel').value   = c.tel || '';
+  document.getElementById('ct-mail').value  = c.email || '';
+  document.getElementById('ct-adr').value   = c.adresse || '';
+  document.getElementById('ct-notes').value = c.notes || '';
+  document.getElementById('btn-ct-save').innerHTML = '<i class="fas fa-check"></i> Valider la modification';
+  document.getElementById('btn-ct-annuler').classList.remove('hidden');
+  document.getElementById('ct-etat').textContent = 'Modification de ' + (c.nom || 'ce contact');
+  document.getElementById('ct-nom').focus();
+  document.getElementById('ct-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function sortirEditionContact(){
+  contactEnEdition = null;
+  ['ct-nom','ct-tel','ct-mail','ct-adr','ct-notes'].forEach(i => { const e = document.getElementById(i); if(e) e.value = ''; });
+  document.getElementById('btn-ct-save').innerHTML = '<i class="fas fa-floppy-disk"></i> Enregistrer le contact';
+  document.getElementById('btn-ct-annuler').classList.add('hidden');
+  document.getElementById('ct-etat').textContent = '';
+}
+
+async function enregistrerContact(){
+  const nom = document.getElementById('ct-nom').value.trim();
+  if(!nom){ toast("Le nom est obligatoire."); return; }
+  const donnees = {
+    nom: nom,
+    tel: document.getElementById('ct-tel').value.trim(),
+    email: document.getElementById('ct-mail').value.trim(),
+    adresse: document.getElementById('ct-adr').value.trim(),
+    notes: document.getElementById('ct-notes').value.trim(),
+    majAtMs: Date.now()
+  };
+  try{
+    if(contactEnEdition){
+      await updateDoc(doc(db, "clients", contactEnEdition), donnees);
+      toast("Contact modifié.");
+    }else{
+      await addDoc(collection(db, "clients"), { ...donnees, creeAtMs: Date.now(), auteur: (auth.currentUser && auth.currentUser.email) || '' });
+      toast("Contact enregistré.");
+    }
+    sortirEditionContact();
+  }catch(e){ toast("Enregistrement refusé : " + (e.code || e.message)); }
+}
+
+async function supprimerContact(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  if(!confirm('Supprimer définitivement le contact ' + (c.nom || '') + ' ?')) return;
+  try{
+    await deleteDoc(doc(db, "clients", id));
+    if(contactEnEdition === id) sortirEditionContact();
+    toast("Contact supprimé.");
+  }catch(e){ toast("Suppression refusée : " + (e.code || e.message)); }
+}
+
+function devisPourContact(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  const data = { client: c.nom || '', tel: c.tel || '', email: c.email || '', adresse: c.adresse || '', projet: '', lignes: [] };
+  try{ localStorage.setItem('ds-devis-transfert', JSON.stringify(data)); }
+  catch(e){ toast("Transfert impossible : " + e.message); return; }
+  window.open('devis.html', '_blank', 'noopener');
+}
+
+// Création ou mise à jour silencieuse d'un contact depuis un dossier client.
+async function majContactDepuisDossier(infos){
+  const nom = (infos && infos.nom || '').trim();
+  if(!nom) return;
+  const existant = contacts.find(c => strip(c.nom || '') === strip(nom));
+  const donnees = { nom: nom, majAtMs: Date.now() };
+  ['tel','email','adresse'].forEach(k => { if(infos[k]) donnees[k] = infos[k].trim(); });
+  try{
+    if(existant) await updateDoc(doc(db, "clients", existant.id), donnees);
+    else await addDoc(collection(db, "clients"), { ...donnees, notes: '', creeAtMs: Date.now(), auteur: (auth.currentUser && auth.currentUser.email) || '' });
+  }catch(e){ /* le contact n'est qu'un confort : on n'interrompt jamais l'appel pour ça */ }
+}
+
 /* ---------- catalogue de prestations cliquables dans le panneau devis ---------- */
 function renderPrixBoutons(){
   const box = document.getElementById('px-boutons');
@@ -2421,7 +2599,7 @@ function publierDevis(){
 
 /* ---------- onglets de la console ---------- */
 function initOnglets(){
-  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-tarifs':'pan-tarifs', 'tab-fiches':'pan-fiches', 'tab-diagnostics':'pan-diagnostics' };
+  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-tarifs':'pan-tarifs', 'tab-fiches':'pan-fiches', 'tab-diagnostics':'pan-diagnostics', 'tab-contacts':'pan-contacts' };
   Object.keys(map).forEach(t => {
     const btn = document.getElementById(t);
     if(!btn) return;
@@ -2432,6 +2610,12 @@ function initOnglets(){
       });
     });
   });
+  const cs = document.getElementById('btn-ct-save');
+  if(cs) cs.addEventListener('click', enregistrerContact);
+  const ca = document.getElementById('btn-ct-annuler');
+  if(ca) ca.addEventListener('click', sortirEditionContact);
+  const cr = document.getElementById('ct-recherche');
+  if(cr) cr.addEventListener('input', renderContacts);
   const od = document.getElementById('tab-outil-devis');
   if(od) od.addEventListener('click', ouvrirModeDevis);
   const imp = document.getElementById('btn-cat-import');

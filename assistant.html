@@ -69,6 +69,12 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .dossier-grille label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);margin-bottom:4px}
 .dossier-grille input{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .9rem 'Red Hat Display',sans-serif;padding:10px 13px}
 .dossier-grille input:focus{outline:none;border-color:var(--blue-light)}
+.cli-cherche{position:relative}
+.cli-sugg{position:absolute;z-index:40;left:0;right:0;top:100%;margin-top:4px;background:#0c2033;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.45);max-height:230px;overflow-y:auto}
+.cli-sugg button{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.06);color:#fff;padding:9px 13px;font:400 .86rem 'Red Hat Display',sans-serif;cursor:pointer}
+.cli-sugg button:last-child{border-bottom:none}
+.cli-sugg button:hover{background:rgba(232,119,34,.16)}
+.cli-sugg .s2{display:block;font-size:.74rem;color:rgba(255,255,255,.5);margin-top:2px}
 .dossier-bar{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
 .dossier-aide{font-size:.76rem;color:rgba(255,255,255,.45);line-height:1.55;margin-top:8px}
 .dossier-aide b{color:#fff}
@@ -288,7 +294,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
     <div class="dossier">
       <h2>Dossier client</h2>
       <div class="dossier-grille">
-        <div><label for="cli-nom">Nom du client</label><input type="text" id="cli-nom" placeholder="Mme Berger" autocomplete="off"></div>
+        <div class="cli-cherche"><label for="cli-nom">Nom du client</label><input type="text" id="cli-nom" placeholder="Mme Berger" autocomplete="off"><div class="cli-sugg hidden" id="cli-sugg"></div></div>
         <div><label for="cli-tel">Téléphone</label><input type="tel" id="cli-tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
         <div><label for="cli-mail">Email</label><input type="email" id="cli-mail" placeholder="client@exemple.fr" autocomplete="off" inputmode="email"></div>
         <div class="large"><label for="cli-adr">Adresse du chantier</label><input type="text" id="cli-adr" placeholder="14 rue de Lyon, 75012 Paris" autocomplete="off"></div>
@@ -862,6 +868,7 @@ async function enregistrer(manuel){
     });
     if(note) derniereNote = note;
     if(texte) dernierTranscript = texte;
+    majContactDepuisDossier();
     $('note-etat').textContent = 'Enregistré à ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     if(manuel){ toast("Note enregistrée."); $('note').value=''; }
   }catch(e){ toast("Enregistrement refusé : " + (e.code||e.message)); }
@@ -1104,6 +1111,63 @@ $('btn-pj-envoi').addEventListener('click', async () => {
   toast("Partage non supporté : les fichiers ont été téléchargés, joins-les à la main.");
 });
 
+/* ---------- contacts clients partages ---------- */
+let contacts = [];
+function ecouterContacts(){
+  onSnapshot(collection(db,"clients"), (s) => {
+    contacts = s.docs.map(d => ({ id:d.id, ...d.data() }));
+  }, () => {});
+}
+
+function renderSuggClients(){
+  const box = $('cli-sugg');
+  const q = strip($('cli-nom').value.trim());
+  if(!box) return;
+  if(q.length < 2){ box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const liste = contacts
+    .filter(c => strip([c.nom, c.tel, c.adresse].join(' ')).includes(q))
+    .slice(0, 6);
+  if(!liste.length){ box.classList.add('hidden'); box.innerHTML = ''; return; }
+  box.innerHTML = liste.map(c =>
+    `<button type="button" data-cli="${esc(c.id)}">${esc(c.nom || '(sans nom)')}` +
+    `<span class="s2">${esc([c.tel, c.adresse].filter(Boolean).join(' · ') || 'aucune coordonnée')}</span></button>`
+  ).join('');
+  box.classList.remove('hidden');
+  box.querySelectorAll('[data-cli]').forEach(b => b.addEventListener('click', () => {
+    const c = contacts.find(x => x.id === b.dataset.cli);
+    if(!c) return;
+    $('cli-nom').value  = c.nom || '';
+    $('cli-tel').value  = c.tel || '';
+    $('cli-mail').value = c.email || '';
+    $('cli-adr').value  = c.adresse || '';
+    box.classList.add('hidden'); box.innerHTML = '';
+    toast("Client repris des contacts.");
+  }));
+}
+$('cli-nom').addEventListener('input', renderSuggClients);
+$('cli-nom').addEventListener('focus', renderSuggClients);
+document.addEventListener('click', (e) => {
+  if(!e.target.closest || !e.target.closest('.cli-cherche')){
+    const b = $('cli-sugg'); if(b){ b.classList.add('hidden'); b.innerHTML = ''; }
+  }
+});
+
+// Le dossier client enregistre alimente les contacts, sans jamais bloquer l'appel.
+async function majContactDepuisDossier(){
+  const nom = $('cli-nom').value.trim();
+  if(!nom) return;
+  const donnees = { nom: nom, majAtMs: Date.now() };
+  const tel = $('cli-tel').value.trim(), mail = $('cli-mail').value.trim(), adr = $('cli-adr').value.trim();
+  if(tel) donnees.tel = tel;
+  if(mail) donnees.email = mail;
+  if(adr) donnees.adresse = adr;
+  const existant = contacts.find(c => strip(c.nom || '') === strip(nom));
+  try{
+    if(existant) await updateDoc(doc(db,"clients",existant.id), donnees);
+    else await addDoc(collection(db,"clients"), { ...donnees, notes:'', creeAtMs: Date.now(), auteur: monEmail });
+  }catch(e){}
+}
+
 /* ---------- publication vers la page devis & factures ---------- */
 const CLE_TRANSFERT = 'ds-devis-transfert';
 $('btn-publier-devis').addEventListener('click', () => {
@@ -1236,6 +1300,7 @@ onAuthStateChanged(auth,(user)=>{
 let lance=false;
 function ecouterTout(){
   if(lance) return; lance=true;
+  ecouterContacts();
   onSnapshot(collection(db,"fiches"),(s)=>{
     const d=s.docs.map(x=>({docId:x.id,...x.data()})).sort((a,b)=>(a.ordre||0)-(b.ordre||0));
     fiches = uniques(d.length ? d.map(x=>({...x,id:x.id||x.docId})) : FICHES_DEFAUT.slice());
