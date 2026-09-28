@@ -184,6 +184,8 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .devis-total span{color:rgba(255,255,255,.5)}
 .devis-total .ttc{font-size:1.05rem;padding-top:6px;border-top:1px solid rgba(255,255,255,.1)}
 .devis-total .ttc b{color:#4CE28C}
+.devis-pied{padding:12px 16px;border-top:1px solid var(--line)}
+.devis-pied .btn{width:100%;justify-content:center}
 
 /* deux colonnes : fiche a gauche, devis a droite */
 /* onglets internes du panneau */
@@ -254,6 +256,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
             <div class="devis-corps" id="devis-lignes"></div>
             <div class="devis-sugg" id="devis-sugg"></div>
             <div class="devis-total" id="devis-total"></div>
+            <div class="devis-pied"><button class="btn small" id="btn-publier-devis"><i class="fas fa-file-export"></i> Publier le devis</button></div>
           </div>
           <div class="bloc" id="bloc-tarifs">
             <div class="bloc-head">
@@ -1099,6 +1102,24 @@ $('btn-pj-envoi').addEventListener('click', async () => {
     setTimeout(() => URL.revokeObjectURL(url), 30000);
   });
   toast("Partage non supporté : les fichiers ont été téléchargés, joins-les à la main.");
+});
+
+/* ---------- publication vers la page devis & factures ---------- */
+const CLE_TRANSFERT = 'ds-devis-transfert';
+$('btn-publier-devis').addEventListener('click', () => {
+  if(!devis.length){ toast("Le devis est vide : ajoute au moins une prestation."); return; }
+  const titres = sujets.map(id => { const f = fiches.find(x => x.id === id); return f ? f.titre : ''; }).filter(Boolean);
+  const data = {
+    client:  $('cli-nom').value.trim(),
+    tel:     $('cli-tel').value.trim(),
+    email:   $('cli-mail').value.trim(),
+    adresse: $('cli-adr').value.trim(),
+    projet:  titres.join(' — '),
+    lignes:  devis.map(l => ({ designation: l.des, unite: l.unite, prixHT: l.pu, tva: l.tva, qte: l.qte }))
+  };
+  try{ localStorage.setItem(CLE_TRANSFERT, JSON.stringify(data)); }
+  catch(e){ toast("Transfert impossible : " + e.message); return; }
+  window.open('devis.html', '_blank', 'noopener');
 });
 
 /* ---------- fiche a coller dans le mail ---------- */
