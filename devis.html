@@ -1,0 +1,1115 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Facture</title>
+<script>
+(function() {
+    var p = new URLSearchParams(location.search);
+    if (p.get('docId') && (p.get('signature') === '1' || p.get('voir') === '1')) {
+        document.documentElement.classList.add('mode-client-attente');
+    }
+})();
+</script>
+<style>
+* { box-sizing: border-box; }
+html.mode-client-attente .btns-fixed,
+html.mode-client-attente .btn-add,
+html.mode-client-attente .toggle-doc,
+html.mode-client-attente .upload-btn,
+html.mode-client-attente .btn-suppr-ligne { display: none !important; }
+
+body { font-family: Arial, Helvetica, sans-serif; color:#1a202c; font-size:12px; line-height:1.4;
+       background:#E2E8F0; margin:0; padding:18px 10px 150px; }
+#app { background:#fff; max-width:820px; margin:0 auto; padding:26px 30px 30px;
+       box-shadow:0 6px 24px rgba(15,23,42,.14); }
+.upload-btn { margin-bottom:10px; }
+
+/* ---- en-tete : logo + identite ---- */
+.top { display:flex; align-items:center; gap:18px; padding-bottom:7px; }
+.left-col { display:flex; align-items:center; gap:18px; flex:1 1 auto; min-width:0; }
+.logo-box { width:104px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+.logo-box img { width:100%; height:auto; }
+.ident { flex:1 1 auto; min-width:0; font-size:11.5px; color:#4a5568; line-height:1.5; }
+.ident .auto-ta, .ident .info-line { font-size:11.5px; color:#4a5568; }
+.ident #nomEntreprise { font-size:17px; font-weight:bold; color:#1A365D; letter-spacing:.2px; }
+.auto-ta { width:100%; border:none; border-bottom:1px solid #EDF2F7; resize:none; overflow:hidden;
+           font-family:Arial, Helvetica, sans-serif; background:transparent; padding:1px 0; display:block;
+           min-height:18px; line-height:1.45; color:inherit; font-size:inherit; }
+.auto-ta:focus, .info-line:focus { outline:none; border-bottom-color:#1A365D; }
+.info-line { width:100%; border:none; border-bottom:1px solid #EDF2F7; background:transparent;
+             font-family:Arial, Helvetica, sans-serif; padding:1px 0; display:block; color:inherit; font-size:inherit; }
+
+.filet { border-top:2px solid #1A365D; margin:2px 0 14px; }
+
+/* ---- titre et meta ---- */
+.right-col { text-align:left; }
+.toggle-doc { display:inline-flex; border:1px solid #CBD5E0; border-radius:20px; overflow:hidden;
+              font-size:12px; margin-bottom:10px; }
+.toggle-doc button { border:none; background:#EDF2F7; padding:5px 16px; cursor:pointer; font-weight:bold; color:#4a5568; }
+.toggle-doc button.actif { background:#1A365D; color:#fff; }
+.big-title { text-align:center; }
+.titre-imprime { font-size:20px; font-weight:bold; color:#1A365D; letter-spacing:.4px; margin:0 0 8px; }
+.big-title input { display:none; font-size:20px; font-weight:bold; text-align:center; border:none; background:transparent;
+                   width:100%; color:#1A365D; letter-spacing:.4px; font-family:Arial, Helvetica, sans-serif; }
+.big-title input:focus { outline:none; }
+.meta-line { margin:2px 0; font-size:11.5px; color:#4a5568; }
+.meta-line input { border:none; border-bottom:1px solid #EDF2F7; background:transparent;
+                   font-size:11.5px; color:#4a5568; font-family:Arial, Helvetica, sans-serif; }
+.meta-line input:focus { outline:none; border-bottom-color:#1A365D; }
+
+/* ---- bloc client / projet ---- */
+.client-box { margin-top:12px; text-align:left; }
+.client-box b { color:#1a202c; }
+.client-box input, .client-box .auto-ta { text-align:left; border:none; border-bottom:1px solid #EDF2F7;
+        background:transparent; font-size:12px; font-family:Arial, Helvetica, sans-serif; width:100%; padding:1px 0; }
+.client-box input:focus { outline:none; border-bottom-color:#1A365D; }
+.section { margin-top:14px; font-size:12px; }
+.section input { border:none; border-bottom:1px solid #EDF2F7; background:transparent; font-size:12px;
+                 font-family:Arial, Helvetica, sans-serif; width:100%; }
+.section input:focus { outline:none; border-bottom-color:#1A365D; }
+.section-label { border:none; border-bottom:1px solid #EDF2F7; background:transparent; font-size:12px;
+                 font-family:Arial, Helvetica, sans-serif; font-weight:bold; width:140px; padding:0; margin-right:6px; }
+.section-label:focus { outline:none; }
+
+/* ---- tableau ---- */
+table { width:100%; border-collapse:collapse; margin-top:12px; table-layout:fixed; counter-reset:ligne; }
+thead th, #table tr:first-child th { background:#1A365D; color:#fff; font-size:11.5px; padding:6px 7px;
+        text-align:center; font-weight:bold; border:1px solid #1A365D; }
+td { border:1px solid #CBD5E0; padding:3.4px 7px; vertical-align:top; font-size:11.5px; text-align:center; }
+td:nth-child(1), th:nth-child(1) { width:34%; text-align:left; }
+td:nth-child(2), th:nth-child(2) { width:12%; }
+td:nth-child(3), th:nth-child(3) { width:7%; }
+td:nth-child(4), th:nth-child(4) { width:7%; }
+td:nth-child(5), th:nth-child(5) { width:12%; }
+td:nth-child(6), th:nth-child(6) { width:8%; }
+td:nth-child(7), th:nth-child(7) { width:16%; text-align:right; white-space:nowrap; }
+td:nth-child(8), th:nth-child(8) { width:4%; }
+td input, td textarea { width:100%; border:none; background:transparent; font-size:11.5px;
+        font-family:Arial, Helvetica, sans-serif; resize:none; overflow:hidden; padding:0; text-align:center; color:#1a202c; }
+td:nth-child(1) textarea { text-align:left; }
+td input:focus, td textarea:focus { outline:none; }
+.desc-ta { min-height:20px; line-height:1.45; display:block; }
+#dateGlobale { width:100%; font-size:10px; border:1px solid #CBD5E0; border-radius:3px; background:#fff;
+               padding:1px 2px; margin-top:3px; color:#1a202c; }
+.date-affichee { display:inline-block; min-height:14px; font-size:11.5px; }
+.montant { font-weight:bold; }
+.date-print, .pu-print { display:none; }
+
+/* ---- totaux facon modele ---- */
+.total-box { margin-top:11px; margin-left:auto; width:58%; font-size:12px; }
+.total-box .tl { display:flex; justify-content:space-between; padding:3.4px 8px; border-bottom:1px solid #E2E8F0; }
+.total-box .tl span { font-weight:bold; }
+.total-box .tl.ttc { border:2px solid #1A365D; font-size:13.5px; font-weight:bold; margin-top:4px; }
+.total-box .tl.ttc b { color:#1A365D; }
+
+.btn-add { margin-top:8px; background:#EDF2F7; border:1px solid #CBD5E0; padding:6px 14px; cursor:pointer;
+           border-radius:4px; font-size:13px; color:#1A365D; font-weight:600; }
+.btn-add:hover { background:#dbe4ee; }
+hr { border:none; border-top:1px solid #CBD5E0; margin:16px 0; }
+
+.legal-mention { font-size:10.5px; color:#4a5568; border:1px solid #EDF2F7; background:transparent; width:100%;
+        font-family:Arial, Helvetica, sans-serif; padding:4px 0; resize:vertical; min-height:40px;
+        white-space:pre-wrap; word-wrap:break-word; }
+.legal-mention:focus { outline:none; border-color:#1A365D; }
+
+/* ---- remarques, signatures, tampon, pied ---- */
+.remarques { margin-top:12px; font-size:10.5px; color:#4a5568; text-align:justify; line-height:1.55; }
+.remarques b { color:#1A365D; display:block; text-align:left; }
+.remarques textarea { width:100%; border:1px solid #EDF2F7; background:transparent; font-size:10.5px;
+        color:#4a5568; font-family:Arial, Helvetica, sans-serif; resize:vertical; min-height:38px; line-height:1.55; padding:4px; }
+.remarques textarea:focus { outline:none; border-color:#1A365D; }
+.signatures { margin-top:14px; font-size:12px; display:flex; justify-content:space-between;
+              align-items:flex-end; gap:20px; page-break-inside:avoid; }
+.signatures .sig-client { flex:1 1 auto; }
+.signatures .sig-client .trait { display:inline-block; border-bottom:1px solid #4a5568; width:210px; margin-left:6px; }
+.sig-entreprise { flex:0 0 auto; text-align:center; }
+.tampon { width:186px; display:block; margin:4px auto 0; }
+.pied { margin-top:16px; border-top:1px solid #CBD5E0; padding-top:7px; font-size:9.5px; color:#718096; text-align:center; }
+.pagination { text-align:center; font-size:9.5px; color:#718096; margin-top:5px; }
+
+/* ---- barre de boutons ---- */
+.btns-fixed { position:fixed; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:8px;
+              padding:0 10px; flex-wrap:wrap; }
+.btns-fixed button { flex:1 1 30%; min-width:100px; max-width:170px; background:#475569; color:#fff; border:none;
+        padding:15px 8px; cursor:pointer; border-radius:6px; font-size:13px; font-weight:600; }
+.btns-fixed button:hover { background:#334155; }
+.btn-pdf { background:#1A365D !important; }
+.btn-pdf:hover { background:#122744 !important; }
+.btn-agenda { background:#2563EB !important; }
+.btn-enregistrer { background:#059669 !important; }
+.btn-enregistrer:hover { background:#047857 !important; }
+.btn-retour { background:#E87722 !important; }
+.btn-retour:hover { background:#c9640f !important; }
+
+/* ================= IMPRESSION : reproduction du modele ================= */
+@media print {
+    @page { size:A4; margin:14mm 13mm 18mm 13mm; }
+    body { background:#fff; font-size:9pt; padding:0 !important; margin:0 !important; }
+    #app { box-shadow:none; max-width:100%; padding:0; }
+    .btns-fixed, .upload-btn, .btn-add, .toggle-doc, .no-print { display:none !important; }
+    td:nth-child(8), th:nth-child(8) { display:none !important; }
+    td:nth-child(2), th:nth-child(2) { display:none !important; }   /* colonne Date */
+    td:nth-child(6), th:nth-child(6) { display:none !important; }   /* colonne TVA par ligne */
+    input, textarea { border-bottom:none !important; border:none !important; }
+    /* un champ resté vide ne doit pas imprimer son texte d'aide */
+    input:placeholder-shown, textarea:placeholder-shown { display:none !important; }
+    /* les dates s'impriment en toutes lettres, pas dans le sélecteur du navigateur */
+    input[type=date] { display:none !important; }
+    .date-print { display:inline !important; }
+    td:nth-child(5) input { display:none !important; }
+    .pu-print { display:inline !important; }
+    #bloc-facturation { display:none !important; }
+    #dateGlobale { display:none !important; }
+    .ident { font-size:8.6pt; }
+    .ident #nomEntreprise { font-size:12.5pt; }
+    .logo-box { width:84px; }
+    .titre-imprime { font-size:15pt; }
+    .meta-line, .meta-line input { font-size:8.6pt; }
+    .client-box, .client-box input, .client-box .auto-ta, .section, .section input { font-size:9pt; }
+    table { page-break-inside:auto; }
+    tr { page-break-inside:avoid; }
+    thead th, #table tr:first-child th { font-size:8.6pt; }
+    td, td input, td textarea { font-size:8.5pt; }
+    td:nth-child(1), th:nth-child(1) { width:52% !important; }
+    td:nth-child(3), th:nth-child(3) { width:8% !important; }
+    td:nth-child(4), th:nth-child(4) { width:8% !important; }
+    td:nth-child(5), th:nth-child(5) { width:15% !important; }
+    td:nth-child(7), th:nth-child(7) { width:17% !important; }
+    .total-box { width:56%; font-size:9pt; }
+    .total-box .tl.ttc { font-size:10.5pt; }
+    .remarques, .remarques textarea { font-size:7.9pt; }
+    .remarques textarea { border:none !important; resize:none !important; }
+    textarea { resize:none !important; }
+    .signatures { font-size:8.8pt; }
+    .pied, .pagination { font-size:7.4pt; }
+    .legal-mention { font-size:7.9pt; border:none !important; }
+}
+</style>
+</head>
+<body>
+
+<input class="upload-btn" type="file" accept="image/*" onchange="loadLogo(event)">
+
+<div id="app">
+<div class="top">
+<div class="left-col">
+<div class="logo-box">
+<img id="logo" src="img/logo-ds.png">
+<span id="logo-placeholder" style="display:none;color:#aaa;font-size:13px">Logo</span>
+</div>
+<div class="ident">
+<textarea class="auto-ta" id="nomEntreprise" placeholder="Nom entreprise" oninput="grow(this)"></textarea>
+<textarea class="auto-ta" id="adresseEntreprise" placeholder="Adresse entreprise" oninput="grow(this)"></textarea>
+<input class="info-line" id="siretEntreprise" placeholder="N° SIRET">
+<input class="info-line" id="sireneEntreprise" placeholder="N° SIRENE">
+<input class="info-line" id="tvaEntreprise" placeholder="N° TVA intracommunautaire">
+<input class="info-line" id="telEntreprise" placeholder="Téléphone entreprise">
+<textarea class="auto-ta" id="emailEntreprise" placeholder="Email entreprise" oninput="grow(this)"></textarea>
+</div>
+</div>
+</div>
+
+<div class="filet"></div>
+
+<div class="right-col">
+<div class="toggle-doc no-print">
+<button type="button" id="btn-type-facture" class="actif" onclick="choisirTypeDocument('FACTURE')">FACTURE</button>
+<button type="button" id="btn-type-devis" onclick="choisirTypeDocument('DEVIS')">DEVIS</button>
+</div>
+<div class="big-title">
+<input id="titreDocument" value="FACTURE">
+<div class="titre-imprime" id="titre-imprime">FACTURE</div>
+</div>
+<div class="meta-line">N° <input id="numeroFacture" value="" style="width:130px"> — <input type="date" id="dateFacture" style="width:140px" onchange="calculerValiditeDevis(); majPiedDocument();"><span class="date-print" id="date-print"></span></div>
+</div>
+
+<div class="client-box">
+<div><b>Client :</b></div>
+<textarea class="auto-ta" placeholder="Nom Prénom" oninput="grow(this)"></textarea>
+<textarea class="auto-ta" placeholder="Adresse + Code postal" oninput="grow(this)"></textarea>
+<input placeholder="Téléphone">
+<input id="emailClient" placeholder="Email client">
+</div>
+
+<div class="client-box">
+<div><b>Projet :</b> <input id="objetProjet" placeholder="Ex : Rénovation complète de salle de bain"></div>
+<div><b>Durée estimée :</b> <input id="dureeProjet" placeholder="Ex : 5 à 7 jours ouvrés"></div>
+</div>
+
+<div class="section" id="bloc-facturation">
+<input class="section-label" id="labelFacturation" value="Facturation :">
+<input placeholder="Ex: Débouchage">
+</div>
+
+<table id="table">
+<tr>
+<th>Désignation</th>
+<th>Date<br><input type="date" id="dateGlobale" onchange="appliquerDate()"></th>
+<th>Qté</th>
+<th>U</th>
+<th>PU HT</th>
+<th>TVA %</th>
+<th>Total HT</th>
+<th></th>
+</tr>
+<tr>
+<td><textarea class="desc-ta auto-ta" placeholder="Description prestation" oninput="grow(this); calc()"></textarea></td>
+<td class="date-cell"><span class="date-affichee"></span></td>
+<td><input type="number" value="1" oninput="calc()"></td>
+<td><input value="h"></td>
+<td><input type="number" value="0" oninput="calc()"></td>
+<td><input type="number" value="20" oninput="calc()"></td>
+<td class="montant">0,00 €</td>
+<td style="text-align:center;"><button type="button" class="btn-suppr-ligne" onclick="supprimerLigne(this)" title="Supprimer cette ligne" style="background:none;border:none;color:#DC2626;font-size:16px;cursor:pointer;padding:0 4px;">✕</button></td>
+</tr>
+</table>
+
+<button class="btn-add" onclick="addRow()">+ Ajouter une ligne</button>
+
+<div class="total-box">
+<div class="tl"><span>Total HT</span><b><span id="ht">0,00</span> €</b></div>
+<div class="tl"><span id="libelle-tva">TVA</span><b><span id="tva">0,00</span> €</b></div>
+<div class="tl ttc"><span>TOTAL TTC</span><b><span id="ttc">0,00</span> €</b></div>
+</div>
+
+<hr>
+
+<div class="section" id="bloc-validite-devis" style="display:none;">
+<b>Devis valable jusqu'au :</b><br>
+<input id="validiteDevis" type="date" onchange="majPiedDocument()"><span class="date-print" id="validite-print"></span>
+</div>
+
+<div class="section">
+<b>Modalités de paiement :</b><br>
+<input id="conditionsPaiement" value="Par virement, espèce ou carte bancaire"><br><br>
+<b>Informations bancaires :</b><br>
+IBAN : <input id="ibanEntreprise" placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX" style="margin-bottom:4px;"><br>
+BIC : <input id="bicEntreprise" placeholder="XXXXXXXX"><br><br>
+<b>Mentions légales :</b><br>
+<textarea class="legal-mention" id="mentionLegale" rows="3" oninput="grow(this)">Article L441-10 du Code de commerce : tout retard de
+paiement entraîne une pénalité, ainsi qu'une indemnité
+forfaitaire de 40 € pour frais de recouvrement.</textarea>
+</div>
+
+<div class="section" id="bloc-signature" style="text-align:right;display:none;">
+<b>Signature du client :</b><br>
+<div id="signature-affichee" style="border:1px solid #ccc; height:80px; width:220px; margin-left:auto; margin-top:6px;"></div>
+</div>
+
+<div id="bloc-pad-signature" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+<div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
+<b>Signez ici pour accepter ce devis :</b><br>
+<canvas id="pad-signature" width="290" height="140" style="border:1px solid #999;border-radius:6px;touch-action:none;margin-top:10px;background:#fff;max-width:100%;"></canvas><br>
+<button type="button" onclick="effacerSignaturePad()" style="margin-top:8px;background:#eee;border:1px solid #ccc;padding:6px 14px;border-radius:4px;cursor:pointer;">Effacer</button>
+<button type="button" onclick="validerSignature()" style="margin-top:8px;margin-left:8px;background:#059669;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-weight:bold;">Valider ma signature</button>
+<div id="signature-message" style="margin-top:10px;font-size:13px;"></div>
+</div>
+</div>
+</div>
+
+<div class="remarques">
+<b>Remarques :</b>
+<textarea id="remarques" oninput="grow(this)" placeholder="Précisions sur les fournitures, les aides mobilisables, les conditions particulières…"></textarea>
+<div id="ligne-reglement" style="margin-top:6px;">Mode de règlement : <span id="reglement-affiche"></span></div>
+</div>
+
+<div class="signatures">
+<div class="sig-client">
+<div>Signature du Client : <span class="trait"></span></div>
+<div style="margin-top:12px;">Signature de l'Entreprise :</div>
+</div>
+<div class="sig-entreprise">
+<img class="tampon" src="img/tampon-ds.png" alt="Tampon et signature">
+</div>
+</div>
+
+<div class="pied" id="pied-document"></div>
+<div class="pagination" id="pagination-document"></div>
+
+<div class="btns-fixed">
+<button type="button" class="btn-retour" onclick="location.href='console.html'">Console</button>
+<button onclick="envoyerEntreprise()">Envoyer entreprise</button>
+<button class="btn-pdf" onclick="imprimerNatif()">⬇ PDF</button>
+<button onclick="ouvrirChoixEnvoi()">Envoyer client</button>
+
+<button class="btn-agenda" onclick="ajouterFactureAgenda()">Agenda</button>
+<button class="btn-enregistrer" id="btn-enregistrer" onclick="enregistrerDocumentFirestore()" disabled>Connexion...</button>
+</div>
+<div id="enregistrer-message" style="position:fixed;bottom:60px;left:10px;right:10px;background:#FEF3C7;border:1px solid #F59E0B;color:#92400E;padding:10px 14px;border-radius:8px;font-size:13px;display:none;z-index:100;"></div>
+
+<div id="overlay-choix-envoi" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:12px;padding:24px;width:280px;text-align:center;">
+        <div style="font-weight:bold;font-size:15px;margin-bottom:18px;">Envoyer au client par :</div>
+        <div style="display:flex;gap:14px;justify-content:center;">
+            <button onclick="envoyerClientSMS()" style="flex:1;background:#F1F5F9;border:none;border-radius:10px;padding:18px 8px;cursor:pointer;font-size:13px;">
+                <div style="font-size:30px;">📱</div>SMS
+            </button>
+            <button onclick="envoyerClientEmail()" style="flex:1;background:#F1F5F9;border:none;border-radius:10px;padding:18px 8px;cursor:pointer;font-size:13px;">
+                <div style="font-size:30px;">✉️</div>Email
+            </button>
+        </div>
+        <button onclick="document.getElementById('overlay-choix-envoi').style.display='none'" style="margin-top:16px;background:none;border:none;color:#64748B;font-size:13px;cursor:pointer;">Annuler</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCI1ZNhesbffGJ0VqUxyIoEhSwLwqBcyPE",
+        authDomain: "proplus-e969a.firebaseapp.com",
+        projectId: "proplus-e969a",
+        storageBucket: "proplus-e969a.firebasestorage.app",
+        messagingSenderId: "262149416577",
+        appId: "1:262149416577:web:928517efa7336a43550f80"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    let authPret = false;
+    let utilisateurActuel = null;
+
+    function debloquerBoutonEnregistrer(connecte) {
+        const btn = document.getElementById('btn-enregistrer');
+        if (!btn) return;
+        btn.disabled = false;
+        btn.innerText = connecte ? 'Enregistrer' : 'Enregistrer (non connecté)';
+    }
+
+    firebase.auth().onAuthStateChanged(function(user) {
+        authPret = true;
+        utilisateurActuel = user;
+        debloquerBoutonEnregistrer(!!user);
+        if (!user && document.documentElement.classList.contains('mode-client-attente')) {
+            firebase.auth().signInAnonymously().catch(function() {});
+        }
+    });
+
+    // Filet de sécurité : si Firebase ne répond jamais en 5 secondes,
+    // on débloque quand même le bouton pour ne jamais rester bloqué.
+    setTimeout(function() {
+        if (!authPret) {
+            authPret = true;
+            debloquerBoutonEnregistrer(false);
+        }
+    }, 5000);
+</script>
+<script>
+function loadLogo(e) {
+const img = document.getElementById('logo');
+const ph = document.getElementById('logo-placeholder');
+img.src = URL.createObjectURL(e.target.files[0]);
+img.style.display = 'block';
+ph.style.display = 'none';
+}
+
+function grow(el) {
+el.style.height = 'auto';
+el.style.height = el.scrollHeight + 'px';
+}
+
+function addRow() {
+const table = document.getElementById('table');
+const tr = document.createElement('tr');
+tr.innerHTML = `
+<td><textarea class="desc-ta auto-ta" placeholder="Description prestation" oninput="grow(this); calc()"></textarea></td>
+<td class="date-cell"><span class="date-affichee"></span></td>
+<td><input type="number" value="1" oninput="calc()"></td>
+<td><input value="h"></td>
+<td><input type="number" value="0" oninput="calc()"></td>
+<td><input type="number" value="20" oninput="calc()"></td>
+<td class="montant">0,00 €</td>
+<td style="text-align:center;"><button type="button" class="btn-suppr-ligne" onclick="supprimerLigne(this)" title="Supprimer cette ligne" style="background:none;border:none;color:#DC2626;font-size:16px;cursor:pointer;padding:0 4px;">✕</button></td>
+`;
+table.appendChild(tr);
+appliquerDate();
+}
+
+function supprimerLigne(btn) {
+const row = btn.closest('tr');
+if (row) { row.remove(); calc(); }
+}
+
+function fmt(n) {
+return n.toFixed(2).replace('.', ',');
+}
+
+function calc() {
+const rows = document.querySelectorAll('#table tr');
+let totalHT = 0, totalTVA = 0;
+rows.forEach((row, i) => {
+if (i === 0) return;
+const qte = parseFloat(row.cells[2].querySelector('input').value) || 0;
+const prix = parseFloat(row.cells[4].querySelector('input').value) || 0;
+const tva = parseFloat(row.cells[5].querySelector('input').value) || 0;
+const ht = qte * prix;
+const tvaAmt = ht * tva / 100;
+row.cells[6].innerText = fmt(ht) + ' \u20ac';
+let sp = row.cells[4].querySelector('.pu-print');
+if (!sp) { sp = document.createElement('span'); sp.className = 'pu-print'; row.cells[4].appendChild(sp); }
+sp.innerText = fmt(prix) + ' \u20ac';
+totalHT += ht;
+totalTVA += tvaAmt;
+});
+document.getElementById('ht').innerText = fmt(totalHT);
+document.getElementById('tva').innerText = fmt(totalTVA);
+document.getElementById('ttc').innerText = fmt(totalHT + totalTVA);
+majLibelleTva();
+majPiedDocument();
+}
+
+// Libelle de TVA : un seul taux -> "TVA 10 %", plusieurs taux -> "TVA"
+function majLibelleTva() {
+    const el = document.getElementById('libelle-tva');
+    if (!el) return;
+    const taux = new Set();
+    document.querySelectorAll('#table tr').forEach(function(row, i) {
+        if (i === 0) return;
+        const q = parseFloat(row.cells[2].querySelector('input').value) || 0;
+        const p = parseFloat(row.cells[4].querySelector('input').value) || 0;
+        if (q * p > 0) taux.add(row.cells[5].querySelector('input').value);
+    });
+    el.innerText = (taux.size === 1) ? 'TVA ' + [...taux][0] + ' %' : 'TVA';
+}
+
+// Pied de page et pagination, repris du modele
+function majPiedDocument() {
+    const pied = document.getElementById('pied-document');
+    const pag  = document.getElementById('pagination-document');
+    if (!pied || !pag) return;
+    const nom    = (document.getElementById('nomEntreprise').value || '').trim();
+    const siret  = (document.getElementById('siretEntreprise').value || '').trim();
+    const tvaNum = (document.getElementById('tvaEntreprise').value || '').trim();
+    const bouts = [];
+    if (nom)    bouts.push(nom);
+    if (siret)  bouts.push('SIRET ' + siret);
+    if (tvaNum) bouts.push('TVA ' + tvaNum);
+    pied.innerText = bouts.join(' — ');
+    const type = (document.getElementById('titreDocument').value || '').trim();
+    const num  = (document.getElementById('numeroFacture').value || '').trim();
+    pag.innerText = num ? (type.indexOf('DEVIS') === 0 ? 'Devis ' : 'Facture ') + num : '';
+    const reg = document.getElementById('reglement-affiche');
+    const cond = document.getElementById('conditionsPaiement');
+    if (reg && cond) reg.innerText = cond.value || '';
+    const ti = document.getElementById('titre-imprime');
+    if (ti) ti.innerText = (type === 'DEVIS') ? 'DEVIS ESTIMATIF DE TRAVAUX' : 'FACTURE';
+    const dp = document.getElementById('date-print');
+    const dv = document.getElementById('validite-print');
+    if (dp) dp.innerText = dateLongueFR(document.getElementById('dateFacture').value);
+    if (dv) dv.innerText = dateLongueFR(document.getElementById('validiteDevis').value);
+}
+
+// 2026-09-28 -> 28 septembre 2026
+function dateLongueFR(iso) {
+    if (!iso) return '';
+    const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    const p = iso.split('-');
+    if (p.length !== 3) return iso;
+    return parseInt(p[2], 10) + ' ' + mois[parseInt(p[1], 10) - 1] + ' ' + p[0];
+}
+
+function formatDateFR(iso) {
+if (!iso) return '';
+const p = iso.split('-');
+if (p.length !== 3) return iso;
+return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+function appliquerDate() {
+const dateInput = document.getElementById('dateGlobale');
+const formatted = formatDateFR(dateInput ? dateInput.value : '');
+document.querySelectorAll('.date-affichee').forEach(function(span) {
+span.textContent = formatted;
+});
+}
+
+function imprimerNatif() {
+    window.print();
+}
+
+function envoyerEntreprise() {
+const email = document.getElementById('emailEntreprise').value.trim();
+if (!email) { alert("Veuillez renseigner l'email de l'entreprise."); return; }
+const type = document.getElementById('titreDocument').value || 'Facture';
+const sujet = encodeURIComponent(type);
+const corps = encodeURIComponent("Bonjour,\n\nLe document vient d'être émis. Merci de l'enregistrer.\n\nCordialement.");
+window.location.href = 'mailto:' + email + '?subject=' + sujet + '&body=' + corps;
+}
+
+function ouvrirChoixEnvoi() {
+    const email = document.getElementById('emailClient').value.trim();
+    const clientInputs = document.querySelectorAll('.client-box input');
+    const tel = clientInputs[0] ? clientInputs[0].value.trim() : '';
+    if (!email && !tel) { alert("Renseignez au moins l'email ou le téléphone du client."); return; }
+    document.getElementById('overlay-choix-envoi').style.display = 'flex';
+}
+
+function construireLienEtCorps(r) {
+    let lien = '';
+    let texte = '';
+    if (r.type === 'DEVIS' && docIdCourant) {
+        lien = (window.location.origin + window.location.pathname) + '?docId=' + docIdCourant + '&signature=1';
+        texte = "Bonjour,\n\nVeuillez trouver votre devis via ce lien. Vous pouvez le consulter et le signer directement en ligne :\n" + lien + "\n\nCordialement.";
+    } else if (docIdCourant) {
+        lien = (window.location.origin + window.location.pathname) + '?docId=' + docIdCourant + '&voir=1';
+        texte = "Bonjour,\n\nVeuillez trouver votre facture via ce lien. Vous pouvez la consulter et la télécharger directement en ligne :\n" + lien + "\n\nCordialement.";
+    } else {
+        texte = "Bonjour,\n\nVeuillez trouver ci-joint votre document.\n\nCordialement.";
+    }
+    return texte;
+}
+
+function envoyerClientEmail() {
+    document.getElementById('overlay-choix-envoi').style.display = 'none';
+    const email = document.getElementById('emailClient').value.trim();
+    if (!email) { alert("Aucun email renseigné pour ce client."); return; }
+
+    sauvegarderDocument().then(function(r) {
+        const sujet = encodeURIComponent(r.type + ' ' + r.numero);
+        const emailEntreprise = document.getElementById('emailEntreprise').value.trim();
+        const corps = construireLienEtCorps(r);
+        let bcc = '';
+        if (r.type === 'FACTURE' && docIdCourant && emailEntreprise) bcc = '&bcc=' + encodeURIComponent(emailEntreprise);
+        window.location.href = 'mailto:' + email + '?subject=' + sujet + bcc + '&body=' + encodeURIComponent(corps);
+    }).catch(function(err) {
+        afficherMessageEnregistrer(err.message, false);
+    });
+}
+
+function envoyerClientSMS() {
+    document.getElementById('overlay-choix-envoi').style.display = 'none';
+    const clientInputs = document.querySelectorAll('.client-box input');
+    const tel = clientInputs[0] ? clientInputs[0].value.replace(/\s/g, '') : '';
+    if (!tel) { alert("Aucun numéro de téléphone renseigné pour ce client."); return; }
+
+    sauvegarderDocument().then(function(r) {
+        const corps = construireLienEtCorps(r);
+        window.location.href = 'sms:' + tel + '?body=' + encodeURIComponent(corps);
+        // Le SMS ne permet pas de copie cachée : on envoie un mail séparé vers vous, avec un léger délai.
+        if (r.type === 'FACTURE') {
+            const emailEntreprise = document.getElementById('emailEntreprise').value.trim();
+            if (emailEntreprise) {
+                const sujet = encodeURIComponent(r.type + ' ' + r.numero + ' (copie — envoyée par SMS au client)');
+                setTimeout(function() {
+                    window.location.href = 'mailto:' + emailEntreprise + '?subject=' + sujet + '&body=' + encodeURIComponent(corps);
+                }, 1500);
+            }
+        }
+    }).catch(function(err) {
+        afficherMessageEnregistrer(err.message, false);
+    });
+}
+
+// ===================== BASCULE FACTURE / DEVIS =====================
+let numeroEstDefinitif = false; // true seulement quand un document existant (docId) est rouvert
+
+function choisirTypeDocument(type, estChargementDocument) {
+    const titre = document.getElementById('titreDocument');
+    const label = document.getElementById('labelFacturation');
+    const btnFacture = document.getElementById('btn-type-facture');
+    const btnDevis = document.getElementById('btn-type-devis');
+    const blocValidite = document.getElementById('bloc-validite-devis');
+    const blocSignature = document.getElementById('bloc-signature');
+
+    titre.value = type;
+    label.value = (type === 'DEVIS') ? 'Devis :' : 'Facturation :';
+    blocValidite.style.display = (type === 'DEVIS') ? 'block' : 'none';
+    blocSignature.style.display = (type === 'DEVIS') ? 'block' : 'none';
+
+    btnFacture.classList.toggle('actif', type === 'FACTURE');
+    btnDevis.classList.toggle('actif', type === 'DEVIS');
+    const ti = document.getElementById('titre-imprime');
+    if (ti) ti.innerText = (type === 'DEVIS') ? 'DEVIS ESTIMATIF DE TRAVAUX' : 'FACTURE';
+    if (typeof majPiedDocument === 'function') majPiedDocument();
+
+    if (type === 'DEVIS') calculerValiditeDevis();
+
+    if (!estChargementDocument) {
+        numeroEstDefinitif = false;
+        previsualiserNumero(type);
+    }
+}
+
+function calculerValiditeDevis() {
+    const dateInput = document.getElementById('dateFacture').value;
+    if (!dateInput) return;
+    const p = dateInput.split('-');
+    const d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+    d.setMonth(d.getMonth() + 1);
+    const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    document.getElementById('validiteDevis').value = iso;
+}
+
+// Aperçu du prochain numéro : LECTURE SEULE, ne consomme rien.
+// Le vrai numéro n'est attribué qu'au moment de l'enregistrement (voir enregistrerDocumentFirestore).
+function previsualiserNumero(type, tentative) {
+    tentative = tentative || 1;
+    const numeroChamp = document.getElementById('numeroFacture');
+    numeroChamp.value = 'Aperçu du numéro...';
+    (function attendre() {
+        if (!authPret) { setTimeout(attendre, 150); return; }
+        if (!utilisateurActuel) { numeroChamp.value = ''; return; }
+        const cleCompteur = (type === 'DEVIS') ? 'devis' : 'facture';
+        firebase.firestore().collection('compteurs').doc(cleCompteur).get().then(function(doc) {
+            const dernier = (doc.exists && doc.data().dernier) ? doc.data().dernier : 0;
+            numeroChamp.value = formatNumero(type, dernier + 1);
+        }).catch(function(err) {
+            if (tentative < 4) { setTimeout(function() { previsualiserNumero(type, tentative + 1); }, tentative * 800); }
+            else { numeroChamp.value = ''; afficherMessageEnregistrer('Aperçu du numéro indisponible : ' + err.message, false); }
+        });
+    })();
+}
+
+function formatNumero(type, n) {
+    const prefixe = (type === 'DEVIS') ? 'D-' : 'F-';
+    const maintenant = new Date();
+    const annee = maintenant.getFullYear();
+    const mois = String(maintenant.getMonth() + 1).padStart(2, '0');
+    return prefixe + annee + '-' + mois + '-' + n;
+}
+
+// Attribution DÉFINITIVE du numéro, uniquement appelée au moment d'Enregistrer un document neuf.
+// Incrémente le compteur ET renvoie le numéro dans la même transaction : aucun trou possible.
+function attribuerNumeroDefinitif(type) {
+    const cleCompteur = (type === 'DEVIS') ? 'devis' : 'facture';
+    const ref = firebase.firestore().collection('compteurs').doc(cleCompteur);
+    return firebase.firestore().runTransaction(function(transaction) {
+        return transaction.get(ref).then(function(doc) {
+            const dernier = (doc.exists && doc.data().dernier) ? doc.data().dernier : 0;
+            const nouveau = dernier + 1;
+            transaction.set(ref, { dernier: nouveau }, { merge: true });
+            return nouveau;
+        });
+    }).then(function(n) {
+        return formatNumero(type, n);
+    });
+}
+
+// ===================== AGENDA =====================
+function ajouterFactureAgenda() {
+    const type = document.getElementById('titreDocument').value || 'Facture';
+    const numero = document.getElementById('numeroFacture').value || '';
+    const clientNomEl = document.querySelector('.client-box .auto-ta');
+    const nomClient = clientNomEl ? clientNomEl.value : '';
+    const titre = type + ' ' + numero + (nomClient ? ' - ' + nomClient : '');
+    const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(titre);
+    window.open(url, '_blank');
+}
+
+// ===================== ENREGISTREMENT FIRESTORE =====================
+function afficherMessageEnregistrer(texte, ok) {
+    const div = document.getElementById('enregistrer-message');
+    div.textContent = texte;
+    div.style.background = ok ? '#D1FAE5' : '#FEF3C7';
+    div.style.borderColor = ok ? '#059669' : '#F59E0B';
+    div.style.color = ok ? '#065F46' : '#92400E';
+    div.style.display = 'block';
+    setTimeout(function() { div.style.display = 'none'; }, 5000);
+}
+
+function clientCorrespondEnregistre(nomClient) {
+    try {
+        const brut = localStorage.getItem('clients_liste');
+        const liste = brut ? JSON.parse(brut) : [];
+        if (!Array.isArray(liste)) return false;
+        const cible = (nomClient || '').trim().toLowerCase();
+        return liste.some(function(c) { return (c.nom || '').trim().toLowerCase() === cible; });
+    } catch (e) {
+        return false;
+    }
+}
+
+let docIdCourant = null;
+
+function collecterLignesTable() {
+    const lignes = [];
+    document.querySelectorAll('#table tr').forEach(function(row, i) {
+        if (i === 0) return;
+        lignes.push({
+            description: row.cells[0].querySelector('textarea').value,
+            qte: row.cells[2].querySelector('input').value,
+            unite: row.cells[3].querySelector('input').value,
+            prix: row.cells[4].querySelector('input').value,
+            tva: row.cells[5].querySelector('input').value
+        });
+    });
+    return lignes;
+}
+
+// Coeur de l'enregistrement, réutilisable (bouton Enregistrer ET bouton Envoyer client).
+// Retourne une Promise résolue avec { type, numero, rattache } une fois l'enregistrement terminé.
+function sauvegarderDocument() {
+    return new Promise(function(resolve, reject) {
+        if (!authPret) { reject(new Error("Vérification de connexion en cours, patientez une seconde puis réessayez.")); return; }
+        if (!utilisateurActuel) { reject(new Error("Vous n'êtes pas connecté à PRO+, impossible d'enregistrer.")); return; }
+
+        const type = document.getElementById('titreDocument').value || 'FACTURE';
+        const clientTa = document.querySelectorAll('.client-box .auto-ta');
+        const clientInputs = document.querySelectorAll('.client-box input');
+        const nomClient = clientTa[0] ? clientTa[0].value.trim() : '';
+        const adresseClient = clientTa[1] ? clientTa[1].value : '';
+        const telClient = clientInputs[0] ? clientInputs[0].value : '';
+        const emailClient = document.getElementById('emailClient').value;
+        const montantTTC = document.getElementById('ttc').innerText || '0,00';
+        const date = document.getElementById('dateFacture').value || '';
+
+        if (!nomClient) { reject(new Error("Renseignez le nom du client avant d'enregistrer.")); return; }
+
+        const rattache = clientCorrespondEnregistre(nomClient);
+        const numero = document.getElementById('numeroFacture').value.trim();
+
+        if (!numero || numero.indexOf('Aperçu') === 0) { reject(new Error("Le numéro n'est pas encore prêt, patientez une seconde puis réessayez.")); return; }
+
+        const donnees = {
+            proUid: utilisateurActuel.uid,
+            type: type,
+            numero: numero,
+            clientNom: nomClient,
+            clientAdresse: adresseClient,
+            clientTel: telClient,
+            clientEmail: emailClient,
+            entrepriseEmail: document.getElementById('emailEntreprise').value.trim(),
+            entrepriseNom: document.getElementById('nomEntreprise').value,
+            entrepriseAdresse: document.getElementById('adresseEntreprise').value,
+            entrepriseLogo: localStorage.getItem('artisan_logo') || '',
+            entrepriseSiret: document.getElementById('siretEntreprise').value,
+            entrepriseSirene: document.getElementById('sireneEntreprise').value,
+            entrepriseTva: document.getElementById('tvaEntreprise').value,
+            entrepriseTelephone: document.getElementById('telEntreprise').value,
+            entrepriseIban: document.getElementById('ibanEntreprise').value,
+            entrepriseBic: document.getElementById('bicEntreprise').value,
+            montantTTC: montantTTC,
+            date: date,
+            validiteDevis: type === 'DEVIS' ? (document.getElementById('validiteDevis').value || '') : '',
+            conditionsPaiement: document.getElementById('conditionsPaiement').value,
+            mentionLegale: document.getElementById('mentionLegale').value,
+            lignes: collecterLignesTable()
+        };
+
+        const col = firebase.firestore().collection('documents');
+        const promesse = docIdCourant
+            ? col.doc(docIdCourant).update(donnees)
+            : col.add(Object.assign({}, donnees, { statut: 'en attente', creeLe: firebase.firestore.FieldValue.serverTimestamp() }))
+                .then(function(ref) { docIdCourant = ref.id; numeroEstDefinitif = true; });
+
+        promesse.then(function() {
+            resynchroniserCompteurSurNumero(type, numero);
+            resolve({ type: type, numero: numero, rattache: rattache, nomClient: nomClient });
+        }).catch(reject);
+    });
+}
+
+function enregistrerDocumentFirestore() {
+    sauvegarderDocument().then(function(r) {
+        if (r.rattache) {
+            afficherMessageEnregistrer(r.type + ' ' + r.numero + ' enregistrée et rattachée à ' + r.nomClient + '.', true);
+        } else {
+            afficherMessageEnregistrer('Enregistré, mais "' + r.nomClient + '" ne correspond à aucun client enregistré sur PRO+ — ce document ne sera pas rattaché à une fiche client.', false);
+        }
+    }).catch(function(err) {
+        afficherMessageEnregistrer(err.message, false);
+    });
+}
+
+// Après un enregistrement, le compteur repart du numéro réellement utilisé (même s'il a été tapé à la main),
+// pour que le prochain aperçu automatique continue logiquement à partir de là.
+function resynchroniserCompteurSurNumero(type, numero) {
+    const m = numero.match(/(\d+)\s*$/);
+    if (!m) return;
+    const valeur = parseInt(m[1], 10);
+    if (isNaN(valeur)) return;
+    const cleCompteur = (type === 'DEVIS') ? 'devis' : 'facture';
+    firebase.firestore().collection('compteurs').doc(cleCompteur).set({ dernier: valeur }, { merge: true }).catch(function() {});
+}
+
+let entrepriseEmailPourNotif = '';
+let numeroPourNotif = '';
+let typePourNotif = '';
+
+function chargerDocumentDepuisFirestore(docId, modeSignature, modeVoir) {
+    firebase.firestore().collection('documents').doc(docId).get().then(function(doc) {
+        if (!doc.exists) {
+            afficherMessageEnregistrer('Ce document est introuvable (peut-être supprimé).', false);
+            return;
+        }
+        docIdCourant = docId;
+        numeroEstDefinitif = true;
+        const d = doc.data();
+        entrepriseEmailPourNotif = d.entrepriseEmail || '';
+        numeroPourNotif = d.numero || '';
+        typePourNotif = d.type || '';
+
+        if (d.entrepriseLogo) {
+            const logoEl = document.getElementById('logo');
+            const logoPh = document.getElementById('logo-placeholder');
+            logoEl.src = d.entrepriseLogo;
+            logoEl.style.display = 'block';
+            if (logoPh) logoPh.style.display = 'none';
+        }
+        if (d.entrepriseNom) { const el = document.getElementById('nomEntreprise'); el.value = d.entrepriseNom; grow(el); }
+        if (d.entrepriseAdresse) { const el = document.getElementById('adresseEntreprise'); el.value = d.entrepriseAdresse; grow(el); }
+        if (d.entrepriseSiret) document.getElementById('siretEntreprise').value = d.entrepriseSiret;
+        if (d.entrepriseSirene) document.getElementById('sireneEntreprise').value = d.entrepriseSirene;
+        if (d.entrepriseTva) document.getElementById('tvaEntreprise').value = d.entrepriseTva;
+        if (d.entrepriseTelephone) document.getElementById('telEntreprise').value = d.entrepriseTelephone;
+        if (d.entrepriseEmail) { const elEmail = document.getElementById('emailEntreprise'); elEmail.value = d.entrepriseEmail; grow(elEmail); }
+        if (d.entrepriseIban) document.getElementById('ibanEntreprise').value = d.entrepriseIban;
+        if (d.entrepriseBic) document.getElementById('bicEntreprise').value = d.entrepriseBic;
+        document.getElementById('titreDocument').value = d.type || 'FACTURE';
+        choisirTypeDocument(d.type || 'FACTURE', true);
+        document.getElementById('numeroFacture').value = d.numero || '';
+        document.getElementById('dateFacture').value = d.date || '';
+        document.getElementById('validiteDevis').value = d.validiteDevis || '';
+        document.getElementById('conditionsPaiement').value = d.conditionsPaiement || document.getElementById('conditionsPaiement').value;
+        const elMention = document.getElementById('mentionLegale'); elMention.value = d.mentionLegale || elMention.value; grow(elMention);
+
+        const clientTa = document.querySelectorAll('.client-box .auto-ta');
+        const clientInputs = document.querySelectorAll('.client-box input');
+        if (clientTa[0]) { clientTa[0].value = d.clientNom || ''; grow(clientTa[0]); }
+        if (clientTa[1]) { clientTa[1].value = d.clientAdresse || ''; grow(clientTa[1]); }
+        if (clientInputs[0]) clientInputs[0].value = d.clientTel || '';
+        document.getElementById('emailClient').value = d.clientEmail || '';
+
+        if (Array.isArray(d.lignes) && d.lignes.length > 0) {
+            const table = document.getElementById('table');
+            while (table.rows.length > 1) table.deleteRow(1);
+            d.lignes.forEach(function(l) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+<td><textarea class="desc-ta auto-ta" oninput="grow(this); calc()">${l.description || ''}</textarea></td>
+<td class="date-cell"><span class="date-affichee"></span></td>
+<td><input type="number" value="${l.qte || 1}" oninput="calc()"></td>
+<td><input value="${l.unite || 'h'}"></td>
+<td><input type="number" value="${l.prix || 0}" oninput="calc()"></td>
+<td><input type="number" value="${l.tva || 20}" oninput="calc()"></td>
+<td class="montant">0,00 €</td>
+<td style="text-align:center;"><button type="button" class="btn-suppr-ligne" onclick="supprimerLigne(this)" title="Supprimer cette ligne" style="background:none;border:none;color:#DC2626;font-size:16px;cursor:pointer;padding:0 4px;">✕</button></td>`;
+                table.appendChild(tr);
+                grow(tr.querySelector('.desc-ta'));
+            });
+        }
+        appliquerDate();
+        calc();
+
+        if (d.signatureImage) {
+            document.getElementById('signature-affichee').innerHTML = '<img src="' + d.signatureImage + '" style="max-height:100%;max-width:100%;">';
+        }
+
+        if (modeSignature && d.type === 'DEVIS' && !d.signatureImage) {
+            activerModeSignatureClient();
+        } else if (modeSignature && d.signatureImage) {
+            activerModeConsultationClient();
+            afficherMessageEnregistrer('Ce devis a déjà été signé le ' + (d.signeLe ? new Date(d.signeLe.seconds * 1000).toLocaleDateString('fr-FR') : '') + '.', true);
+        } else if (modeVoir && !d.accuseReception) {
+            activerModeConsultationClient();
+        } else if (modeVoir && d.accuseReception) {
+            afficherMessageEnregistrer('Réception déjà confirmée le ' + (d.receptionLe ? new Date(d.receptionLe.seconds * 1000).toLocaleDateString('fr-FR') : '') + '.', true);
+        }
+    }).catch(function(err) {
+        afficherMessageEnregistrer('Erreur de chargement : ' + err.message, false);
+    });
+}
+
+function activerModeConsultationClient() {
+    document.querySelectorAll('input, textarea, select, .upload-btn').forEach(function(el) { el.disabled = true; });
+    document.querySelector('.btns-fixed').style.display = 'none';
+    document.querySelectorAll('.btn-add, .toggle-doc, .btn-suppr-ligne').forEach(function(el) { el.style.display = 'none'; });
+
+    const btnTelecharger = document.createElement('button');
+    btnTelecharger.innerText = 'Télécharger';
+    btnTelecharger.onclick = function() { window.print(); };
+    btnTelecharger.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a6dc4;color:white;border:none;padding:14px 30px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;z-index:200;';
+    document.body.appendChild(btnTelecharger);
+}
+
+function notifierEntrepriseParEmail() {
+    if (!entrepriseEmailPourNotif) return;
+    const lien = window.location.origin + window.location.pathname + '?docId=' + docIdCourant;
+    const sujet = encodeURIComponent(typePourNotif + ' reçue : ' + numeroPourNotif);
+    const corps = encodeURIComponent("Bonjour,\n\nLe " + typePourNotif.toLowerCase() + " " + numeroPourNotif + " a bien été reçu par le client.\nVous pouvez le consulter ici :\n" + lien + "\n\nCordialement.");
+    setTimeout(function() {
+        window.location.href = 'mailto:' + entrepriseEmailPourNotif + '?subject=' + sujet + '&body=' + corps;
+    }, 1200);
+}
+
+// ===================== SIGNATURE CLIENT =====================
+let padSignatureCtx = null;
+let padSignatureEnCours = false;
+
+function activerModeSignatureClient() {
+    document.querySelectorAll('input, textarea, select, .upload-btn').forEach(function(el) { el.disabled = true; });
+    document.querySelector('.btns-fixed').style.display = 'none';
+    document.querySelectorAll('.btn-add, .toggle-doc, .btn-suppr-ligne').forEach(function(el) { el.style.display = 'none'; });
+    document.getElementById('bloc-pad-signature').style.display = 'flex';
+
+    const canvas = document.getElementById('pad-signature');
+    padSignatureCtx = canvas.getContext('2d');
+    padSignatureCtx.lineWidth = 2;
+    padSignatureCtx.lineCap = 'round';
+    padSignatureCtx.strokeStyle = '#0F172A';
+
+    function position(e) {
+        const rect = canvas.getBoundingClientRect();
+        const point = e.touches ? e.touches[0] : e;
+        return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+    }
+    function debut(e) {
+        e.preventDefault();
+        padSignatureEnCours = true;
+        const p = position(e);
+        padSignatureCtx.beginPath();
+        padSignatureCtx.moveTo(p.x, p.y);
+    }
+    function trace(e) {
+        if (!padSignatureEnCours) return;
+        e.preventDefault();
+        const p = position(e);
+        padSignatureCtx.lineTo(p.x, p.y);
+        padSignatureCtx.stroke();
+    }
+    function fin() { padSignatureEnCours = false; }
+
+    canvas.addEventListener('mousedown', debut);
+    canvas.addEventListener('mousemove', trace);
+    canvas.addEventListener('mouseup', fin);
+    canvas.addEventListener('mouseleave', fin);
+    canvas.addEventListener('touchstart', debut);
+    canvas.addEventListener('touchmove', trace);
+    canvas.addEventListener('touchend', fin);
+}
+
+function effacerSignaturePad() {
+    const canvas = document.getElementById('pad-signature');
+    padSignatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function validerSignature() {
+    const canvas = document.getElementById('pad-signature');
+    const imageDataUrl = canvas.toDataURL('image/png');
+
+    // Vérifier que quelque chose a été dessiné (pas juste un canvas vide)
+    const vide = document.createElement('canvas');
+    vide.width = canvas.width; vide.height = canvas.height;
+    if (imageDataUrl === vide.toDataURL('image/png')) {
+        document.getElementById('signature-message').innerHTML = '<span style="color:#DC2626;">Veuillez signer avant de valider.</span>';
+        return;
+    }
+
+    firebase.firestore().collection('documents').doc(docIdCourant).update({
+        signatureImage: imageDataUrl,
+        statut: 'devis accepté',
+        signeLe: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function() {
+        document.getElementById('bloc-pad-signature').innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.35);"><span style="color:#059669;font-weight:bold;">Merci, votre signature a bien été enregistrée. Ce devis est maintenant accepté.</span><br><button type="button" onclick="document.getElementById(\'bloc-pad-signature\').style.display=\'none\'" style="margin-top:14px;background:#059669;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-weight:bold;">Fermer</button></div>';
+        document.getElementById('signature-affichee').innerHTML = '<img src="' + imageDataUrl + '" style="max-height:100%;max-width:100%;">';
+    }).catch(function(err) {
+        document.getElementById('signature-message').innerHTML = '<span style="color:#DC2626;">Erreur : ' + err.message + '</span>';
+    });
+}
+
+
+calc();
+appliquerDate();
+
+(function() {
+    const dg = document.getElementById('dateGlobale');
+    if (dg && !dg.value) {
+        const auj = new Date();
+        dg.value = auj.getFullYear() + '-' + String(auj.getMonth() + 1).padStart(2, '0') + '-' + String(auj.getDate()).padStart(2, '0');
+        appliquerDate();
+    }
+})();
+
+(function() {
+chargerProfilEntreprise();
+
+const params = new URLSearchParams(window.location.search);
+
+const docId = params.get('docId');
+const modeSignature = params.get('signature') === '1';
+const modeVoir = params.get('voir') === '1';
+if (docId) {
+    (function attendreAuthPuisCharger() {
+        if (authPret) { chargerDocumentDepuisFirestore(docId, modeSignature, modeVoir); }
+        else { setTimeout(attendreAuthPuisCharger, 150); }
+    })();
+    return;
+}
+
+previsualiserNumero('FACTURE');
+
+const data = params.get('data');
+if (!data) return;
+
+let panier;
+try { panier = JSON.parse(decodeURIComponent(data)); } catch(e) { return; }
+if (!Array.isArray(panier) || panier.length === 0) return;
+
+const table = document.getElementById('table');
+while (table.rows.length > 1) table.deleteRow(1);
+
+panier.forEach(function(art) {
+const tr = document.createElement('tr');
+tr.innerHTML = `
+<td><textarea class="desc-ta auto-ta" oninput="grow(this); calc()">${art.des || ''}${art.ref ? ' (Réf: ' + art.ref + ')' : ''}</textarea></td>
+<td class="date-cell"><span class="date-affichee"></span></td>
+<td><input type="number" value="${art.qte || 1}" oninput="calc()"></td>
+<td><input value="u"></td>
+<td><input type="number" value="${art.px || 0}" oninput="calc()"></td>
+<td><input type="number" value="20" oninput="calc()"></td>
+<td class="montant">0,00 €</td>
+<td style="text-align:center;"><button type="button" class="btn-suppr-ligne" onclick="supprimerLigne(this)" title="Supprimer cette ligne" style="background:none;border:none;color:#DC2626;font-size:16px;cursor:pointer;padding:0 4px;">✕</button></td>`;
+table.appendChild(tr);
+grow(tr.querySelector('.desc-ta'));
+});
+
+appliquerDate();
+calc();
+window.history.replaceState({}, document.title, window.location.pathname);
+})();
+
+function chargerProfilEntreprise() {
+const nom = localStorage.getItem('artisan_nom');
+const email = localStorage.getItem('artisan_contact');
+const adresse = localStorage.getItem('artisan_adresse');
+const siret = localStorage.getItem('artisan_siret');
+const sirene = localStorage.getItem('artisan_sirene');
+const tva = localStorage.getItem('artisan_tva');
+const telephone = localStorage.getItem('artisan_telephone');
+const iban = localStorage.getItem('artisan_iban');
+const bic = localStorage.getItem('artisan_bic');
+const logo = localStorage.getItem('artisan_logo');
+
+const nomEl = document.getElementById('nomEntreprise');
+const emailEl = document.getElementById('emailEntreprise');
+const adresseEl = document.getElementById('adresseEntreprise');
+const siretEl = document.getElementById('siretEntreprise');
+const sireneEl = document.getElementById('sireneEntreprise');
+const tvaEl = document.getElementById('tvaEntreprise');
+const telEl = document.getElementById('telEntreprise');
+const ibanEl = document.getElementById('ibanEntreprise');
+const bicEl = document.getElementById('bicEntreprise');
+const logoEl = document.getElementById('logo');
+const logoPh = document.getElementById('logo-placeholder');
+
+if (nom && nomEl) { nomEl.value = nom; grow(nomEl); }
+if (email && emailEl) { emailEl.value = email; grow(emailEl); }
+if (adresse && adresseEl) { adresseEl.value = adresse; grow(adresseEl); }
+if (siret && siretEl) siretEl.value = siret;
+if (sirene && sireneEl) sireneEl.value = sirene;
+if (tva && tvaEl) tvaEl.value = tva;
+if (telephone && telEl) telEl.value = telephone;
+if (iban && ibanEl) ibanEl.value = iban;
+if (bic && bicEl) bicEl.value = bic;
+
+if (logo && logoEl) {
+logoEl.src = logo;
+logoEl.style.display = 'block';
+if (logoPh) logoPh.style.display = 'none';
+}
+}
+</script>
+</body>
+</html>
