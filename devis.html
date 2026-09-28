@@ -192,6 +192,21 @@ hr { border:none; border-top:1px solid #CBD5E0; margin:16px 0; }
 
 <input class="upload-btn" type="file" accept="image/*" onchange="loadLogo(event)">
 
+<div id="ecran-login" style="display:none;position:fixed;inset:0;background:#0b1f33;z-index:2000;align-items:center;justify-content:center;padding:18px;">
+  <div style="background:#fff;border-radius:12px;padding:26px 24px;width:100%;max-width:340px;box-shadow:0 12px 40px rgba(0,0,0,.35);">
+    <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#718096;margin-bottom:4px;">DS Plomberie</div>
+    <div style="font-size:18px;font-weight:bold;color:#1A365D;margin-bottom:16px;">Devis &amp; factures</div>
+    <input id="login-email" type="email" placeholder="Email" autocomplete="username"
+           style="width:100%;padding:10px 12px;border:1px solid #CBD5E0;border-radius:8px;font-size:14px;margin-bottom:9px;font-family:Arial,sans-serif;">
+    <input id="login-mdp" type="password" placeholder="Mot de passe" autocomplete="current-password"
+           style="width:100%;padding:10px 12px;border:1px solid #CBD5E0;border-radius:8px;font-size:14px;margin-bottom:12px;font-family:Arial,sans-serif;">
+    <button type="button" id="login-btn" onclick="seConnecter()"
+            style="width:100%;background:#1A365D;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Se connecter</button>
+    <div id="login-err" style="color:#B91C1C;font-size:12.5px;margin-top:10px;min-height:18px;"></div>
+    <div style="color:#718096;font-size:12px;margin-top:6px;">Le même compte que la console visio.</div>
+  </div>
+</div>
+
 <div id="app">
 <div class="top">
 <div class="left-col">
@@ -379,13 +394,44 @@ forfaitaire de 40 € pour frais de recouvrement.</textarea>
         btn.innerText = connecte ? 'Enregistrer' : 'Enregistrer (non connecté)';
     }
 
+    function afficherLogin(afficher) {
+        const e = document.getElementById('ecran-login');
+        if (e) e.style.display = afficher ? 'flex' : 'none';
+    }
+
+    function seConnecter() {
+        const mail = document.getElementById('login-email').value.trim();
+        const mdp  = document.getElementById('login-mdp').value;
+        const err  = document.getElementById('login-err');
+        const btn  = document.getElementById('login-btn');
+        err.textContent = '';
+        if (!mail || !mdp) { err.textContent = 'Email et mot de passe obligatoires.'; return; }
+        btn.disabled = true; btn.innerText = 'Connexion…';
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+          .then(function() { return firebase.auth().signInWithEmailAndPassword(mail, mdp); })
+          .catch(function(e) {
+              err.textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
+                  ? 'Email ou mot de passe incorrect.' : ('Connexion refusée : ' + (e.code || e.message));
+          })
+          .finally(function() { btn.disabled = false; btn.innerText = 'Se connecter'; });
+    }
+
+    document.addEventListener('keydown', function(ev) {
+        const e = document.getElementById('ecran-login');
+        if (ev.key === 'Enter' && e && e.style.display === 'flex') seConnecter();
+    });
+
     firebase.auth().onAuthStateChanged(function(user) {
         authPret = true;
         utilisateurActuel = user;
         debloquerBoutonEnregistrer(!!user);
-        if (!user && document.documentElement.classList.contains('mode-client-attente')) {
+        const modeClient = document.documentElement.classList.contains('mode-client-attente');
+        if (!user && modeClient) {
             firebase.auth().signInAnonymously().catch(function() {});
+            return;
         }
+        // Le poste doit être identifié pour créer ou relire ses documents.
+        afficherLogin(!user && !modeClient);
     });
 
     // Filet de sécurité : si Firebase ne répond jamais en 5 secondes,
