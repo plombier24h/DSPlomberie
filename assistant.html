@@ -77,12 +77,15 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .cli-sugg .s2{display:block;font-size:.74rem;color:rgba(255,255,255,.5);margin-top:2px}
 
 /* tableau de suivi */
-.sv-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.sv-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.sv-tri{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.sv-tri button{background:rgba(0,0,0,.3);border:none;color:rgba(255,255,255,.65);padding:8px 16px;font:700 .76rem 'Red Hat Display',sans-serif;cursor:pointer}
+.sv-tri button.on{background:var(--orange);color:#fff}
 .sv-bar input[type=search]{flex:1 1 220px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .88rem 'Red Hat Display',sans-serif;padding:9px 13px}
 .sv-bar input[type=search]:focus{outline:none;border-color:var(--orange)}
 .sv-nb{font-size:.78rem;color:rgba(255,255,255,.4);margin:0 0 9px}
 .sv-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--ink2)}
-.sv-table{width:100%;border-collapse:collapse;min-width:980px}
+.sv-table{width:100%;border-collapse:collapse;min-width:1060px;table-layout:fixed}
 .sv-table th{background:rgba(0,0,0,.35);color:rgba(255,255,255,.62);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:10px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
 .sv-table th small{display:block;text-transform:none;letter-spacing:0;color:var(--orange);font-size:.66rem;font-weight:600}
 .sv-table td{border-bottom:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);padding:0;vertical-align:top}
@@ -94,6 +97,10 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .sv-table .col-prix{width:100px}
 .sv-table .col-tech{width:125px}
 .sv-table .col-sup{width:36px;text-align:center}
+.sv-table .col-date{width:132px}
+.sv-table th.c,.sv-table td.c input,.sv-table td.c textarea{text-align:center}
+.sv-table td.col-date input{text-align:center;color-scheme:dark}
+.sv-table td textarea{text-align:left}
 .sv-sup{background:none;border:none;color:rgba(255,255,255,.28);cursor:pointer;padding:9px 4px;font-size:.86rem}
 .sv-sup:hover{color:#FF6B6B}
 .sv-aide{font-size:.76rem;color:rgba(255,255,255,.4);margin-top:10px;line-height:1.5}
@@ -316,6 +323,10 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <div class="outils-corps">
         <div class="sv-bar">
           <input type="search" id="sv-recherche" placeholder="Filtrer — client, technicien, note…" autocomplete="off">
+          <div class="sv-tri">
+            <button type="button" class="on" data-tri="nom">A → Z</button>
+            <button type="button" data-tri="date">Plus récents</button>
+          </div>
           <button class="btn small" id="btn-sv-new"><i class="fas fa-plus"></i> Nouveau client</button>
         </div>
         <p class="sv-nb" id="sv-nb"></p>
@@ -1161,21 +1172,33 @@ $('btn-pj-envoi').addEventListener('click', async () => {
 /* ---------- tableau de suivi, partage avec la console ---------- */
 const SV_COLS = [
   { k:'nom',          t:'Client',          cls:'col-client' },
-  { k:'deal',         t:'Deal',            sous:'15 %',  cls:'col-court' },
-  { k:'call',         t:'Call',            sous:'100 €', cls:'col-court' },
+  { k:'dateDevis',    t:'Date',            cls:'col-date', date:true },
+  { k:'deal',         t:'Deal',            sous:'15 %',  cls:'col-court c' },
+  { k:'call',         t:'Call',            sous:'100 €', cls:'col-court c' },
   { k:'notes',        t:'Note',            long:true },
-  { k:'prix',         t:'Prix',            cls:'col-prix' },
-  { k:'technicien',   t:'Technicien',      cls:'col-tech' },
-  { k:'devisFacture', t:'Devis / Facture', cls:'col-tech' },
+  { k:'prix',         t:'Prix',            cls:'col-prix c' },
+  { k:'technicien',   t:'Technicien',      cls:'col-tech c' },
+  { k:'devisFacture', t:'Devis / Facture', long:true },
   { k:'relance',      t:'Relance',         long:true }
 ];
+let svTri = 'nom';
+function svTrier(liste){
+  const l = [...liste];
+  if(svTri === 'date'){
+    const q = c => c.dateDevis ? Date.parse(c.dateDevis) : (c.creeAtMs || 0);
+    l.sort((a,b) => q(b) - q(a));
+  }else{
+    l.sort((a,b) => strip(a.nom||'').localeCompare(strip(b.nom||'')));
+  }
+  return l;
+}
 
 function renderSuivi(){
   const tbl = $('sv-table');
   if(!tbl) return;
   const q = strip(($('sv-recherche') && $('sv-recherche').value) || '');
-  const liste = contacts.filter(c => !q ||
-      strip([c.nom, c.notes, c.technicien, c.relance, c.devisFacture, c.deal, c.call, c.prix].join(' ')).includes(q));
+  const liste = svTrier(contacts.filter(c => !q ||
+      strip([c.nom, c.notes, c.technicien, c.relance, c.devisFacture, c.deal, c.call, c.prix].join(' ')).includes(q)));
   const nb = $('sv-nb');
   if(nb) nb.textContent = contacts.length
       ? (liste.length === contacts.length ? contacts.length + ' client' + (contacts.length > 1 ? 's' : '')
@@ -1188,7 +1211,7 @@ function renderSuivi(){
   const lignes = liste.map(c => '<tr data-id="' + esc(c.id) + '">' + SV_COLS.map(col => {
       const v = esc(c[col.k] || '');
       const champ = col.long ? `<textarea data-ch="${col.k}" rows="1">${v}</textarea>`
-                             : `<input type="text" data-ch="${col.k}" value="${v}">`;
+                             : `<input type="${col.date ? 'date' : 'text'}" data-ch="${col.k}" value="${v}">`;
       return `<td class="${col.cls || ''}">${champ}</td>`;
     }).join('') + '<td class="col-sup"><button class="sv-sup" data-sv-sup title="Retirer"><i class="fas fa-xmark"></i></button></td></tr>').join('');
 
@@ -1225,6 +1248,11 @@ function renderSuivi(){
 $('btn-suivi').addEventListener('click', () => { $('panneau-suivi').classList.remove('hidden'); renderSuivi(); });
 $('btn-suivi-fermer').addEventListener('click', () => $('panneau-suivi').classList.add('hidden'));
 $('sv-recherche').addEventListener('input', renderSuivi);
+document.querySelectorAll('[data-tri]').forEach(b => b.addEventListener('click', () => {
+  svTri = b.dataset.tri;
+  document.querySelectorAll('[data-tri]').forEach(x => x.classList.toggle('on', x === b));
+  renderSuivi();
+}));
 $('btn-sv-new').addEventListener('click', async () => {
   const nom = prompt("Nom du client :");
   if(!nom || !nom.trim()) return;
