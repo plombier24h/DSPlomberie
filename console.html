@@ -314,6 +314,27 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .ct-c-act button{background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.7);border-radius:7px;padding:5px 11px;font:600 .74rem 'Red Hat Display',sans-serif;cursor:pointer}
 .ct-c-act button:hover{border-color:var(--orange);color:#fff}
 .ct-c-act .sup:hover{border-color:#FF6B6B;color:#FF6B6B}
+#sv-recherche{flex:1 1 240px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .88rem 'Red Hat Display',sans-serif;padding:9px 13px}
+#sv-recherche:focus{outline:none;border-color:var(--orange)}
+.sv-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--ink2)}
+.sv-table{width:100%;border-collapse:collapse;min-width:1000px}
+.sv-table th{background:rgba(0,0,0,.35);color:rgba(255,255,255,.62);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:10px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;z-index:2}
+.sv-table th small{display:block;text-transform:none;letter-spacing:0;color:var(--orange);font-size:.66rem;font-weight:600}
+.sv-table td{border-bottom:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);padding:0;vertical-align:top}
+.sv-table td:last-child{border-right:none}
+.sv-table tr:hover td{background:rgba(255,255,255,.03)}
+.sv-table input,.sv-table textarea{width:100%;background:none;border:none;color:#fff;font:400 .82rem 'Red Hat Display',sans-serif;padding:9px;resize:none;overflow:hidden;min-height:38px;line-height:1.4}
+.sv-table input:focus,.sv-table textarea:focus{outline:none;background:rgba(232,119,34,.12);box-shadow:inset 0 0 0 1px var(--orange)}
+.sv-table .col-client input{font-weight:800}
+.sv-table .col-court{width:86px}
+.sv-table .col-prix{width:104px}
+.sv-table .col-tech{width:130px}
+.sv-table .col-sup{width:38px;text-align:center}
+.sv-sup{background:none;border:none;color:rgba(255,255,255,.28);cursor:pointer;padding:9px 4px;font-size:.86rem}
+.sv-sup:hover{color:#FF6B6B}
+.sv-aide{font-size:.76rem;color:rgba(255,255,255,.4);margin-top:10px;line-height:1.5}
+.sv-etat{position:fixed;right:16px;bottom:16px;background:#0F6B4F;color:#fff;padding:8px 14px;border-radius:8px;font-size:.78rem;z-index:900;opacity:0;transition:opacity .2s;pointer-events:none}
+.sv-etat.on{opacity:1}
 .devis-pied .btn{width:100%;justify-content:center}
 
 /* recapitulatif garde a l'ecran apres le raccrochage */
@@ -366,6 +387,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <button id="tab-fiches">Fiches</button>
       <button id="tab-diagnostics">Diagnostics</button>
       <button id="tab-contacts">Contacts</button>
+      <button id="tab-suivi">Tableau de suivi</button>
       <button id="tab-outil-devis">Fiches &amp; devis</button>
       <button id="tab-devis" onclick="location.href='devis.html'">Devis &amp; factures</button>
     </div>
@@ -463,6 +485,16 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <button class="btn ghost small" id="btn-diag-purge"><i class="fas fa-broom"></i> Vider les plus de 30 jours</button>
       </div>
       <div id="diag-list"></div>
+    </div>
+
+    <div id="pan-suivi" class="hidden">
+      <div class="cat-actions">
+        <input type="search" id="sv-recherche" placeholder="Filtrer — client, technicien, note…" autocomplete="off">
+        <button class="btn small" id="btn-sv-new"><i class="fas fa-plus"></i> Nouveau client</button>
+      </div>
+      <p class="ct-nb" id="sv-nb"></p>
+      <div class="sv-scroll"><table class="sv-table" id="sv-table"></table></div>
+      <p class="sv-aide">Chaque case se modifie directement et s'enregistre dès que tu sors du champ. Tout le monde voit les mêmes lignes, console et postes assistants.</p>
     </div>
 
     <div id="pan-contacts" class="hidden">
@@ -2410,6 +2442,8 @@ function ecouterContacts(){
     contacts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     contacts.sort((a, b) => strip(a.nom || '').localeCompare(strip(b.nom || '')));
     renderContacts();
+    if(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.ch) return;
+    renderSuivi();
   }, (e) => { const l = document.getElementById('ct-list'); if(l) l.innerHTML = '<p class="px-vide">Lecture refusée : ' + (e.code || e.message) + '</p>'; });
 }
 
@@ -2546,6 +2580,87 @@ async function majContactDepuisDossier(infos){
   }catch(e){ /* le contact n'est qu'un confort : on n'interrompt jamais l'appel pour ça */ }
 }
 
+/* =========================================================
+   TABLEAU DE SUIVI — une ligne par client, colonnes du tableau blanc.
+   Les colonnes vivent sur la fiche contact : une seule source.
+   ========================================================= */
+const SV_COLS = [
+  { k:'nom',          t:'Client',          cls:'col-client' },
+  { k:'deal',         t:'Deal',            sous:'15 %',  cls:'col-court' },
+  { k:'call',         t:'Call',            sous:'100 €', cls:'col-court' },
+  { k:'notes',        t:'Note',            long:true },
+  { k:'prix',         t:'Prix',            cls:'col-prix' },
+  { k:'technicien',   t:'Technicien',      cls:'col-tech' },
+  { k:'devisFacture', t:'Devis / Facture', cls:'col-tech' },
+  { k:'relance',      t:'Relance',         long:true }
+];
+
+function svEtat(txt){
+  let e = document.getElementById('sv-etat');
+  if(!e){ e = document.createElement('div'); e.id = 'sv-etat'; e.className = 'sv-etat'; document.body.appendChild(e); }
+  e.textContent = txt; e.classList.add('on');
+  clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 1600);
+}
+
+function renderSuivi(){
+  const tbl = document.getElementById('sv-table');
+  if(!tbl) return;
+  const champ = document.getElementById('sv-recherche');
+  const q = strip((champ && champ.value) || '');
+  const liste = contacts.filter(c => !q ||
+      strip([c.nom, c.notes, c.technicien, c.relance, c.devisFacture, c.deal, c.call, c.prix].join(' ')).includes(q));
+  const nb = document.getElementById('sv-nb');
+  if(nb) nb.textContent = contacts.length
+      ? (liste.length === contacts.length ? contacts.length + ' client' + (contacts.length > 1 ? 's' : '')
+                                          : liste.length + ' sur ' + contacts.length) : '';
+
+  const entete = '<tr>' + SV_COLS.map(c =>
+      `<th class="${c.cls || ''}">${esc(c.t)}${c.sous ? '<small>' + esc(c.sous) + '</small>' : ''}</th>`).join('')
+    + '<th class="col-sup"></th></tr>';
+
+  const lignes = liste.map(c => '<tr data-id="' + esc(c.id) + '">' + SV_COLS.map(col => {
+      const v = esc(c[col.k] || '');
+      const champ = col.long
+        ? `<textarea data-ch="${col.k}" rows="1">${v}</textarea>`
+        : `<input type="text" data-ch="${col.k}" value="${v}">`;
+      return `<td class="${col.cls || ''}">${champ}</td>`;
+    }).join('') + '<td class="col-sup"><button class="sv-sup" data-sv-sup title="Retirer du tableau"><i class="fas fa-xmark"></i></button></td></tr>').join('');
+
+  tbl.innerHTML = entete + (lignes || '<tr><td colspan="9" style="padding:16px;color:rgba(255,255,255,.45)">Aucun client. Clique sur « Nouveau client ».</td></tr>');
+
+  tbl.querySelectorAll('textarea').forEach(t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px';
+      t.addEventListener('input', () => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }); });
+
+  tbl.querySelectorAll('[data-ch]').forEach(el => {
+    el.addEventListener('focus', () => { el.dataset.avant = el.value; });
+    el.addEventListener('blur', async () => {
+      if(el.value === el.dataset.avant) return;
+      const id = el.closest('tr').dataset.id, champ = el.dataset.ch;
+      if(champ === 'nom' && !el.value.trim()){ el.value = el.dataset.avant; toast("Le nom ne peut pas être vide."); return; }
+      try{
+        await updateDoc(doc(db, "clients", id), { [champ]: el.value.trim(), majAtMs: Date.now() });
+        svEtat('Enregistré');
+      }catch(e){ el.value = el.dataset.avant; toast("Enregistrement refusé : " + (e.code || e.message)); }
+    });
+    el.addEventListener('keydown', (ev) => { if(ev.key === 'Enter' && el.tagName === 'INPUT'){ ev.preventDefault(); el.blur(); } });
+  });
+
+  tbl.querySelectorAll('[data-sv-sup]').forEach(b => b.addEventListener('click', () => {
+    supprimerContact(b.closest('tr').dataset.id);
+  }));
+}
+
+async function nouveauClientSuivi(){
+  const nom = prompt("Nom du client :");
+  if(!nom || !nom.trim()) return;
+  try{
+    await addDoc(collection(db, "clients"), { nom: nom.trim(), tel:'', email:'', adresse:'', notes:'',
+      deal:'', call:'', prix:'', technicien:'', devisFacture:'', relance:'',
+      creeAtMs: Date.now(), majAtMs: Date.now(), auteur: (auth.currentUser && auth.currentUser.email) || '' });
+    svEtat('Client ajouté');
+  }catch(e){ toast("Création refusée : " + (e.code || e.message)); }
+}
+
 /* ---------- catalogue de prestations cliquables dans le panneau devis ---------- */
 function renderPrixBoutons(){
   const box = document.getElementById('px-boutons');
@@ -2615,7 +2730,7 @@ function publierDevis(){
 
 /* ---------- onglets de la console ---------- */
 function initOnglets(){
-  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-tarifs':'pan-tarifs', 'tab-fiches':'pan-fiches', 'tab-diagnostics':'pan-diagnostics', 'tab-contacts':'pan-contacts' };
+  const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-tarifs':'pan-tarifs', 'tab-fiches':'pan-fiches', 'tab-diagnostics':'pan-diagnostics', 'tab-contacts':'pan-contacts', 'tab-suivi':'pan-suivi' };
   Object.keys(map).forEach(t => {
     const btn = document.getElementById(t);
     if(!btn) return;
@@ -2626,6 +2741,10 @@ function initOnglets(){
       });
     });
   });
+  const sr = document.getElementById('sv-recherche');
+  if(sr) sr.addEventListener('input', renderSuivi);
+  const sn = document.getElementById('btn-sv-new');
+  if(sn) sn.addEventListener('click', nouveauClientSuivi);
   const cs = document.getElementById('btn-ct-save');
   if(cs) cs.addEventListener('click', enregistrerContact);
   const ca = document.getElementById('btn-ct-annuler');

@@ -75,6 +75,28 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .cli-sugg button:last-child{border-bottom:none}
 .cli-sugg button:hover{background:rgba(232,119,34,.16)}
 .cli-sugg .s2{display:block;font-size:.74rem;color:rgba(255,255,255,.5);margin-top:2px}
+
+/* tableau de suivi */
+.sv-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.sv-bar input[type=search]{flex:1 1 220px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .88rem 'Red Hat Display',sans-serif;padding:9px 13px}
+.sv-bar input[type=search]:focus{outline:none;border-color:var(--orange)}
+.sv-nb{font-size:.78rem;color:rgba(255,255,255,.4);margin:0 0 9px}
+.sv-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--ink2)}
+.sv-table{width:100%;border-collapse:collapse;min-width:980px}
+.sv-table th{background:rgba(0,0,0,.35);color:rgba(255,255,255,.62);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:10px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+.sv-table th small{display:block;text-transform:none;letter-spacing:0;color:var(--orange);font-size:.66rem;font-weight:600}
+.sv-table td{border-bottom:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);padding:0;vertical-align:top}
+.sv-table td:last-child{border-right:none}
+.sv-table input,.sv-table textarea{width:100%;background:none;border:none;color:#fff;font:400 .82rem 'Red Hat Display',sans-serif;padding:9px;resize:none;overflow:hidden;min-height:38px;line-height:1.4}
+.sv-table input:focus,.sv-table textarea:focus{outline:none;background:rgba(232,119,34,.12);box-shadow:inset 0 0 0 1px var(--orange)}
+.sv-table .col-client input{font-weight:800}
+.sv-table .col-court{width:80px}
+.sv-table .col-prix{width:100px}
+.sv-table .col-tech{width:125px}
+.sv-table .col-sup{width:36px;text-align:center}
+.sv-sup{background:none;border:none;color:rgba(255,255,255,.28);cursor:pointer;padding:9px 4px;font-size:.86rem}
+.sv-sup:hover{color:#FF6B6B}
+.sv-aide{font-size:.76rem;color:rgba(255,255,255,.4);margin-top:10px;line-height:1.5}
 .dossier-bar{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
 .dossier-aide{font-size:.76rem;color:rgba(255,255,255,.45);line-height:1.55;margin-top:8px}
 .dossier-aide b{color:#fff}
@@ -231,6 +253,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 
     <div class="barre-outils">
       <button class="btn ghost small" id="btn-outils"><i class="fas fa-clipboard-list"></i> Fiches &amp; devis</button>
+      <button class="btn ghost small" id="btn-suivi"><i class="fas fa-table-list"></i> Clients &amp; suivi</button>
       <span class="outils-info" id="outils-info"></span>
     </div>
 
@@ -282,6 +305,22 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
           <div class="tabs" id="tabs"></div>
           <div id="body"></div>
         </div>
+      </div>
+    </div>
+
+    <div class="outils hidden" id="panneau-suivi">
+      <div class="outils-tete">
+        <h2>Clients &amp; tableau de suivi</h2>
+        <button class="btn ghost small" id="btn-suivi-fermer"><i class="fas fa-xmark"></i> Fermer</button>
+      </div>
+      <div class="outils-corps">
+        <div class="sv-bar">
+          <input type="search" id="sv-recherche" placeholder="Filtrer — client, technicien, note…" autocomplete="off">
+          <button class="btn small" id="btn-sv-new"><i class="fas fa-plus"></i> Nouveau client</button>
+        </div>
+        <p class="sv-nb" id="sv-nb"></p>
+        <div class="sv-scroll"><table class="sv-table" id="sv-table"></table></div>
+        <p class="sv-aide">Chaque case s'enregistre dès que tu sors du champ. Le tableau est le même pour tout le monde, postes et console centrale.</p>
       </div>
     </div>
 
@@ -1119,6 +1158,82 @@ $('btn-pj-envoi').addEventListener('click', async () => {
   toast("Partage non supporté : les fichiers ont été téléchargés, joins-les à la main.");
 });
 
+/* ---------- tableau de suivi, partage avec la console ---------- */
+const SV_COLS = [
+  { k:'nom',          t:'Client',          cls:'col-client' },
+  { k:'deal',         t:'Deal',            sous:'15 %',  cls:'col-court' },
+  { k:'call',         t:'Call',            sous:'100 €', cls:'col-court' },
+  { k:'notes',        t:'Note',            long:true },
+  { k:'prix',         t:'Prix',            cls:'col-prix' },
+  { k:'technicien',   t:'Technicien',      cls:'col-tech' },
+  { k:'devisFacture', t:'Devis / Facture', cls:'col-tech' },
+  { k:'relance',      t:'Relance',         long:true }
+];
+
+function renderSuivi(){
+  const tbl = $('sv-table');
+  if(!tbl) return;
+  const q = strip(($('sv-recherche') && $('sv-recherche').value) || '');
+  const liste = contacts.filter(c => !q ||
+      strip([c.nom, c.notes, c.technicien, c.relance, c.devisFacture, c.deal, c.call, c.prix].join(' ')).includes(q));
+  const nb = $('sv-nb');
+  if(nb) nb.textContent = contacts.length
+      ? (liste.length === contacts.length ? contacts.length + ' client' + (contacts.length > 1 ? 's' : '')
+                                          : liste.length + ' sur ' + contacts.length) : '';
+
+  const entete = '<tr>' + SV_COLS.map(c =>
+      `<th class="${c.cls || ''}">${esc(c.t)}${c.sous ? '<small>' + esc(c.sous) + '</small>' : ''}</th>`).join('')
+    + '<th class="col-sup"></th></tr>';
+
+  const lignes = liste.map(c => '<tr data-id="' + esc(c.id) + '">' + SV_COLS.map(col => {
+      const v = esc(c[col.k] || '');
+      const champ = col.long ? `<textarea data-ch="${col.k}" rows="1">${v}</textarea>`
+                             : `<input type="text" data-ch="${col.k}" value="${v}">`;
+      return `<td class="${col.cls || ''}">${champ}</td>`;
+    }).join('') + '<td class="col-sup"><button class="sv-sup" data-sv-sup title="Retirer"><i class="fas fa-xmark"></i></button></td></tr>').join('');
+
+  tbl.innerHTML = entete + (lignes || '<tr><td colspan="9" style="padding:16px;color:rgba(255,255,255,.45)">Aucun client. Clique sur « Nouveau client ».</td></tr>');
+
+  tbl.querySelectorAll('textarea').forEach(t => { t.style.height='auto'; t.style.height=t.scrollHeight+'px';
+      t.addEventListener('input', () => { t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }); });
+
+  tbl.querySelectorAll('[data-ch]').forEach(el => {
+    el.addEventListener('focus', () => { el.dataset.avant = el.value; });
+    el.addEventListener('blur', async () => {
+      if(el.value === el.dataset.avant) return;
+      const id = el.closest('tr').dataset.id, champ = el.dataset.ch;
+      if(champ === 'nom' && !el.value.trim()){ el.value = el.dataset.avant; toast("Le nom ne peut pas être vide."); return; }
+      try{
+        await updateDoc(doc(db,"clients",id), { [champ]: el.value.trim(), majAtMs: Date.now() });
+        toast("Enregistré.");
+      }catch(e){ el.value = el.dataset.avant; toast("Enregistrement refusé : " + (e.code||e.message)); }
+    });
+    el.addEventListener('keydown', ev => { if(ev.key === 'Enter' && el.tagName === 'INPUT'){ ev.preventDefault(); el.blur(); } });
+  });
+
+  tbl.querySelectorAll('[data-sv-sup]').forEach(b => b.addEventListener('click', async () => {
+    const id = b.closest('tr').dataset.id;
+    const c = contacts.find(x => x.id === id);
+    if(!c || !confirm('Retirer ' + (c.nom || 'ce client') + ' du tableau et des contacts ?')) return;
+    try{ await deleteDoc(doc(db,"clients",id)); toast("Client retiré."); }
+    catch(e){ toast("Suppression refusée : " + (e.code||e.message)); }
+  }));
+}
+
+$('btn-suivi').addEventListener('click', () => { $('panneau-suivi').classList.remove('hidden'); renderSuivi(); });
+$('btn-suivi-fermer').addEventListener('click', () => $('panneau-suivi').classList.add('hidden'));
+$('sv-recherche').addEventListener('input', renderSuivi);
+$('btn-sv-new').addEventListener('click', async () => {
+  const nom = prompt("Nom du client :");
+  if(!nom || !nom.trim()) return;
+  try{
+    await addDoc(collection(db,"clients"), { nom: nom.trim(), tel:'', email:'', adresse:'', notes:'',
+      deal:'', call:'', prix:'', technicien:'', devisFacture:'', relance:'',
+      creeAtMs: Date.now(), majAtMs: Date.now(), auteur: monEmail });
+    toast("Client ajouté.");
+  }catch(e){ toast("Création refusée : " + (e.code||e.message)); }
+});
+
 /* ---------- catalogue des chaudieres ---------- */
 let chaudieres = [];
 function ecouterCatalogue(){
@@ -1178,6 +1293,10 @@ let contacts = [];
 function ecouterContacts(){
   onSnapshot(collection(db,"clients"), (s) => {
     contacts = s.docs.map(d => ({ id:d.id, ...d.data() }));
+    contacts.sort((a,b) => strip(a.nom||'').localeCompare(strip(b.nom||'')));
+    const a = document.activeElement;
+    if(a && a.dataset && a.dataset.ch) return;   // on ne casse pas une saisie en cours
+    if(!$('panneau-suivi').classList.contains('hidden')) renderSuivi();
   }, () => {});
 }
 
