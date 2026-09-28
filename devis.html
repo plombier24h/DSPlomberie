@@ -1158,6 +1158,70 @@ logoEl.src = logo;
 logoEl.style.display = 'block';
 if (logoPh) logoPh.style.display = 'none';
 }
+
+valeursParDefautEntreprise();
+importerDevisDepuisConsole();
+}
+
+// Coordonnées de l'entreprise pré-remplies si rien n'a encore été saisi.
+// Elles restent modifiables et sont mémorisées dès la première modification.
+function valeursParDefautEntreprise() {
+    const defauts = {
+        nomEntreprise:     'SAS DA SILVA PLOMBERIE',
+        adresseEntreprise: '17 Avenue Gambetta, 75020 Paris',
+        siretEntreprise:   '106 245 921 00015',
+        sireneEntreprise:  '106 245 921',
+        tvaEntreprise:     'FR7501.106245921',
+        telEntreprise:     '01.74.60.17.95 / 06.16.69.49.89',
+        emailEntreprise:   'plombierds24@gmail.com'
+    };
+    Object.keys(defauts).forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim()) {
+            el.value = defauts[id];
+            if (el.tagName === 'TEXTAREA') grow(el);
+        }
+    });
+    if (typeof majPiedDocument === 'function') majPiedDocument();
+}
+
+// Reprise d'un devis préparé pendant l'appel (console ou poste assistant).
+const CLE_TRANSFERT = 'ds-devis-transfert';
+function importerDevisDepuisConsole() {
+    let data = null;
+    try { data = JSON.parse(localStorage.getItem(CLE_TRANSFERT) || 'null'); } catch (e) { return; }
+    if (!data) return;
+    localStorage.removeItem(CLE_TRANSFERT);
+
+    choisirTypeDocument('DEVIS');
+
+    const ta = document.querySelectorAll('.client-box .auto-ta');
+    const inp = document.querySelectorAll('.client-box input');
+    if (ta[0] && data.client)   { ta[0].value = data.client;   grow(ta[0]); }
+    if (ta[1] && data.adresse)  { ta[1].value = data.adresse;  grow(ta[1]); }
+    if (inp[0] && data.tel)     inp[0].value = data.tel;
+    if (inp[1] && data.email)   inp[1].value = data.email;
+    if (data.projet) { const o = document.getElementById('objetProjet'); if (o) o.value = data.projet; }
+
+    const lignes = Array.isArray(data.lignes) ? data.lignes : [];
+    if (lignes.length) {
+        const table = document.getElementById('table');
+        // on ne garde que l'en-tête, puis on recrée une ligne par prestation
+        while (table.rows.length > 1) table.deleteRow(1);
+        lignes.forEach(function(l) {
+            addRow();
+            const row = table.rows[table.rows.length - 1];
+            const desc = row.cells[0].querySelector('textarea');
+            desc.value = l.designation || '';
+            grow(desc);
+            row.cells[2].querySelector('input').value = l.qte != null ? l.qte : 1;
+            row.cells[3].querySelector('input').value = l.unite || 'U';
+            row.cells[4].querySelector('input').value = l.prixHT != null ? l.prixHT : 0;
+            row.cells[5].querySelector('input').value = l.tva != null ? l.tva : 10;
+        });
+    }
+    calc();
+    afficherMessageEnregistrer('Devis repris depuis l\'appel : ' + lignes.length + ' ligne(s). Vérifie puis enregistre.', true);
 }
 </script>
 </body>

@@ -281,6 +281,8 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .devis-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.55);flex:0 0 auto}
 .devis-head button{background:none;border:none;color:rgba(255,255,255,.5);font-size:1.15rem;line-height:1;cursor:pointer;padding:0 2px}
 .devis-head button:hover{color:#fff}
+.devis-pied{padding:12px 16px;border-top:1px solid var(--line);flex:0 0 auto}
+.devis-pied .btn{width:100%;justify-content:center}
 
 /* recapitulatif garde a l'ecran apres le raccrochage */
 .recap-screen{justify-content:flex-start;padding:26px 16px;overflow-y:auto;background:radial-gradient(circle at 50% 0%,#0d4b74 0%,#06243a 70%)}
@@ -331,6 +333,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <button id="tab-tarifs">Tarifs</button>
       <button id="tab-fiches">Fiches</button>
       <button id="tab-diagnostics">Diagnostics</button>
+      <button id="tab-outil-devis">Fiches &amp; devis</button>
       <button id="tab-devis" onclick="location.href='devis.html'">Devis &amp; factures</button>
     </div>
 
@@ -1526,6 +1529,7 @@ function panneauAssistant(titre, ouvert){
       <div class="devis-corps" id="devis-lignes"></div>
       <div class="devis-sugg" id="devis-sugg"></div>
       <div class="devis-total" id="devis-total"></div>
+      <div class="devis-pied"><button class="btn small" id="btn-publier-devis"><i class="fas fa-file-export"></i> Publier le devis</button></div>
     </div>`;
 }
 
@@ -1966,6 +1970,55 @@ async function enregistrerDevisRecap(){
   }catch(e){ toast("Devis non enregistré : " + (e.code || e.message)); }
 }
 
+/* ---------- mode DEVIS : fiches et devis hors appel, sans micro ---------- */
+function ouvrirModeDevis(){
+  if(currentCallDocId){ toast("Un appel visio est en cours."); return; }
+  callRoot.innerHTML = `
+    <div class="call-screen">
+      ${panneauAssistant('Préparer un devis', true)}
+      <div class="call-top">
+        <div class="call-avatar"><i class="fas fa-file-invoice"></i></div>
+        <div class="call-name">Fiches &amp; devis</div>
+        <div class="call-status">Hors appel — le micro ne tourne pas</div>
+      </div>
+      <div class="call-actions">
+        <div class="call-action">
+          <button class="call-btn" id="btn-assist"><i class="fas fa-clipboard-list"></i></button>
+          <span class="call-btn-label">Fiches</span>
+        </div>
+        <div class="call-action">
+          <button class="call-btn" id="btn-devis"><i class="fas fa-file-invoice"></i></button>
+          <span class="call-btn-label">Devis</span>
+        </div>
+        <div class="call-action">
+          <button class="call-btn hangup" id="btn-fermer-devis"><i class="fas fa-xmark"></i></button>
+          <span class="call-btn-label">Fermer</span>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('btn-fermer-devis').addEventListener('click', ecranRecap);
+  sujets = []; sujetsEcartes = new Set(); devisInit();
+  ficheManuelle = null;
+
+  const panel = document.getElementById('assist');
+  const pdev  = document.getElementById('devis-panneau');
+  const ecran = callRoot.querySelector('.call-screen');
+  const majEcran = () => {
+    if(!ecran) return;
+    ecran.classList.toggle('p-gauche', !!(panel && panel.classList.contains('open')));
+    ecran.classList.toggle('p-droite', !!(pdev && pdev.classList.contains('open')));
+  };
+  majEcran();
+  const bA = document.getElementById('btn-assist');
+  if(bA && panel) bA.addEventListener('click', () => { panel.classList.toggle('open'); majEcran(); });
+  const bD = document.getElementById('btn-devis');
+  if(bD && pdev) bD.addEventListener('click', () => { pdev.classList.toggle('open'); majEcran(); });
+  const bF = document.getElementById('btn-devis-fermer');
+  if(bF && pdev) bF.addEventListener('click', () => { pdev.classList.remove('open'); majEcran(); });
+
+  renderSujets(); renderDevis(); renderAssist();
+}
+
 /* ---------- mode ECOUTE : assistant sans visio ---------- */
 function ouvrirEcoute(){
   if(currentCallDocId){ toast("Un appel visio est en cours."); return; }
@@ -2283,6 +2336,25 @@ function renderDiagnostics(){
   });
 }
 
+/* ---------- transfert du devis vers la page devis & factures ---------- */
+const CLE_TRANSFERT = 'ds-devis-transfert';
+document.addEventListener('click', (e) => {
+  if(e.target.closest && e.target.closest('#btn-publier-devis')) publierDevis();
+});
+function publierDevis(){
+  if(!devis.length){ toast("Le devis est vide : ajoute au moins une prestation."); return; }
+  const titres = sujets.map(id => { const f = fiches.find(x => x.id === id); return f ? f.titre : ''; }).filter(Boolean);
+  const data = {
+    client: assistCallerName && assistCallerName !== 'Visiteur' ? assistCallerName : '',
+    tel: '', email: '', adresse: '',
+    projet: titres.join(' — '),
+    lignes: devis.map(l => ({ designation: l.des, unite: l.unite, prixHT: l.pu, tva: l.tva, qte: l.qte }))
+  };
+  try{ localStorage.setItem(CLE_TRANSFERT, JSON.stringify(data)); }
+  catch(e){ toast("Transfert impossible : " + e.message); return; }
+  window.open('devis.html', '_blank', 'noopener');
+}
+
 /* ---------- onglets de la console ---------- */
 function initOnglets(){
   const map = { 'tab-appels':'pan-appels', 'tab-catalogue':'pan-catalogue', 'tab-tarifs':'pan-tarifs', 'tab-fiches':'pan-fiches', 'tab-diagnostics':'pan-diagnostics' };
@@ -2296,6 +2368,8 @@ function initOnglets(){
       });
     });
   });
+  const od = document.getElementById('tab-outil-devis');
+  if(od) od.addEventListener('click', ouvrirModeDevis);
   const imp = document.getElementById('btn-cat-import');
   if(imp) imp.addEventListener('click', importerCatalogue);
   const add = document.getElementById('btn-cat-add');
