@@ -271,6 +271,10 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
             </div>
             <div id="px-boutons"><p class="empty-txt">Chargement des tarifs…</p></div>
           </div>
+          <div class="bloc" id="bloc-chaudieres">
+            <div class="bloc-head"><h2>Chaudières Frisquet</h2></div>
+            <div id="chaud-boutons"><p class="empty-txt">Chargement du catalogue…</p></div>
+          </div>
         </div>
         <div class="vue hidden" id="vue-fiches">
           <div class="sujets" id="sujets"></div>
@@ -310,6 +314,10 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <p class="pj-memo hidden" id="pj-memo"></p>
       </div>
 
+      <div class="dossier-bar">
+        <button class="btn ghost small" id="btn-cli-save"><i class="fas fa-address-book"></i> Enregistrer dans les contacts</button>
+        <button class="btn ghost small" id="btn-cli-agenda"><i class="fas fa-calendar-plus"></i> Google Agenda</button>
+      </div>
       <div class="dossier-bar">
         <button class="btn" id="btn-fiche"><i class="fas fa-envelope"></i> Copier la fiche et ouvrir le mail</button>
         <button class="btn ghost hidden" id="btn-pj-envoi"><i class="fas fa-paperclip"></i> Joindre les pièces au mail</button>
@@ -1111,6 +1119,60 @@ $('btn-pj-envoi').addEventListener('click', async () => {
   toast("Partage non supporté : les fichiers ont été téléchargés, joins-les à la main.");
 });
 
+/* ---------- catalogue des chaudieres ---------- */
+let chaudieres = [];
+function ecouterCatalogue(){
+  onSnapshot(collection(db,"catalogue"), (s) => {
+    chaudieres = s.docs.map(d => ({ id:d.id, ...d.data() }));
+    chaudieres.sort((a,b) => (a.kwMin || 0) - (b.kwMin || 0));
+    renderChaudieres();
+  }, () => {});
+}
+
+function renderChaudieres(){
+  const box = $('chaud-boutons');
+  if(!box) return;
+  const dispo = chaudieres.filter(m => m.prixVenteTTC != null && m.prixVenteTTC > 0);
+  if(!dispo.length){
+    box.innerHTML = chaudieres.length
+      ? '<p class="empty-txt">Aucun prix de vente saisi. Renseigne-les depuis la console centrale, onglet Catalogue.</p>'
+      : '<p class="empty-txt">Catalogue vide. Importe les chaudières depuis la console centrale.</p>';
+    return;
+  }
+  box.innerHTML = '<div class="px-grille">' + dispo.map(m => {
+    const kw = (m.kwMin === m.kwMax) ? m.kwMin : (m.kwMin + '-' + m.kwMax);
+    const nom = [(m.gamme || 'Chaudière'), kw ? kw + ' kW' : '', m.variante || ''].filter(Boolean).join(' ');
+    return `<button class="px-b" data-chaud="${esc(m.id)}">${esc(nom)}<em>${eur(m.prixVenteTTC)} TTC</em></button>`;
+  }).join('') + '</div>';
+  box.querySelectorAll('[data-chaud]').forEach(b => b.addEventListener('click', () => {
+    const m = chaudieres.find(x => x.id === b.dataset.chaud);
+    if(!m) return;
+    const kw = (m.kwMin === m.kwMax) ? m.kwMin : (m.kwMin + '-' + m.kwMax);
+    const nom = [(m.gamme || 'Chaudière'), kw ? kw + ' kW' : '', m.variante || ''].filter(Boolean).join(' ');
+    // le catalogue est en TTC, le devis se monte en HT : on repasse en HT à 10 %
+    const ht = Math.round((m.prixVenteTTC / 1.10) * 100) / 100;
+    devisAjouter(nom + ' (fourniture)', 'u', ht, 10);
+    b.classList.add('ok');
+    setTimeout(() => b.classList.remove('ok'), 650);
+  }));
+}
+
+/* ---------- Google Agenda ---------- */
+function ouvrirAgenda(){
+  const nom = $('cli-nom').value.trim() || 'Client';
+  const adr = $('cli-adr').value.trim();
+  const tel = $('cli-tel').value.trim();
+  const note = $('note').value.trim() || derniereNote;
+  const details = ['Client : ' + nom, tel ? 'Téléphone : ' + tel : '', adr ? 'Adresse : ' + adr : '',
+                   note ? '\n' + note : ''].filter(Boolean).join('\n');
+  const u = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+          + '&text=' + encodeURIComponent('DS Plomberie — ' + nom)
+          + '&details=' + encodeURIComponent(details)
+          + (adr ? '&location=' + encodeURIComponent(adr) : '');
+  window.open(u, '_blank', 'noopener');
+}
+$('btn-cli-agenda').addEventListener('click', ouvrirAgenda);
+
 /* ---------- contacts clients partages ---------- */
 let contacts = [];
 function ecouterContacts(){
@@ -1167,6 +1229,14 @@ async function majContactDepuisDossier(){
     else await addDoc(collection(db,"clients"), { ...donnees, notes:'', creeAtMs: Date.now(), auteur: monEmail });
   }catch(e){}
 }
+
+$('btn-cli-save').addEventListener('click', async () => {
+  const nom = $('cli-nom').value.trim();
+  if(!nom){ toast("Renseigne au moins le nom du client."); return; }
+  const existant = contacts.find(c => strip(c.nom || '') === strip(nom));
+  await majContactDepuisDossier();
+  toast(existant ? "Contact mis à jour." : "Client ajouté aux contacts.");
+});
 
 /* ---------- publication vers la page devis & factures ---------- */
 const CLE_TRANSFERT = 'ds-devis-transfert';
@@ -1301,6 +1371,7 @@ let lance=false;
 function ecouterTout(){
   if(lance) return; lance=true;
   ecouterContacts();
+  ecouterCatalogue();
   onSnapshot(collection(db,"fiches"),(s)=>{
     const d=s.docs.map(x=>({docId:x.id,...x.data()})).sort((a,b)=>(a.ordre||0)-(b.ordre||0));
     fiches = uniques(d.length ? d.map(x=>({...x,id:x.id||x.docId})) : FICHES_DEFAUT.slice());

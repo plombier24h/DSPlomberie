@@ -482,6 +482,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       </div>
       <div class="cat-actions">
         <input type="search" id="ct-recherche" placeholder="Rechercher un client — nom, téléphone, adresse…" autocomplete="off">
+        <button class="btn ghost small" onclick="window.open('https://calendar.google.com/calendar/r','_blank','noopener')"><i class="fas fa-calendar-days"></i> Ouvrir Google Agenda</button>
       </div>
       <p class="ct-nb" id="ct-nb"></p>
       <div id="ct-list"></div>
@@ -2441,6 +2442,7 @@ function renderContacts(){
       <div class="ct-c-act">
         <button data-ct-mod="${esc(c.id)}"><i class="fas fa-pen"></i> Modifier</button>
         <button data-ct-devis="${esc(c.id)}"><i class="fas fa-file-invoice"></i> Faire un devis</button>
+        <button data-ct-agenda="${esc(c.id)}"><i class="fas fa-calendar-plus"></i> Agenda</button>
         <button class="sup" data-ct-sup="${esc(c.id)}"><i class="fas fa-trash"></i> Supprimer</button>
       </div>
     </div>`).join('');
@@ -2448,6 +2450,7 @@ function renderContacts(){
   box.querySelectorAll('[data-ct-mod]').forEach(b => b.addEventListener('click', () => editerContact(b.dataset.ctMod)));
   box.querySelectorAll('[data-ct-sup]').forEach(b => b.addEventListener('click', () => supprimerContact(b.dataset.ctSup)));
   box.querySelectorAll('[data-ct-devis]').forEach(b => b.addEventListener('click', () => devisPourContact(b.dataset.ctDevis)));
+  box.querySelectorAll('[data-ct-agenda]').forEach(b => b.addEventListener('click', () => agendaPourContact(b.dataset.ctAgenda)));
 }
 
 function editerContact(id){
@@ -2506,6 +2509,19 @@ async function supprimerContact(id){
     if(contactEnEdition === id) sortirEditionContact();
     toast("Contact supprimé.");
   }catch(e){ toast("Suppression refusée : " + (e.code || e.message)); }
+}
+
+// Ouvre Google Agenda avec le rendez-vous pré-rempli.
+function agendaPourContact(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  const details = ['Client : ' + (c.nom || ''), c.tel ? 'Téléphone : ' + c.tel : '',
+                   c.adresse ? 'Adresse : ' + c.adresse : '', c.notes ? '\n' + c.notes : ''].filter(Boolean).join('\n');
+  const u = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+          + '&text=' + encodeURIComponent('DS Plomberie — ' + (c.nom || 'Client'))
+          + '&details=' + encodeURIComponent(details)
+          + (c.adresse ? '&location=' + encodeURIComponent(c.adresse) : '');
+  window.open(u, '_blank', 'noopener');
 }
 
 function devisPourContact(id){

@@ -352,7 +352,7 @@ forfaitaire de 40 € pour frais de recouvrement.</textarea>
 <button class="btn-agenda" onclick="ajouterFactureAgenda()">Agenda</button>
 <button class="btn-enregistrer" id="btn-enregistrer" onclick="enregistrerDocumentFirestore()" disabled>Connexion...</button>
 </div>
-<div id="enregistrer-message" style="position:fixed;bottom:60px;left:10px;right:10px;background:#FEF3C7;border:1px solid #F59E0B;color:#92400E;padding:10px 14px;border-radius:8px;font-size:13px;display:none;z-index:100;"></div>
+<div id="enregistrer-message" style="position:fixed;bottom:86px;left:50%;transform:translateX(-50%);max-width:520px;width:calc(100% - 28px);background:#1A365D;border:none;color:#fff;padding:11px 16px;border-radius:10px;font-size:13px;line-height:1.45;display:none;z-index:1500;box-shadow:0 10px 30px rgba(15,23,42,.35);text-align:center;"></div>
 
 <div id="overlay-choix-envoi" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center;">
     <div style="background:white;border-radius:12px;padding:24px;width:280px;text-align:center;">
@@ -751,9 +751,8 @@ function ajouterFactureAgenda() {
 function afficherMessageEnregistrer(texte, ok) {
     const div = document.getElementById('enregistrer-message');
     div.textContent = texte;
-    div.style.background = ok ? '#D1FAE5' : '#FEF3C7';
-    div.style.borderColor = ok ? '#059669' : '#F59E0B';
-    div.style.color = ok ? '#065F46' : '#92400E';
+    div.style.background = ok ? '#0F6B4F' : '#8A4B08';
+    div.style.color = '#fff';
     div.style.display = 'block';
     setTimeout(function() { div.style.display = 'none'; }, 5000);
 }
