@@ -100,10 +100,31 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .sv-table .col-date{width:132px}
 .sv-table th.c,.sv-table td.c input,.sv-table td.c textarea{text-align:center}
 .sv-table td.col-date input{text-align:center;color-scheme:dark}
+.sv-table td.col-date input.est{color:#ffb877;font-style:italic}
 .sv-table td textarea{text-align:left}
 .sv-sup{background:none;border:none;color:rgba(255,255,255,.28);cursor:pointer;padding:9px 4px;font-size:.86rem}
 .sv-sup:hover{color:#FF6B6B}
 .sv-aide{font-size:.76rem;color:rgba(255,255,255,.4);margin-top:10px;line-height:1.5}
+.ct-form{background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.ct-grille{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:720px){.ct-grille{grid-template-columns:1fr 1fr}.ct-grille .large{grid-column:1 / -1}}
+.ct-grille label{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);margin-bottom:4px}
+.ct-grille input,.ct-grille textarea{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .9rem 'Red Hat Display',sans-serif;padding:10px 13px;resize:vertical}
+.ct-grille input:focus,.ct-grille textarea:focus{outline:none;border-color:var(--blue-light)}
+.ct-bar{display:flex;align-items:center;gap:12px;margin-top:13px;flex-wrap:wrap}
+.ct-etat{font-size:.78rem;color:rgba(255,255,255,.45)}
+#ct-recherche{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .88rem 'Red Hat Display',sans-serif;padding:9px 13px}
+#ct-recherche:focus{outline:none;border-color:var(--orange)}
+.ct-nb{font-size:.78rem;color:rgba(255,255,255,.4);margin:8px 0 10px}
+.ct-c{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:9px}
+.ct-c-nom{font-weight:900;font-size:.98rem}
+.ct-c-l{font-size:.82rem;color:rgba(255,255,255,.7);margin-top:4px}
+.ct-c-l i{color:var(--orange);width:15px;font-size:.76rem}
+.ct-c-notes{font-size:.8rem;color:rgba(255,255,255,.55);margin-top:6px;white-space:pre-wrap}
+.ct-c-act{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ct-c-act button{background:rgba(0,0,0,.3);border:1px solid var(--line);color:rgba(255,255,255,.7);border-radius:7px;padding:5px 11px;font:600 .74rem 'Red Hat Display',sans-serif;cursor:pointer}
+.ct-c-act button:hover{border-color:var(--orange);color:#fff}
+.ct-c-act .sup:hover{border-color:#FF6B6B;color:#FF6B6B}
 .dossier-bar{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
 .dossier-aide{font-size:.76rem;color:rgba(255,255,255,.45);line-height:1.55;margin-top:8px}
 .dossier-aide b{color:#fff}
@@ -261,6 +282,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
     <div class="barre-outils">
       <button class="btn ghost small" id="btn-outils"><i class="fas fa-clipboard-list"></i> Fiches &amp; devis</button>
       <button class="btn ghost small" id="btn-suivi"><i class="fas fa-table-list"></i> Clients &amp; suivi</button>
+      <button class="btn ghost small" id="btn-contacts"><i class="fas fa-address-book"></i> Contacts</button>
       <span class="outils-info" id="outils-info"></span>
     </div>
 
@@ -332,6 +354,32 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <p class="sv-nb" id="sv-nb"></p>
         <div class="sv-scroll"><table class="sv-table" id="sv-table"></table></div>
         <p class="sv-aide">Chaque case s'enregistre dès que tu sors du champ. Le tableau est le même pour tout le monde, postes et console centrale.</p>
+      </div>
+    </div>
+
+    <div class="outils hidden" id="panneau-contacts">
+      <div class="outils-tete">
+        <h2>Contacts clients</h2>
+        <button class="btn ghost small" id="btn-contacts-fermer"><i class="fas fa-xmark"></i> Fermer</button>
+      </div>
+      <div class="outils-corps">
+        <div class="ct-form" id="ct-form">
+          <div class="ct-grille">
+            <div><label>Nom du client</label><input type="text" id="ct-nom" placeholder="Mme Berger" autocomplete="off"></div>
+            <div><label>Téléphone</label><input type="tel" id="ct-tel" placeholder="06 12 34 56 78" autocomplete="off"></div>
+            <div><label>Email</label><input type="email" id="ct-mail" placeholder="client@exemple.fr" autocomplete="off"></div>
+            <div><label>Adresse</label><input type="text" id="ct-adr" placeholder="14 rue de Lyon, 75012 Paris" autocomplete="off"></div>
+            <div class="large"><label>Notes</label><textarea id="ct-notes" rows="2" placeholder="Code d'accès, étage, historique…"></textarea></div>
+          </div>
+          <div class="ct-bar">
+            <button class="btn small" id="btn-ct-save"><i class="fas fa-floppy-disk"></i> Enregistrer le contact</button>
+            <button class="btn ghost small hidden" id="btn-ct-annuler"><i class="fas fa-xmark"></i> Annuler</button>
+            <span class="ct-etat" id="ct-etat"></span>
+          </div>
+        </div>
+        <input type="search" id="ct-recherche" placeholder="Rechercher un client — nom, téléphone, adresse…" autocomplete="off">
+        <p class="ct-nb" id="ct-nb"></p>
+        <div id="ct-list"></div>
       </div>
     </div>
 
@@ -1211,7 +1259,7 @@ function renderSuivi(){
   const lignes = liste.map(c => '<tr data-id="' + esc(c.id) + '">' + SV_COLS.map(col => {
       const v = esc(c[col.k] || '');
       const champ = col.long ? `<textarea data-ch="${col.k}" rows="1">${v}</textarea>`
-                             : `<input type="${col.date ? 'date' : 'text'}" data-ch="${col.k}" value="${v}">`;
+                             : `<input type="${col.date ? 'date' : 'text'}" data-ch="${col.k}"${col.date && c.dateEstimee ? ' class="est" title="Date estimée d\'après l\'ordre de création de la fiche dans ProGBat — corrige-la si tu la connais"' : ''} value="${v}">`;
       return `<td class="${col.cls || ''}">${champ}</td>`;
     }).join('') + '<td class="col-sup"><button class="sv-sup" data-sv-sup title="Retirer"><i class="fas fa-xmark"></i></button></td></tr>').join('');
 
@@ -1229,7 +1277,9 @@ function renderSuivi(){
       const id = el.closest('tr').dataset.id, champ = el.dataset.ch;
       if(champ === 'nom' && !el.value.trim()){ el.value = el.dataset.avant; toast("Le nom ne peut pas être vide."); return; }
       try{
-        await updateDoc(doc(db,"clients",id), { [champ]: el.value.trim(), majAtMs: Date.now() });
+        const patch = { [champ]: el.value.trim(), majAtMs: Date.now() };
+        if(champ === 'dateDevis') patch.dateEstimee = false;   // une date saisie à la main n'est plus une estimation
+        await updateDoc(doc(db,"clients",id), patch);
         toast("Enregistré.");
       }catch(e){ el.value = el.dataset.avant; toast("Enregistrement refusé : " + (e.code||e.message)); }
     });
@@ -1326,9 +1376,148 @@ function ecouterContacts(){
     contacts.sort((a,b) => strip(a.nom||'').localeCompare(strip(b.nom||'')));
     const a = document.activeElement;
     if(a && a.dataset && a.dataset.ch) return;   // on ne casse pas une saisie en cours
+    if(!$('panneau-contacts').classList.contains('hidden')) renderContacts();
     if(!$('panneau-suivi').classList.contains('hidden')) renderSuivi();
   }, () => {});
 }
+
+/* ---------- panneau contacts : meme fiche client que la console ---------- */
+let contactEnEdition = null;
+
+function renderContacts(){
+  const box = $('ct-list');
+  if(!box) return;
+  const q = strip(($('ct-recherche').value || '').trim());
+  const liste = contacts.filter(c => !q ||
+      strip([c.nom, c.tel, c.email, c.adresse, c.notes].join(' ')).includes(q));
+  $('ct-nb').textContent = contacts.length
+      ? (liste.length === contacts.length
+          ? contacts.length + ' contact' + (contacts.length > 1 ? 's' : '')
+          : liste.length + ' sur ' + contacts.length)
+      : '';
+  if(!liste.length){
+    box.innerHTML = contacts.length
+      ? '<p class="empty-txt">Aucun contact ne correspond.</p>'
+      : '<p class="empty-txt">Aucun contact pour l\'instant. Ils se creent aussi tout seuls quand un dossier client est enregistre.</p>';
+    return;
+  }
+  box.innerHTML = liste.map(c => `
+    <div class="ct-c">
+      <div class="ct-c-nom">${esc(c.nom || '(sans nom)')}</div>
+      ${c.tel     ? `<div class="ct-c-l"><i class="fas fa-phone"></i> ${esc(c.tel)}</div>` : ''}
+      ${c.email   ? `<div class="ct-c-l"><i class="fas fa-envelope"></i> ${esc(c.email)}</div>` : ''}
+      ${c.adresse ? `<div class="ct-c-l"><i class="fas fa-location-dot"></i> ${esc(c.adresse)}</div>` : ''}
+      ${c.notes   ? `<div class="ct-c-notes">${esc(c.notes)}</div>` : ''}
+      <div class="ct-c-act">
+        <button data-ct-mod="${esc(c.id)}"><i class="fas fa-pen"></i> Modifier</button>
+        <button data-ct-dossier="${esc(c.id)}"><i class="fas fa-user-check"></i> Charger dans le dossier</button>
+        <button data-ct-devis="${esc(c.id)}"><i class="fas fa-file-invoice"></i> Faire un devis</button>
+        <button data-ct-agenda="${esc(c.id)}"><i class="fas fa-calendar-plus"></i> Agenda</button>
+        <button class="sup" data-ct-sup="${esc(c.id)}"><i class="fas fa-trash"></i> Supprimer</button>
+      </div>
+    </div>`).join('');
+  box.querySelectorAll('[data-ct-mod]').forEach(b => b.addEventListener('click', () => editerContact(b.dataset.ctMod)));
+  box.querySelectorAll('[data-ct-sup]').forEach(b => b.addEventListener('click', () => supprimerContact(b.dataset.ctSup)));
+  box.querySelectorAll('[data-ct-devis]').forEach(b => b.addEventListener('click', () => devisPourContact(b.dataset.ctDevis)));
+  box.querySelectorAll('[data-ct-agenda]').forEach(b => b.addEventListener('click', () => agendaPourContact(b.dataset.ctAgenda)));
+  box.querySelectorAll('[data-ct-dossier]').forEach(b => b.addEventListener('click', () => chargerContactDansDossier(b.dataset.ctDossier)));
+}
+
+function editerContact(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  contactEnEdition = id;
+  $('ct-nom').value = c.nom || '';
+  $('ct-tel').value = c.tel || '';
+  $('ct-mail').value = c.email || '';
+  $('ct-adr').value = c.adresse || '';
+  $('ct-notes').value = c.notes || '';
+  $('btn-ct-save').innerHTML = '<i class="fas fa-check"></i> Valider la modification';
+  $('btn-ct-annuler').classList.remove('hidden');
+  $('ct-etat').textContent = 'Modification de ' + (c.nom || 'ce contact');
+  $('ct-nom').focus();
+  $('ct-form').scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function sortirEditionContact(){
+  contactEnEdition = null;
+  ['ct-nom','ct-tel','ct-mail','ct-adr','ct-notes'].forEach(i => { const e = $(i); if(e) e.value = ''; });
+  $('btn-ct-save').innerHTML = '<i class="fas fa-floppy-disk"></i> Enregistrer le contact';
+  $('btn-ct-annuler').classList.add('hidden');
+  $('ct-etat').textContent = '';
+}
+
+async function enregistrerContact(){
+  const nom = $('ct-nom').value.trim();
+  if(!nom){ toast("Le nom est obligatoire."); return; }
+  const donnees = {
+    nom: nom,
+    tel: $('ct-tel').value.trim(),
+    email: $('ct-mail').value.trim(),
+    adresse: $('ct-adr').value.trim(),
+    notes: $('ct-notes').value.trim(),
+    majAtMs: Date.now()
+  };
+  try{
+    if(contactEnEdition){
+      await updateDoc(doc(db,"clients",contactEnEdition), donnees);
+      toast("Contact modifie.");
+    }else{
+      await addDoc(collection(db,"clients"), { ...donnees, creeAtMs: Date.now(), auteur: monEmail });
+      toast("Contact enregistre.");
+    }
+    sortirEditionContact();
+  }catch(e){ toast("Enregistrement refuse : " + (e.code || e.message)); }
+}
+
+async function supprimerContact(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  if(!confirm('Supprimer definitivement le contact ' + (c.nom || '') + ' ?')) return;
+  try{
+    await deleteDoc(doc(db,"clients",id));
+    if(contactEnEdition === id) sortirEditionContact();
+    toast("Contact supprime.");
+  }catch(e){ toast("Suppression refusee : " + (e.code || e.message)); }
+}
+
+function chargerContactDansDossier(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  $('cli-nom').value  = c.nom || '';
+  $('cli-tel').value  = c.tel || '';
+  $('cli-mail').value = c.email || '';
+  $('cli-adr').value  = c.adresse || '';
+  $('panneau-contacts').classList.add('hidden');
+  toast("Dossier client rempli.");
+}
+
+function agendaPourContact(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  const details = ['Client : ' + (c.nom || ''), c.tel ? 'Telephone : ' + c.tel : '',
+                   c.adresse ? 'Adresse : ' + c.adresse : '', c.notes ? '\n' + c.notes : ''].filter(Boolean).join('\n');
+  const u = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+          + '&text=' + encodeURIComponent('DS Plomberie — ' + (c.nom || 'Client'))
+          + '&details=' + encodeURIComponent(details)
+          + (c.adresse ? '&location=' + encodeURIComponent(c.adresse) : '');
+  window.open(u, '_blank', 'noopener');
+}
+
+function devisPourContact(id){
+  const c = contacts.find(x => x.id === id);
+  if(!c) return;
+  const data = { client: c.nom || '', tel: c.tel || '', email: c.email || '', adresse: c.adresse || '', projet: '', lignes: [] };
+  try{ localStorage.setItem('ds-devis-transfert', JSON.stringify(data)); }
+  catch(e){ toast("Transfert impossible : " + e.message); return; }
+  window.open('devis.html', '_blank', 'noopener');
+}
+
+$('btn-contacts').addEventListener('click', () => { $('panneau-contacts').classList.remove('hidden'); renderContacts(); });
+$('btn-contacts-fermer').addEventListener('click', () => $('panneau-contacts').classList.add('hidden'));
+$('ct-recherche').addEventListener('input', renderContacts);
+$('btn-ct-save').addEventListener('click', enregistrerContact);
+$('btn-ct-annuler').addEventListener('click', sortirEditionContact);
 
 function renderSuggClients(){
   const box = $('cli-sugg');

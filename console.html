@@ -2646,7 +2646,7 @@ function renderSuivi(){
       const v = esc(c[col.k] || '');
       const champ = col.long
         ? `<textarea data-ch="${col.k}" rows="1">${v}</textarea>`
-        : `<input type="${col.date ? 'date' : 'text'}" data-ch="${col.k}" value="${v}">`;
+        : `<input type="${col.date ? 'date' : 'text'}" data-ch="${col.k}"${col.date && c.dateEstimee ? ' class="est" title="Date estimée d\'après l\'ordre de création de la fiche dans ProGBat — corrige-la si tu la connais"' : ''} value="${v}">`;
       return `<td class="${col.cls || ''}">${champ}</td>`;
     }).join('') + '<td class="col-sup"><button class="sv-sup" data-sv-sup title="Retirer du tableau"><i class="fas fa-xmark"></i></button></td></tr>').join('');
 
@@ -2664,7 +2664,9 @@ function renderSuivi(){
       const id = el.closest('tr').dataset.id, champ = el.dataset.ch;
       if(champ === 'nom' && !el.value.trim()){ el.value = el.dataset.avant; toast("Le nom ne peut pas être vide."); return; }
       try{
-        await updateDoc(doc(db, "clients", id), { [champ]: el.value.trim(), majAtMs: Date.now() });
+        const patch = { [champ]: el.value.trim(), majAtMs: Date.now() };
+        if(champ === 'dateDevis') patch.dateEstimee = false;   // une date saisie à la main n'est plus une estimation
+        await updateDoc(doc(db, "clients", id), patch);
         svEtat('Enregistré');
       }catch(e){ el.value = el.dataset.avant; toast("Enregistrement refusé : " + (e.code || e.message)); }
     });
