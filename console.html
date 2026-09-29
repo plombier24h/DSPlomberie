@@ -334,6 +334,40 @@ body.large .wrap{max-width:1500px}
 .sv-table .col-prix{width:132px}
 .sv-table .col-tech{width:130px}
 .sv-table .col-sup{width:38px;text-align:center}
+/* --- galerie photos du client --- */
+.gal-fond{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:120;display:flex;align-items:center;justify-content:center;padding:16px}
+.gal-fond.hidden{display:none}
+.gal-boite{background:#111c28;border:1px solid rgba(255,255,255,.12);border-radius:14px;width:min(860px,100%);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.gal-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.gal-tete h3{margin:0;font-size:.95rem;color:#fff}
+.gal-x{border:0;background:none;color:rgba(255,255,255,.55);font-size:1rem;cursor:pointer}
+.gal-x:hover{color:#fff}
+.gal-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;padding:16px;overflow-y:auto}
+.gal-item{position:relative;background:rgba(255,255,255,.04);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.gal-item img{width:100%;height:110px;object-fit:cover;display:block}
+.gal-fichier{height:110px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4);font-size:1.6rem}
+.gal-nom{font-size:.66rem;color:rgba(255,255,255,.72);padding:5px 7px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gal-poids{font-size:.6rem;color:rgba(255,255,255,.38);padding:0 7px 6px}
+.gal-sup{position:absolute;top:5px;right:5px;border:0;border-radius:6px;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-size:.7rem;padding:3px 6px}
+.gal-sup:hover{background:#e5484d}
+.gal-vide{color:rgba(255,255,255,.45);font-size:.82rem;grid-column:1/-1;margin:0;padding:10px}
+.gal-bas{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid rgba(255,255,255,.08)}
+
+/* --- suivi : feu de relance sur la cellule client + colonne photos --- */
+.sv-table td.col-client{position:relative}
+.sv-table td.col-client input{padding-left:22px;padding-right:22px}
+.sv-feu{position:absolute;left:7px;top:15px;width:10px;height:10px;border-radius:2px;background:transparent;pointer-events:none}
+.sv-j0 .sv-feu{background:#2ecc71}
+.sv-j1 .sv-feu{background:#f0a132}
+.sv-j2 .sv-feu{background:#e5484d}
+.sv-feu-off{position:absolute;right:5px;top:11px;display:none;border:0;background:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:.68rem;padding:2px}
+.sv-j0 .sv-feu-off,.sv-j1 .sv-feu-off,.sv-j2 .sv-feu-off{display:block}
+.sv-feu-off:hover{color:#fff}
+.sv-table .col-photos{width:74px;text-align:center}
+.sv-photos{width:100%;min-height:38px;border:0;background:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:.82rem;display:flex;align-items:center;justify-content:center;gap:5px}
+.sv-photos:hover{color:#fff;background:rgba(255,255,255,.05)}
+.sv-photos.plein{color:var(--orange)}
+
 .sv-table .col-date{width:132px}
 .sv-table th.c,.sv-table td.c input,.sv-table td.c textarea{text-align:center}
 .sv-table td.col-date input{text-align:center;color-scheme:dark}
@@ -2494,6 +2528,7 @@ function renderContacts(){
       ${c.notes   ? `<div class="ct-c-notes">${esc(c.notes)}</div>` : ''}
       <div class="ct-c-act">
         <button data-ct-mod="${esc(c.id)}"><i class="fas fa-pen"></i> Modifier</button>
+        <button data-ct-photos="${esc(c.id)}"><i class="fas fa-image"></i> Photos${(c.pieces||[]).length ? ' (' + (c.pieces||[]).length + ')' : ''}</button>
         <button data-ct-devis="${esc(c.id)}"><i class="fas fa-file-invoice"></i> Faire un devis</button>
         <button data-ct-agenda="${esc(c.id)}"><i class="fas fa-calendar-plus"></i> Agenda</button>
         <button class="sup" data-ct-sup="${esc(c.id)}"><i class="fas fa-trash"></i> Supprimer</button>
@@ -2501,6 +2536,7 @@ function renderContacts(){
     </div>`).join('');
 
   box.querySelectorAll('[data-ct-mod]').forEach(b => b.addEventListener('click', () => editerContact(b.dataset.ctMod)));
+  box.querySelectorAll('[data-ct-photos]').forEach(b => b.addEventListener('click', () => ouvrirGalerie(b.dataset.ctPhotos)));
   box.querySelectorAll('[data-ct-sup]').forEach(b => b.addEventListener('click', () => supprimerContact(b.dataset.ctSup)));
   box.querySelectorAll('[data-ct-devis]').forEach(b => b.addEventListener('click', () => devisPourContact(b.dataset.ctDevis)));
   box.querySelectorAll('[data-ct-agenda]').forEach(b => b.addEventListener('click', () => agendaPourContact(b.dataset.ctAgenda)));
@@ -2612,7 +2648,8 @@ const SV_COLS = [
   { k:'prix',         t:'Prix',            cls:'col-prix c' },
   { k:'technicien',   t:'Technicien',      cls:'col-tech c' },
   { k:'devisFacture', t:'Devis / Facture', long:true },
-  { k:'relance',      t:'Relance',         long:true }
+  { k:'relance',      t:'Suivi',           long:true },
+  { k:'photos',       t:'Photos',          cls:'col-photos', photos:true }
 ];
 let svTri = 'nom';   // 'nom' ou 'date'
 function svTrier(liste){
@@ -2631,6 +2668,165 @@ function svEtat(txt){
   if(!e){ e = document.createElement('div'); e.id = 'sv-etat'; e.className = 'sv-etat'; document.body.appendChild(e); }
   e.textContent = txt; e.classList.add('on');
   clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove('on'), 1600);
+}
+
+/* ---------- galerie photos et vidéos du client ---------- */
+const GAL_MAX = 8;          // Firestore limite un document à 1 Mo : au-delà la fiche serait refusée
+const GAL_LARGEUR = 900;    // le grand côté de la vignette enregistrée
+const GAL_QUALITE = 0.6;
+let galClientId = null;
+
+function galOctets(n){
+  if(!n) return '';
+  if(n < 1024) return n + ' o';
+  if(n < 1048576) return Math.round(n / 1024) + ' Ko';
+  return (n / 1048576).toFixed(1).replace('.', ',') + ' Mo';
+}
+
+// Une photo de téléphone fait 3 à 5 Mo : on la réduit avant de l'enregistrer,
+// sinon la fiche client dépasse la taille maximale d'un document Firestore.
+function galComprimer(fichier){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(fichier);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const ech = Math.min(1, GAL_LARGEUR / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width  = Math.round(img.width  * ech);
+      cv.height = Math.round(img.height * ech);
+      const ctx = cv.getContext('2d');
+      ctx.drawImage(img, 0, 0, cv.width, cv.height);
+      resolve(cv.toDataURL('image/jpeg', GAL_QUALITE));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("image illisible")); };
+    img.src = url;
+  });
+}
+
+function galBoite(){
+  let f = document.getElementById('gal-fond');
+  if(f) return f;
+  f = document.createElement('div');
+  f.id = 'gal-fond';
+  f.className = 'gal-fond hidden';
+  f.innerHTML = '<div class="gal-boite">' +
+      '<div class="gal-tete"><h3>Photos — <span id="gal-nom"></span></h3>' +
+      '<button class="gal-x" id="gal-fermer" type="button"><i class="fas fa-xmark"></i></button></div>' +
+      '<div class="gal-grille" id="gal-grille"></div>' +
+      '<div class="gal-bas">' +
+        '<button class="btn ghost small" id="gal-plus" type="button"><i class="fas fa-plus"></i> Ajouter des photos</button>' +
+        '<input type="file" id="gal-input" accept="image/*" multiple hidden>' +
+        '<span class="etat" id="gal-etat"></span>' +
+      '</div></div>';
+  document.body.appendChild(f);
+  f.addEventListener('click', (e) => { if(e.target === f) galFermer(); });
+  document.getElementById('gal-fermer').addEventListener('click', galFermer);
+  document.getElementById('gal-plus').addEventListener('click', () => document.getElementById('gal-input').click());
+  document.getElementById('gal-input').addEventListener('change', async (e) => {
+    const fichiers = [...e.target.files];
+    e.target.value = '';
+    await galAjouter(fichiers);
+  });
+  return f;
+}
+
+function galFermer(){
+  const f = document.getElementById('gal-fond');
+  if(f) f.classList.add('hidden');
+  galClientId = null;
+}
+
+function galRendu(){
+  const c = contacts.find(x => x.id === galClientId);
+  if(!c) return galFermer();
+  const nom = document.getElementById('gal-nom');
+  if(nom) nom.textContent = c.nom || 'client';
+  const g = document.getElementById('gal-grille');
+  const pieces = c.pieces || [];
+  if(!pieces.length){
+    g.innerHTML = '<p class="gal-vide">Aucune photo pour ce client. Clique sur « Ajouter des photos ».</p>';
+  }else{
+    g.innerHTML = pieces.map((p, i) => {
+      const image = p.vignette
+        ? `<img src="${p.vignette}" alt="">`
+        : `<div class="gal-fichier"><i class="fas fa-${(p.type || '').startsWith('video') ? 'film' : 'file'}"></i></div>`;
+      const dedans = p.lien ? `<a href="${p.lien}" target="_blank" rel="noopener">${image}</a>` : image;
+      return `<div class="gal-item">${dedans}` +
+             `<span class="gal-nom" title="${esc(p.nom || '')}">${esc(p.nom || '')}</span>` +
+             `<span class="gal-poids">${galOctets(p.taille)}</span>` +
+             `<button class="gal-sup" data-gal-sup="${i}" type="button" title="Retirer"><i class="fas fa-xmark"></i></button></div>`;
+    }).join('');
+    g.querySelectorAll('[data-gal-sup]').forEach(b =>
+      b.addEventListener('click', () => galSupprimer(Number(b.dataset.galSup))));
+  }
+  const plus = document.getElementById('gal-plus');
+  if(plus) plus.disabled = pieces.length >= GAL_MAX;
+  const etat = document.getElementById('gal-etat');
+  if(etat) etat.textContent = pieces.length >= GAL_MAX
+    ? GAL_MAX + ' photos au maximum sur une fiche'
+    : pieces.length + ' sur ' + GAL_MAX;
+}
+
+function ouvrirGalerie(id){
+  galClientId = id;
+  galBoite().classList.remove('hidden');
+  galRendu();
+}
+
+async function galAjouter(fichiers){
+  const c = contacts.find(x => x.id === galClientId);
+  if(!c || !fichiers.length) return;
+  const etat = document.getElementById('gal-etat');
+  const place = GAL_MAX - (c.pieces || []).length;
+  if(place <= 0){ toast(GAL_MAX + " photos au maximum sur une fiche."); return; }
+  const aFaire = fichiers.filter(f => f.type.startsWith('image/')).slice(0, place);
+  if(!aFaire.length){ toast("Seules les photos peuvent être ajoutées ici."); return; }
+  try{
+    const ajoutees = [];
+    for(let i = 0; i < aFaire.length; i++){
+      if(etat) etat.textContent = "compression " + (i + 1) + " sur " + aFaire.length + "…";
+      const vignette = await galComprimer(aFaire[i]);
+      ajoutees.push({ nom: aFaire[i].name, vignette: vignette, type: 'image/jpeg',
+                      taille: Math.round(vignette.length * 0.75), leMs: Date.now() });
+    }
+    if(etat) etat.textContent = "enregistrement…";
+    await updateDoc(doc(db, "clients", galClientId), {
+      pieces: (c.pieces || []).concat(ajoutees),
+      majAtMs: Date.now(), relanceAtMs: Date.now(), suiviOff: false
+    });
+    toast(ajoutees.length + (ajoutees.length > 1 ? " photos ajoutées." : " photo ajoutée."));
+  }catch(e){
+    toast("Ajout refusé : " + (e.code || e.message));
+  }
+  galRendu();
+}
+
+async function galSupprimer(i){
+  const c = contacts.find(x => x.id === galClientId);
+  if(!c) return;
+  const pieces = (c.pieces || []).slice();
+  if(i < 0 || i >= pieces.length) return;
+  if(!confirm("Retirer « " + (pieces[i].nom || 'cette photo') + " » de la fiche ?")) return;
+  pieces.splice(i, 1);
+  try{
+    await updateDoc(doc(db, "clients", galClientId), { pieces: pieces, majAtMs: Date.now() });
+  }catch(e){ toast("Refusé : " + (e.code || e.message)); }
+  galRendu();
+}
+
+// Feu de suivi : vert le jour ou le client est entre, orange le lendemain,
+// rouge le 3e jour. Toute saisie sur la ligne le remet au vert.
+function svFeu(c){
+  if(c.suiviOff) return '';
+  const base = c.relanceAtMs || c.majAtMs || c.creeAtMs;
+  if(!base) return '';
+  const j0 = new Date(base); j0.setHours(0,0,0,0);
+  const au = new Date();     au.setHours(0,0,0,0);
+  const j = Math.floor((au - j0) / 86400000);
+  if(j <= 0) return 'sv-j0';
+  if(j === 1) return 'sv-j1';
+  return 'sv-j2';
 }
 
 function renderSuivi(){
@@ -2654,10 +2850,17 @@ function renderSuivi(){
       const champ = col.long
         ? `<textarea data-ch="${col.k}" rows="1">${v}</textarea>`
         : `<input type="${col.date ? 'date' : 'text'}" data-ch="${col.k}"${col.date && c.dateEstimee ? ' class="est" title="Date estimée d\'après l\'ordre de création de la fiche dans ProGBat — corrige-la si tu la connais"' : ''} value="${v}">`;
+      if(col.photos){
+        const n = (c.pieces || []).length;
+        return `<td class="${col.cls}"><button class="sv-photos${n ? ' plein' : ''}" data-sv-photos title="Photos et vidéos du client"><i class="fas fa-image"></i>${n ? '<span>' + n + '</span>' : ''}</button></td>`;
+      }
+      if(col.k === 'nom'){
+        return `<td class="${col.cls || ''} ${svFeu(c)}"><span class="sv-feu"></span>${champ}<button class="sv-feu-off" data-feu-off title="Retirer la couleur définitivement"><i class="fas fa-xmark"></i></button></td>`;
+      }
       return `<td class="${col.cls || ''}">${champ}</td>`;
     }).join('') + '<td class="col-sup"><button class="sv-sup" data-sv-sup title="Retirer du tableau"><i class="fas fa-xmark"></i></button></td></tr>').join('');
 
-  tbl.innerHTML = entete + (lignes || '<tr><td colspan="9" style="padding:16px;color:rgba(255,255,255,.45)">Aucun client. Clique sur « Nouveau client ».</td></tr>');
+  tbl.innerHTML = entete + (lignes || '<tr><td colspan="11" style="padding:16px;color:rgba(255,255,255,.45)">Aucun client. Clique sur « Nouveau client ».</td></tr>');
 
   const ajuster = () => tbl.querySelectorAll('textarea').forEach(t => { t.style.height = 'auto'; t.style.height = Math.max(38, t.scrollHeight) + 'px'; });
   tbl.querySelectorAll('textarea').forEach(t => t.addEventListener('input', ajuster));
@@ -2671,7 +2874,7 @@ function renderSuivi(){
       const id = el.closest('tr').dataset.id, champ = el.dataset.ch;
       if(champ === 'nom' && !el.value.trim()){ el.value = el.dataset.avant; toast("Le nom ne peut pas être vide."); return; }
       try{
-        const patch = { [champ]: el.value.trim(), majAtMs: Date.now() };
+        const patch = { [champ]: el.value.trim(), majAtMs: Date.now(), relanceAtMs: Date.now(), suiviOff: false };
         if(champ === 'dateDevis') patch.dateEstimee = false;   // une date saisie à la main n'est plus une estimation
         await updateDoc(doc(db, "clients", id), patch);
         svEtat('Enregistré');
@@ -2679,6 +2882,16 @@ function renderSuivi(){
     });
     el.addEventListener('keydown', (ev) => { if(ev.key === 'Enter' && el.tagName === 'INPUT'){ ev.preventDefault(); el.blur(); } });
   });
+
+  tbl.querySelectorAll('[data-feu-off]').forEach(b => b.addEventListener('click', async () => {
+    const id = b.closest('tr').dataset.id;
+    try{ await updateDoc(doc(db, "clients", id), { suiviOff: true, majAtMs: Date.now() }); }
+    catch(e){ toast("Refusé : " + (e.code || e.message)); }
+  }));
+
+  tbl.querySelectorAll('[data-sv-photos]').forEach(b => b.addEventListener('click', () => {
+    ouvrirGalerie(b.closest('tr').dataset.id);
+  }));
 
   tbl.querySelectorAll('[data-sv-sup]').forEach(b => b.addEventListener('click', () => {
     supprimerContact(b.closest('tr').dataset.id);
