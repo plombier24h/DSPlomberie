@@ -259,6 +259,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
   #px-boutons{max-height:340px;overflow-y:auto}
 }
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -419,6 +420,8 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       <div class="dossier-bar">
         <button class="btn" id="btn-fiche"><i class="fas fa-envelope"></i> Copier la fiche et ouvrir le mail</button>
         <button class="btn ghost hidden" id="btn-pj-envoi"><i class="fas fa-paperclip"></i> Joindre les pièces au mail</button>
+        <button class="btn ghost hidden" id="btn-pj-drive"><i class="fas fa-cloud-arrow-up"></i> Envoyer sur Drive</button>
+        <span class="etat" id="pj-drive-etat"></span>
         <span class="etat" id="fiche-etat"></span>
       </div>
       <p class="dossier-aide">La fiche est copiée dans le presse-papier et la boîte mail s'ouvre sur <b>dsplombier@gmx.fr</b> : il n'y a plus qu'à coller. Sur téléphone, le bouton <b>Joindre les pièces</b> envoie les photos et vidéos directement dans le mail.</p>
@@ -450,7 +453,7 @@ const MAIL_DEST = 'dsplombier@gmx.fr';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp }
+import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, serverTimestamp, getDoc, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app  = initializeApp(firebaseConfig, "dsplomberie-poste");
@@ -1190,6 +1193,8 @@ function renderPieces(){
   }
   const b = $('btn-pj-envoi');
   if(b) b.classList.toggle('hidden', !pieces.length);
+  const bd = $('btn-pj-drive');
+  if(bd) bd.classList.toggle('hidden', !pieces.length);
 }
 $('pj-plus').addEventListener('click', () => $('pj-input').click());
 $('pj-input').addEventListener('change', (e) => {
@@ -1216,6 +1221,134 @@ $('btn-pj-envoi').addEventListener('click', async () => {
   });
   toast("Partage non supporté : les fichiers ont été téléchargés, joins-les à la main.");
 });
+
+/* ---------- Google Drive : sauvegarde des photos et videos du client ---------- */
+const DRIVE_CLIENT_ID = '1005022938633-6i3bkocptbb9o2j0obl6hm1o633dait8.apps.googleusercontent.com';
+const DRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_RACINE    = 'DS Plomberie - Dossiers clients';
+let driveJeton = null, driveJetonFin = 0, driveClient = null, driveRacineId = null;
+
+function driveEtat(txt){
+  const e = $('pj-drive-etat');
+  if(e) e.textContent = txt || '';
+}
+function driveValide(){ return driveJeton && Date.now() < driveJetonFin - 60000; }
+
+// Le jeton vit en memoire, une heure au plus : rien n'est ecrit sur le poste.
+function driveJetonDemande(){
+  return new Promise((resolve, reject) => {
+    if(driveValide()) return resolve(driveJeton);
+    if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2)
+      return reject(new Error("Google ne s'est pas chargé, vérifie la connexion."));
+    if(!driveClient){
+      driveClient = google.accounts.oauth2.initTokenClient({
+        client_id: DRIVE_CLIENT_ID, scope: DRIVE_SCOPE, callback: () => {}
+      });
+    }
+    driveClient.callback = (rep) => {
+      if(!rep || rep.error) return reject(new Error((rep && (rep.error_description || rep.error)) || 'accès refusé'));
+      driveJeton = rep.access_token;
+      driveJetonFin = Date.now() + (Number(rep.expires_in || 3600) * 1000);
+      resolve(driveJeton);
+    };
+    try{ driveClient.requestAccessToken({ prompt: '' }); }
+    catch(e){ reject(e); }
+  });
+}
+
+async function driveDossier(nom, parentId){
+  const jeton = await driveJetonDemande();
+  const corps = { name: nom, mimeType: 'application/vnd.google-apps.folder' };
+  if(parentId) corps.parents = [parentId];
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + jeton, 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps)
+  });
+  if(!r.ok) throw new Error('création du dossier refusée (' + r.status + ')');
+  return (await r.json()).id;
+}
+
+async function driveEnvoi(fichier, parentId){
+  const jeton = await driveJetonDemande();
+  const limite = '---dsplomberie' + Date.now();
+  const corps = new Blob([
+    '--' + limite + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n',
+    JSON.stringify({ name: fichier.name, parents: [parentId] }),
+    '\r\n--' + limite + '\r\nContent-Type: ' + (fichier.type || 'application/octet-stream') + '\r\n\r\n',
+    fichier,
+    '\r\n--' + limite + '--\r\n'
+  ]);
+  const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,mimeType,size', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + jeton, 'Content-Type': 'multipart/related; boundary=' + limite },
+    body: corps
+  });
+  if(!r.ok) throw new Error("envoi refusé (" + r.status + ")");
+  return r.json();
+}
+
+// L'identifiant du dossier racine est partage par Firestore pour que tous les
+// postes deposent au meme endroit au lieu de creer chacun son dossier.
+async function driveRacine(){
+  if(driveRacineId) return driveRacineId;
+  try{
+    const s = await getDoc(doc(db, 'reglages', 'drive'));
+    if(s.exists() && s.data().racineId){ driveRacineId = s.data().racineId; return driveRacineId; }
+  }catch(e){}
+  driveRacineId = await driveDossier(DRIVE_RACINE, null);
+  try{ await setDoc(doc(db, 'reglages', 'drive'), { racineId: driveRacineId, majAtMs: Date.now() }, { merge: true }); }catch(e){}
+  return driveRacineId;
+}
+
+async function driveEnvoyerPieces(){
+  if(!pieces.length) return;
+  const nom = $('cli-nom').value.trim();
+  if(!nom){ toast("Renseigne le nom du client avant d'envoyer les pièces."); return; }
+  const b = $('btn-pj-drive');
+  if(b) b.disabled = true;
+  try{
+    driveEtat("connexion…");
+    await driveJetonDemande();
+    const racine = await driveRacine();
+
+    let fiche = contacts.find(c => strip(c.nom || '') === strip(nom));
+    let dossierId = fiche && fiche.driveFolderId;
+    if(!dossierId) dossierId = await driveDossier(nom, racine);
+
+    const envoyees = [];
+    for(let i = 0; i < pieces.length; i++){
+      driveEtat("envoi " + (i + 1) + " sur " + pieces.length + "…");
+      const f = await driveEnvoi(pieces[i], dossierId);
+      envoyees.push({
+        id: f.id, nom: f.name, lien: f.webViewLink || '',
+        type: f.mimeType || '', taille: Number(f.size || 0), leMs: Date.now()
+      });
+    }
+
+    await majContactDepuisDossier();
+    fiche = contacts.find(c => strip(c.nom || '') === strip(nom));
+    if(fiche){
+      await updateDoc(doc(db, 'clients', fiche.id), {
+        driveFolderId: dossierId,
+        pieces: (fiche.pieces || []).concat(envoyees),
+        majAtMs: Date.now()
+      });
+    }
+
+    piecesMemo = piecesMemo.concat(envoyees.map(p => p.nom));
+    pieces = [];
+    renderPieces();
+    driveEtat(envoyees.length + (envoyees.length > 1 ? ' pièces sur Drive' : ' pièce sur Drive'));
+    toast("Drive : " + envoyees.length + " pièce" + (envoyees.length > 1 ? 's' : '') + " dans le dossier " + nom + ".");
+  }catch(e){
+    driveEtat("");
+    toast("Drive : " + (e.message || e));
+  }finally{
+    if(b) b.disabled = false;
+  }
+}
+$('btn-pj-drive').addEventListener('click', driveEnvoyerPieces);
 
 /* ---------- tableau de suivi, partage avec la console ---------- */
 const SV_COLS = [

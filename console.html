@@ -593,11 +593,11 @@ function majBoutonRec(){
   const t = l && l.querySelector('.call-btn-label');
   if(t) t.textContent = actif ? 'Arrêter' : 'Enregistrer';
 }
-function nomVideo(appelant){
+function nomVideo(appelant, ext){
   const d = new Date(), p2 = (n) => String(n).padStart(2, '0');
   const qui = (appelant || 'visiteur').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
               .replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'visiteur';
-  return `DS-appel_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}_${p2(d.getHours())}h${p2(d.getMinutes())}_${qui}.webm`;
+  return `DS-appel_${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}_${p2(d.getHours())}h${p2(d.getMinutes())}_${qui}.${ext || 'mp4'}`;
 }
 function demarrerEnregistrement(appelant){
   if(recorder || !remoteStream) return;
@@ -617,14 +617,21 @@ function demarrerEnregistrement(appelant){
     melange.stream.getAudioTracks().forEach(t => pistes.push(t));
     if(!pistes.length) return;
 
-    const types = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+    // MP4 (H.264/AAC) en priorite : lisible partout, Windows et logiciels de montage compris
+    const types = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4',
+                   'video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
     const type = types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+    if(!type || type.indexOf('mp4') === -1){
+      if(recAudioCtx){ try{ recAudioCtx.close(); }catch(e){} recAudioCtx = null; }
+      toast("Ce navigateur n'enregistre pas en MP4 — utilise Chrome ou Edge.");
+      return;
+    }
     recMorceaux = [];
-    nomFichierVideo = nomVideo(appelant);
+    nomFichierVideo = nomVideo(appelant, 'mp4');
     recorder = new MediaRecorder(new MediaStream(pistes), type ? { mimeType: type } : undefined);
     recorder.ondataavailable = (e) => { if(e.data && e.data.size) recMorceaux.push(e.data); };
     recorder.onstop = () => {
-      const blob = new Blob(recMorceaux, { type: recorder.mimeType || 'video/webm' });
+      const blob = new Blob(recMorceaux, { type: (recorder.mimeType || 'video/mp4').split(';')[0] });
       recMorceaux = [];
       if(blob.size > 0){
         const url = URL.createObjectURL(blob);
