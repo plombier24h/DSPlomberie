@@ -321,7 +321,7 @@ body.large .wrap{max-width:1500px}
 #sv-recherche{flex:1 1 240px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .88rem 'Red Hat Display',sans-serif;padding:9px 13px}
 #sv-recherche:focus{outline:none;border-color:var(--orange)}
 .sv-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--ink2)}
-.sv-table{width:100%;border-collapse:collapse;min-width:1060px;table-layout:fixed}
+.sv-table{width:100%;border-collapse:collapse;min-width:1180px;table-layout:fixed}
 .sv-table th{background:rgba(0,0,0,.35);color:rgba(255,255,255,.62);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:10px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;z-index:2}
 .sv-table th small{display:block;text-transform:none;letter-spacing:0;color:var(--orange);font-size:.66rem;font-weight:600}
 .sv-table td{border-bottom:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);padding:0;vertical-align:top}
@@ -355,7 +355,8 @@ body.large .wrap{max-width:1500px}
 
 /* --- suivi : feu de relance sur la cellule client + colonne photos --- */
 .sv-table td.col-client{position:relative}
-.sv-table td.col-client input{padding-left:22px;padding-right:22px}
+.sv-table .col-client{width:210px}
+.sv-table td.col-client input{padding-left:22px;padding-right:20px}
 .sv-feu{position:absolute;left:7px;top:15px;width:10px;height:10px;border-radius:2px;background:transparent;pointer-events:none}
 .sv-j0 .sv-feu{background:#2ecc71}
 .sv-j1 .sv-feu{background:#f0a132}
