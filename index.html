@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="DS Plomberie - Inspection caméra, débouchage, curage, assainissement Paris Île-de-France. 01 74 60 17 95">
+<meta name="description" content="DS Plomberie - Plomberie, assainissement et rénovation complète à Paris et en Île-de-France : débouchage, curage, inspection caméra, salle de bain, cuisine, agencement. 01 74 60 17 95">
 <title>DS Plomberie – Assainissement & Plomberie Paris Île-de-France</title>
 <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -312,6 +312,17 @@ nav a:hover{color:var(--blue);border-color:var(--blue)}
 @media(min-width:760px){.call-videos{top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(92vw,520px);background:#000}.call-videos #remote-video{object-fit:contain}}
 .call-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:4100;background:#06243a;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:12px 18px;font-size:.85rem;max-width:88vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .call-notice{margin-top:14px;max-width:300px;font-size:.7rem;line-height:1.45;color:rgba(255,255,255,.55);position:relative;z-index:2}
+
+/* ── APERCU DES REALISATIONS ── */
+.apercu{padding:80px 0;background:var(--off)}
+.apercu .intro{text-align:center;margin-bottom:34px}
+.apercu .intro p{color:var(--muted);max-width:680px;margin:14px auto 0}
+.apercu-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:34px}
+.apercu-grille a{border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:#0e1c2a;border:1px solid var(--border);box-shadow:0 4px 16px rgba(14,107,168,.1)}
+.apercu-grille img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+.apercu-grille a:hover img{transform:scale(1.07)}
+.apercu-bas{text-align:center}
+@media(max-width:860px){.apercu{padding:52px 0}.apercu-grille{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}}
 </style>
 </head>
 <body>
@@ -324,14 +335,15 @@ nav a:hover{color:var(--blue);border-color:var(--blue)}
   <div class="container">
     <div class="hero-body">
       <img src="assets/img/logo.png" class="logo-hero" alt="DS Plomberie">
-      <h1>Inspection caméra &amp;<br><span>assainissement</span><br>à Paris</h1>
-      <p class="hero-sub">Débouchage, curage, inspection caméra, assainissement.<br>
+      <h1>Plomberie, assainissement &amp;<br><span>rénovation complète</span><br>à Paris</h1>
+      <p class="hero-sub">Débouchage, curage, inspection caméra, salle de bain,<br>cuisine, agencement sur mesure.<br>
         <strong>Intervention rapide avec ou sans rendez-vous !</strong>
       </p>
       <p class="hero-zone"><i class="fas fa-map-marker-alt"></i> Paris et toute l'Île-de-France</p>
       <div class="hero-btns">
         <a href="tel:0174601795" class="theme-btn"><i class="fas fa-phone"></i> 01 74 60 17 95</a>
         <a href="tel:0616694989" class="theme-btn outline"><i class="fas fa-mobile-alt"></i> 06 16 69 49 89</a>
+        <a href="realisations.html" class="theme-btn outline"><i class="fas fa-images"></i> Nos réalisations</a>
         <a href="https://plombier24h.github.io/chaudiere-frisquet-installation/" class="theme-btn outline"><i class="fas fa-fire"></i> Nos chaudières</a>
         <button type="button" id="btn-visio" class="theme-btn visio-btn"><span class="visio-dot"></span><i class="fas fa-video"></i> <span class="visio-label">Diagnostic vidéo</span></button>
       </div>
@@ -463,6 +475,28 @@ nav a:hover{color:var(--blue);border-color:var(--blue)}
       <p>Nous intervenons à Paris et dans toute l'Île-de-France. Où que vous soyez, nos techniciens qualifiés sont à votre disposition pour des solutions efficaces et durables.</p>
       <p><strong>Devis gratuit · Travail garanti · Disponible 24h/24</strong></p>
       <span class="rge-badge"><i class="fas fa-certificate"></i> RCS : 106 245 921</span>
+    </div>
+  </div>
+</section>
+
+<!-- APERCU REALISATIONS -->
+<section class="apercu" id="realisations">
+  <div class="container">
+    <div class="intro">
+      <span class="sub-title">Nos travaux réalisés</span>
+      <h2>Ce que nous avons déjà réalisé</h2>
+      <p>Rénovation complète, salles de bain, cuisines, agencement sur mesure, colonnes et tranchées. Nos clients nous le demandent souvent : voici nos chantiers, en photos et en vidéo.</p>
+    </div>
+    <div class="apercu-grille">
+      <a href="realisations.html"><img src="assets/realisations/mini-r01-plomberie.jpg" alt="Rénovation de colonne, avant et après — DS Plomberie" loading="lazy"></a>
+      <a href="realisations.html"><img src="assets/realisations/mini-r09-cuisine.jpg" alt="Cuisine rénovée — DS Plomberie" loading="lazy"></a>
+      <a href="realisations.html"><img src="assets/realisations/mini-r14-agencement.jpg" alt="Agencement sur mesure — DS Plomberie" loading="lazy"></a>
+      <a href="realisations.html"><img src="assets/realisations/mini-r22-gros-oeuvre.jpg" alt="Tranchée et fondations — DS Plomberie" loading="lazy"></a>
+      <a href="realisations.html"><img src="assets/realisations/mini-r06-plomberie.jpg" alt="Salle de bain rénovée — DS Plomberie" loading="lazy"></a>
+      <a href="realisations.html"><img src="assets/realisations/mini-r28-exterieur.jpg" alt="Maçonnerie extérieure — DS Plomberie" loading="lazy"></a>
+    </div>
+    <div class="apercu-bas">
+      <a href="realisations.html" class="theme-btn"><i class="fas fa-images"></i> Voir toutes nos réalisations</a>
     </div>
   </div>
 </section>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="Nos réalisations — DS Plomberie : rénovation complète, salles de bain, cuisines, agencement sur mesure, colonnes, tranchées et assainissement à Paris et en Île-de-France.">
+<title>Nos réalisations – DS Plomberie</title>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#0e6ba8; --blue-dark:#0a4f7e; --blue-light:#1a8fd1;
+  --orange:#e87722; --orange-dark:#c9651a;
+  --white:#fff; --off:#f4f8fc; --text:#1e2d3d; --muted:#6b7c93; --border:#dde6f0;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Red Hat Display',sans-serif;color:var(--text);background:#fff;line-height:1.6}
+a{text-decoration:none;color:inherit}
+img{display:block}
+.container{max-width:1170px;margin:0 auto;padding:0 24px}
+.theme-btn{display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;padding:14px 32px;border-radius:4px;font-weight:700;font-size:.92rem;letter-spacing:.02em;transition:.2s;border:2px solid var(--orange)}
+.theme-btn:hover{background:var(--orange-dark);border-color:var(--orange-dark);transform:translateY(-2px)}
+.theme-btn.outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+.theme-btn.outline:hover{background:rgba(255,255,255,.12);border-color:#fff}
+.sub-title{display:inline-block;font-weight:700;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);background:#e6f2fb;padding:6px 18px;border-radius:2px;margin-bottom:16px}
+section h2{font-size:clamp(1.7rem,2.8vw,2.4rem);font-weight:900;line-height:1.2;color:var(--text)}
+
+/* ── BARRE DE CONTACT ── */
+.topbar{background:var(--text);padding:10px 0}
+.topbar .inner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.topbar a{color:#fff;font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:7px}
+.topbar a i{color:var(--orange)}
+.topbar a:hover{color:var(--orange)}
+.topbar .tels{display:flex;gap:24px;flex-wrap:wrap}
+
+/* ── EN-TETE ── */
+header{background:#fff;padding:14px 0;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(14,107,168,.1)}
+header .inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.logo img{height:56px;object-fit:contain}
+.head-links{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.head-links a{font-weight:700;font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text);padding-bottom:3px;border-bottom:2px solid transparent;transition:.2s}
+.head-links a:hover{color:var(--blue);border-color:var(--blue)}
+.cta-nav{background:var(--blue);color:#fff;padding:11px 22px;border-radius:4px;font-weight:700;font-size:.82rem;white-space:nowrap;transition:.2s;border-bottom:none!important}
+.cta-nav:hover{background:var(--blue-dark);color:#fff!important}
+
+/* ── BANDEAU ── */
+.page-head{background:linear-gradient(140deg,#06243a,#0e6ba8);color:#fff;padding:70px 0 60px;text-align:center}
+.page-head .sub-title{background:rgba(255,255,255,.14);color:#fff}
+.page-head h1{font-size:clamp(1.9rem,4vw,3rem);font-weight:900;line-height:1.15;margin-bottom:16px}
+.page-head h1 span{color:var(--orange)}
+.page-head p{color:rgba(255,255,255,.82);max-width:720px;margin:0 auto;font-size:1.02rem}
+.fil{margin-top:22px;font-size:.8rem;color:rgba(255,255,255,.6)}
+.fil a:hover{color:#fff}
+
+/* ── VIDEO ── */
+.film{padding:70px 0 20px;background:var(--off)}
+.film .intro{text-align:center;margin-bottom:34px}
+.film .intro p{color:var(--muted);max-width:680px;margin:14px auto 0}
+.film-box{max-width:960px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 18px 50px rgba(14,107,168,.22);background:#000;border:1px solid var(--border)}
+.film-box video{width:100%;height:auto;display:block}
+.film-note{text-align:center;color:var(--muted);font-size:.84rem;margin-top:16px}
+
+/* ── GALERIE ── */
+.galerie{padding:70px 0 90px;background:var(--off)}
+.galerie .intro{text-align:center;margin-bottom:28px}
+.filtres{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:34px}
+.filtres button{border:2px solid var(--border);background:#fff;color:var(--text);font-family:inherit;font-weight:700;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase;padding:10px 20px;border-radius:4px;cursor:pointer;transition:.2s}
+.filtres button:hover{border-color:var(--blue);color:var(--blue)}
+.filtres button.actif{background:var(--blue);border-color:var(--blue);color:#fff}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.vign{position:relative;border-radius:8px;overflow:hidden;cursor:pointer;background:#0e1c2a;aspect-ratio:4/3;border:1px solid var(--border);box-shadow:0 4px 16px rgba(14,107,168,.1)}
+.vign img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+.vign:hover img{transform:scale(1.07)}
+.vign figcaption{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 12px;color:#fff;font-size:.82rem;font-weight:700;background:linear-gradient(transparent,rgba(6,24,40,.88));opacity:0;transition:opacity .25s}
+.vign:hover figcaption{opacity:1}
+.vign.cache{display:none}
+
+/* ── VISIONNEUSE ── */
+.visio-fond{position:fixed;inset:0;background:rgba(6,20,34,.94);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px}
+.visio-fond[hidden]{display:none}
+.visio-fond img{max-width:94vw;max-height:84vh;border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.visio-x,.visio-prec,.visio-suiv{position:absolute;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);color:#fff;width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+.visio-x:hover,.visio-prec:hover,.visio-suiv:hover{background:var(--orange);border-color:var(--orange)}
+.visio-x{top:20px;right:20px}
+.visio-prec{left:18px;top:50%;transform:translateY(-50%)}
+.visio-suiv{right:18px;top:50%;transform:translateY(-50%)}
+.visio-leg{position:absolute;bottom:22px;left:0;right:0;text-align:center;color:rgba(255,255,255,.8);font-size:.86rem}
+
+/* ── APPEL ── */
+.cta{background:linear-gradient(140deg,#06243a,#0e6ba8);color:#fff;padding:70px 0;text-align:center}
+.cta h2{color:#fff;margin-bottom:12px}
+.cta p{color:rgba(255,255,255,.82);margin-bottom:28px}
+.cta .btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+/* ── PIED ── */
+.footer-bottom{background:var(--text);color:rgba(255,255,255,.72);padding:54px 0 26px;font-size:.86rem}
+.footer-bottom .inner{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:34px}
+.fb-logo img{height:54px;object-fit:contain;margin-bottom:14px}
+.fb-desc{margin-bottom:16px;line-height:1.7}
+.fb-contacts{display:flex;flex-direction:column;gap:8px}
+.fb-contacts a:hover{color:var(--orange)}
+.fb-col h5{color:#fff;font-size:.82rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+.fb-col ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.fb-bas{border-top:1px solid rgba(255,255,255,.12);margin-top:34px;padding-top:20px;text-align:center;font-size:.78rem;color:rgba(255,255,255,.45)}
+
+@media(max-width:860px){
+  .footer-bottom .inner{grid-template-columns:1fr 1fr}
+  .head-links a:not(.cta-nav){display:none}
+  .page-head{padding:50px 0 44px}
+  .film{padding:46px 0 10px}
+  .galerie{padding:46px 0 64px}
+  .grille{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .visio-prec,.visio-suiv{width:40px;height:40px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="container inner">
+    <a href="mailto:plombierds24@gmail.com"><i class="fas fa-envelope"></i> plombierds24@gmail.com</a>
+    <div class="tels">
+      <a href="tel:0174601795"><i class="fas fa-phone"></i> 01 74 60 17 95</a>
+      <a href="tel:0616694989"><i class="fas fa-mobile-alt"></i> 06 16 69 49 89</a>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="container inner">
+    <a href="index.html" class="logo"><img src="assets/img/logo.png" alt="DS Plomberie"></a>
+    <div class="head-links">
+      <a href="index.html">Accueil</a>
+      <a href="index.html#about">Qui sommes-nous</a>
+      <a href="index.html#zones">Zones</a>
+      <a href="tel:0174601795" class="cta-nav"><i class="fas fa-phone"></i> Nous appeler</a>
+    </div>
+  </div>
+</header>
+
+<section class="page-head">
+  <div class="container">
+    <span class="sub-title">Nos travaux réalisés</span>
+    <h1>Ce que nous avons<br><span>déjà réalisé</span></h1>
+    <p>Rénovation complète, salles de bain, cuisines, agencement sur mesure, colonnes d'évacuation, tranchées et assainissement. Des chantiers menés de bout en bout chez des particuliers et des professionnels, à Paris et dans toute l'Île-de-France.</p>
+    <p class="fil"><a href="index.html">Accueil</a> › Nos réalisations</p>
+  </div>
+</section>
+
+<section class="film">
+  <div class="container">
+    <div class="intro">
+      <span class="sub-title">En vidéo</span>
+      <h2>Avant, pendant, après</h2>
+      <p>Un chantier ne se juge pas seulement sur la photo finale. Voici le déroulé réel de nos interventions, du terrassement à la finition.</p>
+    </div>
+    <div class="film-box">
+      <video controls preload="metadata" playsinline poster="assets/realisations/film-poster.jpg">
+        <source src="assets/video/realisations.mp4" type="video/mp4">
+        Votre navigateur ne peut pas lire cette vidéo.
+      </video>
+    </div>
+    <p class="film-note">Montage réalisé à partir de nos propres chantiers. Durée : 1 min 42.</p>
+  </div>
+</section>
+
+<section class="galerie" id="galerie">
+  <div class="container">
+    <div class="intro">
+      <span class="sub-title">En images</span>
+      <h2>Nos chantiers en photos</h2>
+    </div>
+    <div class="filtres" id="filtres">
+      <button class="actif" data-f="tout">Tout voir</button>
+      <button data-f="plomberie">Plomberie &amp; salle de bain</button>
+      <button data-f="cuisine">Cuisine</button>
+      <button data-f="agencement">Agencement sur mesure</button>
+      <button data-f="gros-oeuvre">Gros œuvre &amp; tranchées</button>
+      <button data-f="exterieur">Extérieur &amp; maçonnerie</button>
+    </div>
+    <div class="grille" id="grille"></div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container">
+    <h2>Un projet du même genre ?</h2>
+    <p>Devis gratuit, déplacement rapide, travail garanti. Parlons-en.</p>
+    <div class="btns">
+      <a href="tel:0174601795" class="theme-btn"><i class="fas fa-phone"></i> 01 74 60 17 95</a>
+      <a href="tel:0616694989" class="theme-btn outline"><i class="fas fa-mobile-alt"></i> 06 16 69 49 89</a>
+      <a href="index.html" class="theme-btn outline"><i class="fas fa-video"></i> Diagnostic vidéo gratuit</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer-bottom">
+  <div class="container">
+    <div class="inner">
+      <div>
+        <div class="fb-logo"><img src="assets/img/logo.png" alt="DS Plomberie"></div>
+        <p class="fb-desc">Spécialiste de l'assainissement, de la plomberie et de la rénovation en Île-de-France. Intervention rapide, travail garanti.</p>
+        <div class="fb-contacts">
+          <a href="tel:0174601795"><i class="fas fa-phone" style="color:var(--orange);margin-right:6px"></i> 01 74 60 17 95 (Fixe)</a>
+          <a href="tel:0616694989"><i class="fas fa-mobile-alt" style="color:var(--orange);margin-right:6px"></i> 06 16 69 49 89 (Mobile)</a>
+          <a href="mailto:plombierds24@gmail.com"><i class="fas fa-envelope" style="color:var(--orange);margin-right:6px"></i> plombierds24@gmail.com</a>
+        </div>
+      </div>
+      <div class="fb-col">
+        <h5>Services</h5>
+        <ul>
+          <li>Inspection caméra</li>
+          <li>Débouchage</li>
+          <li>Curage</li>
+          <li>Assainissement</li>
+          <li>Rénovation complète</li>
+          <li>Urgences 24h/24</li>
+        </ul>
+      </div>
+      <div class="fb-col">
+        <h5>Zones</h5>
+        <ul>
+          <li>Paris (75)</li>
+          <li>Hauts-de-Seine (92)</li>
+          <li>Seine-St-Denis (93)</li>
+          <li>Val-de-Marne (94)</li>
+          <li>Île-de-France</li>
+        </ul>
+      </div>
+      <div class="fb-col">
+        <h5>Légal</h5>
+        <ul>
+          <li>RCS : 106 245 921</li>
+          <li>Devis gratuit</li>
+          <li>Particuliers &amp; Pro</li>
+          <li><a href="index.html">Retour à l'accueil</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="fb-bas">© 2026 SAS DA SILVA PLOMBERIE — DS Plomberie. Tous droits réservés.</div>
+  </div>
+</footer>
+
+<div class="visio-fond" id="visio" hidden>
+  <button class="visio-x" id="v-x" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+  <button class="visio-prec" id="v-prec" aria-label="Précédente"><i class="fas fa-chevron-left"></i></button>
+  <img id="v-img" src="" alt="">
+  <button class="visio-suiv" id="v-suiv" aria-label="Suivante"><i class="fas fa-chevron-right"></i></button>
+  <p class="visio-leg" id="v-leg"></p>
+</div>
+
+<script>
+const LIBELLE = {
+  'plomberie'  : 'Plomberie & salle de bain',
+  'cuisine'    : 'Cuisine',
+  'agencement' : 'Agencement sur mesure',
+  'gros-oeuvre': 'Gros œuvre & tranchées',
+  'exterieur'  : 'Extérieur & maçonnerie'
+};
+const PHOTOS = [{"f": "r01-plomberie.jpg", "c": "plomberie"}, {"f": "r02-plomberie.jpg", "c": "plomberie"}, {"f": "r03-plomberie.jpg", "c": "plomberie"}, {"f": "r04-plomberie.jpg", "c": "plomberie"}, {"f": "r05-plomberie.jpg", "c": "plomberie"}, {"f": "r06-plomberie.jpg", "c": "plomberie"}, {"f": "r07-plomberie.jpg", "c": "plomberie"}, {"f": "r08-plomberie.jpg", "c": "plomberie"}, {"f": "r09-cuisine.jpg", "c": "cuisine"}, {"f": "r10-cuisine.jpg", "c": "cuisine"}, {"f": "r11-cuisine.jpg", "c": "cuisine"}, {"f": "r12-cuisine.jpg", "c": "cuisine"}, {"f": "r13-cuisine.jpg", "c": "cuisine"}, {"f": "r14-agencement.jpg", "c": "agencement"}, {"f": "r15-agencement.jpg", "c": "agencement"}, {"f": "r16-agencement.jpg", "c": "agencement"}, {"f": "r17-agencement.jpg", "c": "agencement"}, {"f": "r18-agencement.jpg", "c": "agencement"}, {"f": "r19-agencement.jpg", "c": "agencement"}, {"f": "r20-agencement.jpg", "c": "agencement"}, {"f": "r21-agencement.jpg", "c": "agencement"}, {"f": "r22-gros-oeuvre.jpg", "c": "gros-oeuvre"}, {"f": "r23-gros-oeuvre.jpg", "c": "gros-oeuvre"}, {"f": "r24-gros-oeuvre.jpg", "c": "gros-oeuvre"}, {"f": "r25-gros-oeuvre.jpg", "c": "gros-oeuvre"}, {"f": "r26-gros-oeuvre.jpg", "c": "gros-oeuvre"}, {"f": "r27-exterieur.jpg", "c": "exterieur"}, {"f": "r28-exterieur.jpg", "c": "exterieur"}, {"f": "r29-exterieur.jpg", "c": "exterieur"}, {"f": "r30-exterieur.jpg", "c": "exterieur"}];
+
+const grille = document.getElementById('grille');
+grille.innerHTML = PHOTOS.map((p, i) =>
+  `<figure class="vign" data-cat="${p.c}" data-i="${i}">
+     <img src="assets/realisations/mini-${p.f}" alt="${LIBELLE[p.c]} — DS Plomberie" loading="lazy">
+     <figcaption>${LIBELLE[p.c]}</figcaption>
+   </figure>`).join('');
+
+document.getElementById('filtres').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if(!b) return;
+  document.querySelectorAll('#filtres button').forEach(x => x.classList.toggle('actif', x === b));
+  const f = b.dataset.f;
+  document.querySelectorAll('.vign').forEach(v =>
+    v.classList.toggle('cache', f !== 'tout' && v.dataset.cat !== f));
+});
+
+// Visionneuse : on ne circule que dans les photos actuellement affichees
+const fond = document.getElementById('visio'), vimg = document.getElementById('v-img'), vleg = document.getElementById('v-leg');
+let visibles = [], pos = 0;
+function montrer(n){
+  if(!visibles.length) return;
+  pos = (n + visibles.length) % visibles.length;
+  const p = PHOTOS[visibles[pos]];
+  vimg.src = 'assets/realisations/' + p.f;
+  vleg.textContent = LIBELLE[p.c] + '  ·  ' + (pos + 1) + ' / ' + visibles.length;
+}
+grille.addEventListener('click', (e) => {
+  const v = e.target.closest('.vign');
+  if(!v) return;
+  visibles = [...document.querySelectorAll('.vign')].filter(x => !x.classList.contains('cache')).map(x => Number(x.dataset.i));
+  fond.hidden = false;
+  document.body.style.overflow = 'hidden';
+  montrer(visibles.indexOf(Number(v.dataset.i)));
+});
+function fermer(){ fond.hidden = true; vimg.src = ''; document.body.style.overflow = ''; }
+document.getElementById('v-x').addEventListener('click', fermer);
+document.getElementById('v-prec').addEventListener('click', (e) => { e.stopPropagation(); montrer(pos - 1); });
+document.getElementById('v-suiv').addEventListener('click', (e) => { e.stopPropagation(); montrer(pos + 1); });
+fond.addEventListener('click', (e) => { if(e.target === fond) fermer(); });
+document.addEventListener('keydown', (e) => {
+  if(fond.hidden) return;
+  if(e.key === 'Escape') fermer();
+  if(e.key === 'ArrowLeft') montrer(pos - 1);
+  if(e.key === 'ArrowRight') montrer(pos + 1);
+});
+</script>
+</body>
+</html>
