@@ -317,12 +317,13 @@ nav a:hover{color:var(--blue);border-color:var(--blue)}
 .apercu{padding:80px 0;background:var(--off)}
 .apercu .intro{text-align:center;margin-bottom:34px}
 .apercu .intro p{color:var(--muted);max-width:680px;margin:14px auto 0}
-.apercu-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:34px}
+.apercu-grille{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:34px}
 .apercu-grille a{border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:#0e1c2a;border:1px solid var(--border);box-shadow:0 4px 16px rgba(14,107,168,.1)}
 .apercu-grille img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
 .apercu-grille a:hover img{transform:scale(1.07)}
 .apercu-bas{text-align:center}
-@media(max-width:860px){.apercu{padding:52px 0}.apercu-grille{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}}
+@media(max-width:980px){.apercu-grille{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:860px){.apercu{padding:52px 0}.apercu-grille{grid-template-columns:repeat(2,1fr);gap:9px}}
 </style>
 </head>
 <body>
