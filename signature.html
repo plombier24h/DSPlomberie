@@ -24,7 +24,7 @@ body{background:#eef2f6;font:400 .95rem/1.6 'Red Hat Display',system-ui,sans-ser
 .infos div b{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);font-weight:700;margin-bottom:2px}
 .infos div span{font-size:.88rem;font-weight:600;color:var(--ink)}
 .pages{display:flex;flex-direction:column;gap:12px;align-items:center}
-.page{position:relative;background:#fff;box-shadow:0 2px 14px rgba(6,36,58,.11);border-radius:4px;overflow:hidden;max-width:100%}
+.page{flex:0 0 auto;position:relative;background:#fff;box-shadow:0 2px 14px rgba(6,36,58,.11);border-radius:4px;overflow:hidden;max-width:100%}
 .page canvas{display:block;width:100%;height:auto}
 .zone{position:absolute;border:2px dashed var(--orange);background:rgba(232,119,34,.1);border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .zone span{font-size:.64rem;font-weight:700;color:#b85b11;text-transform:uppercase;letter-spacing:.08em;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:3px;white-space:nowrap}
@@ -192,8 +192,10 @@ const metaAscii = obj => JSON.stringify(obj).replace(/[\u0080-￿]/g, c => '\\u'
     OCTETS = await rp.arrayBuffer();
   }catch(e){ return vide('Devis indisponible', "Le document n'a pas pu être chargé. Rechargez la page ou appelez-nous au 07 82 42 61 16."); }
 
-  await rendre();
+  // L'ecran doit etre visible AVANT le rendu : pdf.js attend le chargement des
+  // polices, et cette attente ne se termine jamais dans un conteneur masque.
   ecran('devis');
+  await rendre();
 })();
 
 function esc(s){ return txt(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -219,13 +221,15 @@ async function rendre(){
     const page = await PDFJS.getPage(n);
     const v1 = page.getViewport({ scale: 1 });
     const ech = large / v1.width;
-    const pr  = Math.min(window.devicePixelRatio || 1, 2);
+    const pr  = Math.min(window.devicePixelRatio || 1, 1.6);
     const vp  = page.getViewport({ scale: ech * pr });
     const box = document.createElement('div'); box.className = 'page';
     const cv  = document.createElement('canvas');
     cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
     box.appendChild(cv); hote.appendChild(box);
-    await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+    await new Promise(r => requestAnimationFrame(r));
+    try{ await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise; }
+    catch(e){ box.innerHTML = '<div style="padding:30px;text-align:center;color:#8aa0b2;font-size:.8rem">Page ' + n + ' : affichage impossible</div>'; }
 
     if(ZONE && ZONE.page === n){
       const m = document.createElement('div'); m.className = 'zone anim';
