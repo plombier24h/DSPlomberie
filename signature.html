@@ -53,7 +53,7 @@ input[type=text]:focus{outline:none;border-color:var(--orange)}
 .mention{display:flex;gap:9px;align-items:flex-start;margin-top:14px;font-size:.8rem;line-height:1.45;color:#2c4a5e}
 .mention input{width:19px;height:19px;flex:0 0 auto;margin-top:1px;accent-color:var(--orange)}
 .lignes{display:flex;gap:9px;margin-top:16px}
-.lignes .btn{flex:1}
+.lignes .btn{flex:1 1 0;width:auto;min-width:0;white-space:nowrap}
 .msg{font-size:.8rem;padding:10px 12px;border-radius:6px;margin-top:12px;display:none}
 .msg.err{display:block;background:#fdecec;color:#a52121;border:1px solid #f3c7c7}
 .ok-ecran{text-align:center;padding:26px 18px}
@@ -207,6 +207,14 @@ function dateFr(iso){
 
 // ------------------------------------------------------------- rendu du PDF
 async function rendre(){
+  // Dans un onglet en arriere-plan, requestAnimationFrame est suspendu et pdf.js
+  // ne termine jamais son rendu : on attend que la page revienne au premier plan.
+  if(document.hidden){
+    await new Promise(r => {
+      const f = () => { if(!document.hidden){ document.removeEventListener('visibilitychange', f); r(); } };
+      document.addEventListener('visibilitychange', f);
+    });
+  }
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   PDFJS = await pdfjsLib.getDocument({ data: OCTETS.slice(0) }).promise;
   PAGES = PDFJS.numPages;
@@ -227,7 +235,7 @@ async function rendre(){
     const cv  = document.createElement('canvas');
     cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
     box.appendChild(cv); hote.appendChild(box);
-    await new Promise(r => requestAnimationFrame(r));
+    await new Promise(r => setTimeout(r, 0));
     try{ await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise; }
     catch(e){ box.innerHTML = '<div style="padding:30px;text-align:center;color:#8aa0b2;font-size:.8rem">Page ' + n + ' : affichage impossible</div>'; }
 
@@ -353,10 +361,9 @@ async function apposer(nom){
   const police = await doc.embedFont(StandardFonts.Helvetica);
   const d = new Date();
   const ligne = 'Bon pour accord - ' + sansAccents(nom) + ' - ' +
-    d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  page.drawText(ligne, { x: z.x * L, y: Math.max(8, dY - 9), size: 6.4, font: police, color: rgb(.19,.29,.37) });
-  page.drawText('Signe electroniquement via le site DS Plomberie (eIDAS - art. 1366-1367 du Code civil)',
-    { x: z.x * L, y: Math.max(2, dY - 17), size: 5.2, font: police, color: rgb(.45,.54,.6) });
+    d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) +
+    ' - signature electronique (eIDAS, art. 1366-1367 du Code civil)';
+  page.drawText(ligne, { x: z.x * L, y: Math.max(8, dY - 9), size: 5.6, font: police, color: rgb(.19,.29,.37) });
 
   return await doc.save();
 }

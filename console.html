@@ -3169,7 +3169,7 @@ async function sgRemplir(nomFichier){
   $('sg-client').value = (nom ? nom[1].trim() : '') || (cli ? cli[0].trim() : '');
   const ttc = texte.match(/TOTAL\s*TTC[^\d]{0,24}([\d][\d\s .,]{2,16})/i);
   if(ttc) $('sg-montant').value = ttc[1].replace(/\s+/g,' ').trim() + ' € TTC';
-  const obj = texte.match(/(?:OBJET|Objet)\s*[: ]*\s*([^\n]{6,120})/);
+  const obj = texte.match(/(?:OBJET|Objet|PROJET|Projet)\s*[:\s\u00a0]*([^\n]{6,120}?)(?:\s+Client\s*:|\s+Validit|\s+Dur\u00e9e|\n|$)/);
   if(obj) $('sg-projet').value = obj[1].trim();
 }
 
