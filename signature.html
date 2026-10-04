@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Signature du devis – DS Plomberie</title>
+<link rel="icon" href="img/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{--blue:#0e6ba8;--blue-light:#1a8fd1;--orange:#e87722;--ink:#06243a;--vert:#1b9e55}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#eef2f6;font:400 .95rem/1.6 'Red Hat Display',system-ui,sans-serif;color:#15313f;-webkit-text-size-adjust:100%}
+.bar{background:var(--ink);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20}
+.bar b{font-weight:800;font-size:1rem;letter-spacing:.01em}
+.bar b span{color:var(--orange)}
+.bar small{margin-left:auto;font-size:.68rem;opacity:.72;text-align:right;line-height:1.3}
+.wrap{max-width:860px;margin:0 auto;padding:16px}
+.carte{background:#fff;border-radius:10px;box-shadow:0 2px 14px rgba(6,36,58,.09);padding:18px;margin-bottom:14px}
+.carte h1{font-size:1.12rem;font-weight:800;color:var(--ink);margin-bottom:3px}
+.carte .st{font-size:.76rem;color:#6b8296}
+.infos{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #e4eaf0}
+.infos div b{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);font-weight:700;margin-bottom:2px}
+.infos div span{font-size:.88rem;font-weight:600;color:var(--ink)}
+.pages{display:flex;flex-direction:column;gap:12px;align-items:center}
+.page{position:relative;background:#fff;box-shadow:0 2px 14px rgba(6,36,58,.11);border-radius:4px;overflow:hidden;max-width:100%}
+.page canvas{display:block;width:100%;height:auto}
+.zone{position:absolute;border:2px dashed var(--orange);background:rgba(232,119,34,.1);border-radius:3px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.zone span{font-size:.64rem;font-weight:700;color:#b85b11;text-transform:uppercase;letter-spacing:.08em;background:rgba(255,255,255,.85);padding:2px 7px;border-radius:3px;white-space:nowrap}
+.zone.anim{animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,119,34,.45)}50%{box-shadow:0 0 0 9px rgba(232,119,34,0)}}
+.cta{position:sticky;bottom:0;background:linear-gradient(to top,#eef2f6 62%,rgba(238,242,246,0));padding:14px 16px 18px;z-index:15}
+.cta .in{max-width:860px;margin:0 auto}
+.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:9px;background:var(--orange);color:#fff;border:none;padding:16px;border-radius:7px;font:800 1rem/1 'Red Hat Display',sans-serif;cursor:pointer;box-shadow:0 5px 18px rgba(232,119,34,.35)}
+.btn:active{transform:translateY(1px)}
+.btn.sec{background:#fff;color:var(--ink);border:2px solid #cfdae4;box-shadow:none;font-weight:700}
+.btn.vert{background:var(--vert);box-shadow:0 5px 18px rgba(27,158,85,.3)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.fond{position:fixed;inset:0;background:rgba(6,36,58,.72);z-index:60;display:none;align-items:flex-end;justify-content:center;padding:0}
+.fond.on{display:flex}
+.modal{background:#fff;width:100%;max-width:560px;border-radius:14px 14px 0 0;padding:20px 18px 22px;max-height:94vh;overflow:auto}
+@media(min-width:620px){.fond{align-items:center;padding:20px}.modal{border-radius:14px}}
+.modal h2{font-size:1.05rem;font-weight:800;color:var(--ink);margin-bottom:4px}
+.modal p.aide{font-size:.76rem;color:#6b8296;margin-bottom:14px}
+label.ch{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);font-weight:700;margin:12px 0 5px}
+input[type=text]{width:100%;padding:12px;border:1.6px solid #cfdae4;border-radius:6px;font:600 .95rem 'Red Hat Display',sans-serif;color:var(--ink)}
+input[type=text]:focus{outline:none;border-color:var(--orange)}
+.pad{position:relative;border:1.6px solid #cfdae4;border-radius:6px;background:#fbfcfd;touch-action:none}
+.pad canvas{display:block;width:100%;height:170px;border-radius:5px}
+.pad .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#9fb3c4;pointer-events:none}
+.pad .ligne{position:absolute;left:12px;right:12px;bottom:40px;border-bottom:1px dashed #cfdae4;pointer-events:none}
+.mention{display:flex;gap:9px;align-items:flex-start;margin-top:14px;font-size:.8rem;line-height:1.45;color:#2c4a5e}
+.mention input{width:19px;height:19px;flex:0 0 auto;margin-top:1px;accent-color:var(--orange)}
+.lignes{display:flex;gap:9px;margin-top:16px}
+.lignes .btn{flex:1}
+.msg{font-size:.8rem;padding:10px 12px;border-radius:6px;margin-top:12px;display:none}
+.msg.err{display:block;background:#fdecec;color:#a52121;border:1px solid #f3c7c7}
+.ok-ecran{text-align:center;padding:26px 18px}
+.ok-ecran .rond{width:66px;height:66px;border-radius:50%;background:var(--vert);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px}
+.ok-ecran h1{font-size:1.2rem;font-weight:800;color:var(--ink);margin-bottom:6px}
+.ok-ecran p{font-size:.86rem;color:#5c7a92}
+.preuve{text-align:left;background:#f6f9fb;border:1px solid #e1e9f0;border-radius:8px;padding:14px;margin-top:18px;font-size:.78rem;line-height:1.75}
+.preuve b{display:inline-block;min-width:112px;color:#6b8296;font-weight:600}
+.preuve .emp{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.66rem;word-break:break-all;color:#2c4a5e}
+.pied{text-align:center;font-size:.7rem;color:#7d94a7;padding:16px;line-height:1.7}
+.chargement{text-align:center;padding:50px 20px;color:#6b8296;font-size:.86rem}
+.chargement i{font-size:26px;color:var(--orange);display:block;margin-bottom:10px}
+.vide{text-align:center;padding:46px 20px}
+.vide i{font-size:38px;color:#c3d1dc;display:block;margin-bottom:12px}
+.vide h1{font-size:1.05rem;font-weight:800;color:var(--ink);margin-bottom:5px}
+.vide p{font-size:.84rem;color:#6b8296}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <b>DS <span>Plomberie</span></b>
+  <small>Signature électronique<br>sécurisée</small>
+</div>
+
+<div id="ecran-chargement" class="chargement"><i class="fas fa-circle-notch fa-spin"></i>Chargement du devis…</div>
+
+<div id="ecran-vide" class="wrap" style="display:none">
+  <div class="carte vide">
+    <i class="fas fa-link-slash"></i>
+    <h1 id="vide-t">Lien introuvable</h1>
+    <p id="vide-p">Ce lien de signature n'est plus valable. Contactez DS Plomberie au 07 82 42 61 16.</p>
+  </div>
+</div>
+
+<div id="ecran-devis" style="display:none">
+  <div class="wrap">
+    <div class="carte">
+      <h1 id="t-titre">Devis à signer</h1>
+      <div class="st" id="t-soustitre"></div>
+      <div class="infos" id="t-infos"></div>
+    </div>
+    <div class="pages" id="pages"></div>
+  </div>
+  <div class="cta"><div class="in">
+    <button class="btn" id="b-signer"><i class="fas fa-pen-nib"></i> Signer le devis</button>
+  </div></div>
+  <div class="pied">
+    SAS DA SILVA PLOMBERIE – DS Plomberie · 07 82 42 61 16<br>
+    Signature électronique simple au sens des articles 1366 et 1367 du Code civil et du règlement eIDAS.
+  </div>
+</div>
+
+<div id="ecran-ok" class="wrap" style="display:none">
+  <div class="carte ok-ecran">
+    <div class="rond"><i class="fas fa-check"></i></div>
+    <h1>Devis signé</h1>
+    <p>Merci. Votre accord est enregistré et DS Plomberie en est informée.</p>
+    <div class="preuve" id="ok-preuve"></div>
+    <div class="lignes"><button class="btn vert" id="b-telecharger"><i class="fas fa-download"></i> Télécharger le devis signé</button></div>
+  </div>
+  <div class="pied">Conservez ce document. Une copie est archivée par DS Plomberie.</div>
+</div>
+
+<div class="fond" id="fond">
+  <div class="modal">
+    <h2>Votre signature</h2>
+    <p class="aide">Signez avec le doigt ou la souris dans le cadre, puis validez. Votre signature sera apposée à l'emplacement prévu sur le devis.</p>
+
+    <label class="ch" for="i-nom">Nom et prénom</label>
+    <input type="text" id="i-nom" placeholder="Ex. Jason Madeleine" autocomplete="name">
+
+    <label class="ch">Signature</label>
+    <div class="pad" id="pad">
+      <canvas id="c-sign"></canvas>
+      <div class="ligne"></div>
+      <div class="ph" id="pad-ph">Signez ici</div>
+    </div>
+
+    <label class="mention">
+      <input type="checkbox" id="i-accord">
+      <span>J'ai lu le devis dans son intégralité et je l'accepte. Je porte la mention <b>« Bon pour accord »</b> et je reconnais que cette signature électronique a la même valeur qu'une signature manuscrite.</span>
+    </label>
+
+    <div class="msg err" id="msg"></div>
+
+    <div class="lignes">
+      <button class="btn sec" id="b-annuler">Annuler</button>
+      <button class="btn sec" id="b-effacer" style="flex:0 0 auto;padding:16px 18px" title="Effacer"><i class="fas fa-eraser"></i></button>
+      <button class="btn" id="b-valider">Valider</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>
+const BASE  = 'https://ds-signature.plombierds24.workers.dev';
+const JETON = new URLSearchParams(location.search).get('d') || '';
+
+let INFO = null, OCTETS = null, PDFJS = null, ZONE = null, PAGES = 0, SIGNE = null;
+
+const $ = id => document.getElementById(id);
+const ecran = n => ['chargement','vide','devis','ok'].forEach(e => $('ecran-'+e).style.display = (e===n ? (e==='devis'?'block':(e==='chargement'?'block':'block')) : 'none'));
+const txt = s => String(s==null?'':s);
+
+function vide(titre, para){ $('vide-t').textContent = titre; $('vide-p').textContent = para; ecran('vide'); }
+
+// ---- en-tete X-Meta : les accents ne passent pas dans un en-tete HTTP ----
+const metaAscii = obj => JSON.stringify(obj).replace(/[\u0080-￿]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4,'0'));
+
+// ---------------------------------------------------------------- demarrage
+(async function(){
+  if(!JETON){ return vide('Lien incomplet', "Le lien de signature est incomplet. Demandez-nous un nouveau lien."); }
+  try{
+    const r = await fetch(BASE + '/info/' + encodeURIComponent(JETON));
+    if(!r.ok){ const e = await r.json().catch(()=>({})); return vide('Lien introuvable', e.erreur ? (e.erreur.charAt(0).toUpperCase()+e.erreur.slice(1)+'.') : "Ce lien n'est plus valable."); }
+    INFO = await r.json();
+  }catch(e){ return vide('Connexion impossible', "Impossible de joindre le serveur. Vérifiez votre connexion puis rechargez la page."); }
+
+  if(INFO.statut === 'signe'){
+    return vide('Devis déjà signé', 'Ce devis a été signé le ' + dateFr(INFO.signeLe) + (INFO.signePar ? ' par ' + INFO.signePar : '') + '. Contactez-nous si vous souhaitez une copie.');
+  }
+
+  $('t-titre').textContent = 'Devis ' + (INFO.devis ? 'n° ' + INFO.devis : 'à signer');
+  $('t-soustitre').textContent = INFO.projet || '';
+  const cases = [];
+  if(INFO.client)  cases.push(['Client', INFO.client]);
+  if(INFO.montant) cases.push(['Montant', INFO.montant]);
+  cases.push(['Pages', '—']);
+  $('t-infos').innerHTML = cases.map(c => '<div><b>'+c[0]+'</b><span>'+esc(c[1])+'</span></div>').join('');
+
+  try{
+    const rp = await fetch(BASE + '/devis/' + encodeURIComponent(JETON));
+    if(!rp.ok) throw new Error('devis');
+    OCTETS = await rp.arrayBuffer();
+  }catch(e){ return vide('Devis indisponible', "Le document n'a pas pu être chargé. Rechargez la page ou appelez-nous au 07 82 42 61 16."); }
+
+  await rendre();
+  ecran('devis');
+})();
+
+function esc(s){ return txt(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function dateFr(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) + ' à ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ------------------------------------------------------------- rendu du PDF
+async function rendre(){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  PDFJS = await pdfjsLib.getDocument({ data: OCTETS.slice(0) }).promise;
+  PAGES = PDFJS.numPages;
+  const infos = $('t-infos').children;
+  if(infos.length) infos[infos.length-1].querySelector('span').textContent = PAGES + (PAGES>1?' pages':' page');
+
+  ZONE = INFO.signature && typeof INFO.signature.x === 'number' ? INFO.signature : await deviner();
+
+  const hote = $('pages'); hote.innerHTML = '';
+  const large = Math.min(820, document.documentElement.clientWidth - 32);
+  for(let n = 1; n <= PAGES; n++){
+    const page = await PDFJS.getPage(n);
+    const v1 = page.getViewport({ scale: 1 });
+    const ech = large / v1.width;
+    const pr  = Math.min(window.devicePixelRatio || 1, 2);
+    const vp  = page.getViewport({ scale: ech * pr });
+    const box = document.createElement('div'); box.className = 'page';
+    const cv  = document.createElement('canvas');
+    cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
+    box.appendChild(cv); hote.appendChild(box);
+    await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+
+    if(ZONE && ZONE.page === n){
+      const m = document.createElement('div'); m.className = 'zone anim';
+      m.style.left = (ZONE.x*100)+'%'; m.style.top = (ZONE.y*100)+'%';
+      m.style.width = (ZONE.l*100)+'%'; m.style.height = (ZONE.h*100)+'%';
+      m.innerHTML = '<span><i class="fas fa-pen-nib"></i> Signez ici</span>';
+      m.onclick = ouvrir;
+      box.appendChild(m);
+    }
+  }
+}
+
+// Si la console n'a pas defini de cadre, on cherche « Signature du Client » dans le texte.
+async function deviner(){
+  for(let n = PAGES; n >= 1; n--){
+    const page = await PDFJS.getPage(n);
+    const v = page.getViewport({ scale: 1 });
+    const tc = await page.getTextContent();
+    for(const it of tc.items){
+      const s = (it.str || '').toLowerCase();
+      if(s.indexOf('signature du client') !== -1){
+        const x = it.transform[4], y = it.transform[5];
+        const l = Math.min(0.40, Math.max(0.26, (it.width || 180) / v.width));
+        return { page:n, x: x / v.width, y: (v.height - y) / v.height + 0.012, l: l, h: 0.055 };
+      }
+    }
+  }
+  const p = PAGES;
+  return { page:p, x:0.08, y:0.86, l:0.33, h:0.055 };
+}
+
+// ------------------------------------------------------------ bloc-signature
+const cv = $('c-sign'), ctx = cv.getContext('2d');
+let dessine = false, vierge = true;
+
+function dimensionner(){
+  const pr = Math.min(window.devicePixelRatio || 1, 2);
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.floor(r.width * pr); cv.height = Math.floor(r.height * pr);
+  ctx.setTransform(pr,0,0,pr,0,0);
+  ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#10243a';
+}
+function pos(e){
+  const r = cv.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - r.left, y: t.clientY - r.top };
+}
+function debut(e){ e.preventDefault(); dessine = true; vierge = false; $('pad-ph').style.display='none'; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }
+function trait(e){ if(!dessine) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); }
+function fin(){ dessine = false; }
+['mousedown','touchstart'].forEach(t => cv.addEventListener(t, debut, {passive:false}));
+['mousemove','touchmove'].forEach(t => cv.addEventListener(t, trait, {passive:false}));
+['mouseup','mouseleave','touchend','touchcancel'].forEach(t => cv.addEventListener(t, fin));
+
+function effacer(){ ctx.clearRect(0,0,cv.width,cv.height); vierge = true; $('pad-ph').style.display='flex'; }
+
+function ouvrir(){ $('fond').classList.add('on'); $('msg').style.display='none'; setTimeout(()=>{ dimensionner(); effacer(); }, 60); }
+function fermer(){ $('fond').classList.remove('on'); }
+
+$('b-signer').onclick  = ouvrir;
+$('b-annuler').onclick = fermer;
+$('b-effacer').onclick = effacer;
+window.addEventListener('resize', () => { if($('fond').classList.contains('on')){ const img = cv.toDataURL(); dimensionner(); if(!vierge){ const i = new Image(); i.onload = () => ctx.drawImage(i,0,0,cv.width/Math.min(window.devicePixelRatio||1,2),cv.height/Math.min(window.devicePixelRatio||1,2)); i.src = img; } } });
+
+// ------------------------------------------------------------------ validation
+$('b-valider').onclick = async function(){
+  const nom = $('i-nom').value.trim();
+  const erreur = m => { $('msg').textContent = m; $('msg').style.display='block'; };
+  $('msg').style.display='none';
+  if(nom.length < 3)             return erreur('Indiquez votre nom et votre prénom.');
+  if(vierge)                     return erreur('Signez dans le cadre avant de valider.');
+  if(!$('i-accord').checked)     return erreur("Cochez la case d'acceptation du devis.");
+
+  const b = this; const avant = b.innerHTML;
+  b.disabled = true; b.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+
+  try{
+    const signe = await apposer(nom);
+    const r = await fetch(BASE + '/signer/' + encodeURIComponent(JETON), {
+      method:'POST',
+      headers:{ 'Content-Type':'application/pdf', 'X-Meta': metaAscii({ nom: nom }) },
+      body: signe
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.erreur || 'envoi impossible');
+
+    SIGNE = signe;
+    fermer();
+    $('ok-preuve').innerHTML =
+      '<div><b>Devis</b> ' + esc(INFO.devis || '—') + '</div>' +
+      '<div><b>Signataire</b> ' + esc(nom) + '</div>' +
+      '<div><b>Signé le</b> ' + esc(dateFr(d.signeLe)) + '</div>' +
+      (d.ip ? '<div><b>Adresse IP</b> ' + esc(d.ip) + '</div>' : '') +
+      '<div><b>Mention</b> Bon pour accord</div>';
+    ecran('ok');
+    window.scrollTo(0,0);
+  }catch(e){
+    erreur('Échec : ' + (e.message || e) + ". Réessayez ou appelez le 07 82 42 61 16.");
+  }finally{
+    b.disabled = false; b.innerHTML = avant;
+  }
+};
+
+// Appose la signature dans le cadre prevu, dans le PDF d'origine.
+async function apposer(nom){
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const doc = await PDFDocument.load(OCTETS.slice(0));
+  const pages = doc.getPages();
+  const z = ZONE || { page: pages.length, x:0.08, y:0.86, l:0.33, h:0.055 };
+  const page = pages[Math.min(Math.max(z.page,1), pages.length) - 1];
+  const { width:L, height:H } = page.getSize();
+
+  const png  = await doc.embedPng(recadrer());
+  const cadL = z.l * L, cadH = z.h * H;
+  const ech  = Math.min(cadL / png.width, cadH / png.height);
+  const dL   = png.width * ech, dH = png.height * ech;
+  const dX   = z.x * L + (cadL - dL) / 2;
+  const dY   = H - (z.y * H) - cadH + (cadH - dH) / 2;
+  page.drawImage(png, { x:dX, y:dY, width:dL, height:dH });
+
+  const police = await doc.embedFont(StandardFonts.Helvetica);
+  const d = new Date();
+  const ligne = 'Bon pour accord - ' + sansAccents(nom) + ' - ' +
+    d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  page.drawText(ligne, { x: z.x * L, y: Math.max(8, dY - 9), size: 6.4, font: police, color: rgb(.19,.29,.37) });
+  page.drawText('Signe electroniquement via le site DS Plomberie (eIDAS - art. 1366-1367 du Code civil)',
+    { x: z.x * L, y: Math.max(2, dY - 17), size: 5.2, font: police, color: rgb(.45,.54,.6) });
+
+  return await doc.save();
+}
+
+function sansAccents(s){ return txt(s).normalize('NFD').replace(/[̀-ͯ]/g,''); }
+
+// Rogne le trace pour que la signature remplisse le cadre sans marge inutile.
+function recadrer(){
+  const d = ctx.getImageData(0,0,cv.width,cv.height).data;
+  let x0=cv.width, y0=cv.height, x1=0, y1=0, trouve=false;
+  for(let y=0;y<cv.height;y++) for(let x=0;x<cv.width;x++){
+    if(d[(y*cv.width+x)*4+3] > 12){ trouve=true; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  }
+  if(!trouve){ x0=0; y0=0; x1=cv.width-1; y1=cv.height-1; }
+  const m = 6;
+  x0 = Math.max(0,x0-m); y0 = Math.max(0,y0-m); x1 = Math.min(cv.width-1,x1+m); y1 = Math.min(cv.height-1,y1+m);
+  const o = document.createElement('canvas');
+  o.width = x1-x0+1; o.height = y1-y0+1;
+  o.getContext('2d').drawImage(cv, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
+  return o.toDataURL('image/png');
+}
+
+$('b-telecharger').onclick = function(){
+  if(!SIGNE) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([SIGNE], {type:'application/pdf'}));
+  a.download = 'Devis ' + (INFO.devis || '') + ' - signe.pdf';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+};
+</script>
+</body>
+</html>

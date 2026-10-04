@@ -35,6 +35,13 @@ service cloud.firestore {
       allow update, delete: if admin() || (connecte() && resource.data.auteur == request.auth.token.email);
     }
 
+    // Devis envoyés en signature électronique : on ne stocke ici que le suivi
+    // (client, numéro, lien, statut). Les PDF vivent dans Cloudflare Workers KV.
+    match /signatures/{jeton} {
+      allow read, create, update: if connecte();
+      allow delete: if admin();
+    }
+
     // Présence de la console visio.
     match /presence/{docId} {
       allow read: if request.auth != null;
