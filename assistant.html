@@ -20,6 +20,11 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .btn:hover{filter:brightness(1.08)}
 .btn.ghost{background:transparent;border-color:var(--line);color:rgba(255,255,255,.85)}
 .btn.small{padding:9px 16px;font-size:.78rem}
+/* Hierarchie des actions : orange = action principale, bleu = envoi sur Drive,
+   contour discret = reglage que l'on ne touche qu'une fois. */
+.btn.drive{background:var(--blue-light);border-color:var(--blue-light);color:#fff}
+.btn.reglage{background:transparent;border:1px dashed var(--line);color:rgba(255,255,255,.5);padding:8px 13px;font-size:.72rem;font-weight:600}
+.btn.reglage:hover{color:#fff;border-color:var(--orange);border-style:solid}
 .card{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:20px}
 .field{margin-bottom:13px}
 .field label{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.55);margin-bottom:6px}
@@ -450,14 +455,14 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
       </div>
 
       <div class="dossier-bar">
-        <button class="btn ghost small" id="btn-cli-save"><i class="fas fa-address-book"></i> Enregistrer dans les contacts</button>
+        <button class="btn" id="btn-cli-save"><i class="fas fa-address-book"></i> Enregistrer dans les contacts</button>
         <button class="btn ghost small" id="btn-cli-agenda"><i class="fas fa-calendar-plus"></i> Google Agenda</button>
       </div>
       <div class="dossier-bar">
-        <button class="btn" id="btn-fiche"><i class="fas fa-envelope"></i> Copier la fiche et ouvrir le mail</button>
+        <button class="btn drive hidden" id="btn-pj-drive"><i class="fas fa-cloud-arrow-up"></i> Envoyer sur Drive</button>
         <button class="btn ghost hidden" id="btn-pj-envoi"><i class="fas fa-paperclip"></i> Joindre les pièces au mail</button>
-        <button class="btn ghost hidden" id="btn-pj-drive"><i class="fas fa-cloud-arrow-up"></i> Envoyer sur Drive</button>
-        <button class="btn ghost small" id="btn-drive-racine"><i class="fas fa-folder-open"></i> Choisir le dossier Clients</button>
+        <button class="btn ghost" id="btn-fiche"><i class="fas fa-envelope"></i> Copier la fiche et ouvrir le mail</button>
+        <button class="btn reglage" id="btn-drive-racine"><i class="fas fa-folder-open"></i> Choisir le dossier Clients</button>
         <span class="etat" id="pj-drive-etat"></span>
         <span class="etat" id="fiche-etat"></span>
       </div>

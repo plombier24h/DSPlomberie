@@ -94,6 +94,14 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
   .assist.open{transform:translateY(0)}
 }
 
+/* Hierarchie des actions : orange = action principale, bleu = envoi sur Drive,
+   contour discret = reglage que l'on ne touche qu'une fois. */
+.btn.drive{background:var(--blue-light);border-color:var(--blue-light);color:#fff}
+.btn.reglage{background:transparent;border:1px dashed var(--line);color:rgba(255,255,255,.5);padding:8px 13px;font:600 .72rem 'Red Hat Display',sans-serif}
+.btn.reglage:hover{color:#fff;border-color:var(--orange);border-style:solid}
+.sg-drive{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.sg-drive .etat{font-size:.72rem;color:rgba(255,255,255,.55)}
+
 /* ===== SIGNATURE ELECTRONIQUE DES DEVIS ===== */
 .sg-intro{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:18px}
 .sg-voie{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:14px}
@@ -616,6 +624,11 @@ body.large .wrap{max-width:1500px}
         </div>
       </div>
 
+      <div class="sg-drive">
+        <button class="btn reglage" id="btn-drive-racine"><i class="fas fa-folder-open"></i> Choisir le dossier Clients</button>
+        <span class="etat" id="sg-drive-etat"></span>
+      </div>
+
       <div class="sg-depot" id="sg-depot">
         <i class="fas fa-file-arrow-up"></i>
         <b>Importer le devis en PDF</b>
@@ -674,6 +687,8 @@ body.large .wrap{max-width:1500px}
 <div id="call-root"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 
 <script type="module">
 /* =========================================================
@@ -703,7 +718,7 @@ const HEARTBEAT = 30000;
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp }
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Nom d'app distinct : la session d'authentification de la console est isolee
@@ -3081,6 +3096,166 @@ function publierDevis(){
   window.open('devis.html', '_blank', 'noopener');
 }
 
+/* ---------- Google Drive : dossiers clients ---------- */
+const DRIVE_CLIENT_ID  = '1005022938633-6i3bkocptbb9o2j0obl6hm1o633dait8.apps.googleusercontent.com';
+const DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file';
+// L'autorisation drive.file ne donne acces qu'aux fichiers crees par l'application :
+// le dossier « Clients » existant est designe une fois avec le selecteur Google,
+// ce qui ouvre aussi l'acces a tout son contenu.
+const DRIVE_PICKER_KEY = 'AIzaSyCVzOevRreO4W5fOKAc5sg5zLbfMvJjYfw';
+let driveJeton = null, driveJetonFin = 0, driveClient = null, driveRacineId = null;
+
+function driveEtat(t){ const e = $('sg-drive-etat'); if(e) e.textContent = t || ''; }
+function driveValide(){ return driveJeton && Date.now() < driveJetonFin - 60000; }
+
+// Le jeton vit en memoire, une heure au plus : rien n'est ecrit sur le poste.
+function driveJetonDemande(){
+  return new Promise((resolve, reject) => {
+    if(driveValide()) return resolve(driveJeton);
+    if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2)
+      return reject(new Error("Google ne s'est pas chargé, vérifie la connexion."));
+    if(!driveClient){
+      driveClient = google.accounts.oauth2.initTokenClient({
+        client_id: DRIVE_CLIENT_ID, scope: DRIVE_SCOPE, callback: () => {}
+      });
+    }
+    driveClient.callback = (rep) => {
+      if(!rep || rep.error) return reject(new Error((rep && (rep.error_description || rep.error)) || 'accès refusé'));
+      driveJeton = rep.access_token;
+      driveJetonFin = Date.now() + (Number(rep.expires_in || 3600) * 1000);
+      resolve(driveJeton);
+    };
+    try{ driveClient.requestAccessToken({ prompt: '' }); }
+    catch(e){ reject(e); }
+  });
+}
+
+async function driveDossier(nom, parentId){
+  const jeton = await driveJetonDemande();
+  const corps = { name: nom, mimeType: 'application/vnd.google-apps.folder' };
+  if(parentId) corps.parents = [parentId];
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + jeton, 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps)
+  });
+  if(!r.ok) throw new Error('création du dossier refusée (' + r.status + ')');
+  return (await r.json()).id;
+}
+
+// Le dossier du client existe deja la plupart du temps : on le cherche avant
+// d'en creer un, sinon on fabrique un doublon a cote du sien.
+async function driveDossierClient(nom, parentId){
+  const jeton = await driveJetonDemande();
+  const q = "mimeType='application/vnd.google-apps.folder' and trashed=false and '" +
+            parentId + "' in parents and name='" + String(nom).replace(/'/g, "\\'") + "'";
+  try{
+    const r = await fetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) +
+                          '&fields=files(id,name)&pageSize=1',
+                          { headers: { Authorization: 'Bearer ' + jeton } });
+    if(r.ok){
+      const d = await r.json();
+      if(d.files && d.files.length) return d.files[0].id;
+    }
+  }catch(e){}
+  return driveDossier(nom, parentId);
+}
+
+// Liste les dossiers clients deja presents, pour pouvoir proposer le bon.
+async function driveDossiersClients(){
+  const jeton = await driveJetonDemande();
+  const racine = await driveRacine();
+  const q = "mimeType='application/vnd.google-apps.folder' and trashed=false and '" + racine + "' in parents";
+  const r = await fetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) +
+                        '&fields=files(id,name)&orderBy=name&pageSize=200',
+                        { headers: { Authorization: 'Bearer ' + jeton } });
+  if(!r.ok) throw new Error('lecture du Drive refusée (' + r.status + ')');
+  return (await r.json()).files || [];
+}
+
+async function driveEnvoi(contenu, nom, type, parentId){
+  const jeton = await driveJetonDemande();
+  const limite = '---dsplomberie' + Date.now();
+  const corps = new Blob([
+    '--' + limite + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n',
+    JSON.stringify({ name: nom, parents: [parentId] }),
+    '\r\n--' + limite + '\r\nContent-Type: ' + (type || 'application/octet-stream') + '\r\n\r\n',
+    contenu,
+    '\r\n--' + limite + '--\r\n'
+  ]);
+  const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + jeton, 'Content-Type': 'multipart/related; boundary=' + limite },
+    body: corps
+  });
+  if(!r.ok) throw new Error("envoi refusé (" + r.status + ")");
+  return r.json();
+}
+
+// L'identifiant du dossier racine est partage par Firestore : console et poste
+// assistant deposent au meme endroit, le dossier « Clients » du Drive.
+async function driveRacine(){
+  if(driveRacineId) return driveRacineId;
+  try{
+    const s = await getDoc(doc(db, 'reglages', 'drive'));
+    if(s.exists() && s.data().racineId){ driveRacineId = s.data().racineId; return driveRacineId; }
+  }catch(e){}
+  throw new Error("dossier Drive non défini — clique sur « Choisir le dossier Clients »");
+}
+
+function drivePickerPret(){
+  return new Promise((resolve, reject) => {
+    if(window.google && google.picker) return resolve();
+    if(typeof gapi === 'undefined') return reject(new Error("Google ne s'est pas chargé, vérifie la connexion."));
+    gapi.load('picker', { callback: resolve, onerror: () => reject(new Error('sélecteur indisponible')) });
+  });
+}
+
+async function driveChoisirRacine(){
+  const b = $('btn-drive-racine'); if(b) b.disabled = true;
+  try{
+    driveEtat('connexion…');
+    const jeton = await driveJetonDemande();
+    await drivePickerPret();
+    driveEtat('');
+    const vue = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
+      .setIncludeFolders(true).setSelectFolderEnabled(true)
+      .setMimeTypes('application/vnd.google-apps.folder');
+    new google.picker.PickerBuilder()
+      .setOAuthToken(jeton)
+      .setDeveloperKey(DRIVE_PICKER_KEY)
+      .setTitle('Choisis le dossier Clients')
+      .addView(vue)
+      .setCallback(async (d) => {
+        if(!d || d.action !== google.picker.Action.PICKED) return;
+        const choisi = d.docs && d.docs[0];
+        if(!choisi) return;
+        driveRacineId = choisi.id;
+        try{
+          await setDoc(doc(db, 'reglages', 'drive'),
+            { racineId: choisi.id, racineNom: choisi.name || '', majAtMs: Date.now() }, { merge: true });
+        }catch(e){}
+        driveEtat('dossier « ' + (choisi.name || '') + ' » enregistré');
+        toast('Dossier Drive : ' + (choisi.name || ''));
+      })
+      .build().setVisible(true);
+  }catch(e){
+    driveEtat('');
+    toast('Drive : ' + (e.message || e));
+  }finally{
+    if(b) b.disabled = false;
+  }
+}
+
+// Depose un document dans le dossier du client, en respectant le nommage du Drive :
+// « Mr Untel - Devis D-260031.pdf » dans « Clients/Mr Untel ».
+async function driveRangerDocument(nomClient, nomFichier, contenu, type){
+  if(!nomClient) throw new Error('nom du client manquant');
+  const racine = await driveRacine();
+  const dossier = await driveDossierClient(nomClient, racine);
+  return driveEnvoi(contenu, nomFichier, type || 'application/pdf', dossier);
+}
+
 /* ---------- signature electronique des devis ---------- */
 const SG_BASE = 'https://ds-signature.plombierds24.workers.dev';
 let sgOctets = null, sgPdf = null, sgPages = 0, sgZone = null, sgPret = false, sgDemandes = [];
@@ -3106,6 +3281,7 @@ function sgInit(){
   $('sg-generer').addEventListener('click', sgGenerer);
   $('sg-reset').addEventListener('click', sgReset);
   $('sg-rafraichir').addEventListener('click', sgActualiser);
+  $('btn-drive-racine').addEventListener('click', driveChoisirRacine);
   $('sg-copier').addEventListener('click', () => {
     const u = $('sg-url').value;
     navigator.clipboard.writeText(u).then(() => toast('Lien copie')).catch(() => { $('sg-url').select(); document.execCommand('copy'); toast('Lien copie'); });
