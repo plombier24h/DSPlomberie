@@ -101,6 +101,9 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 .sv-table .sv-attente{box-shadow:inset 0 0 0 1px rgba(232,119,34,.75)}
 .sv-table .sv-ok{box-shadow:inset 0 0 0 1px rgba(27,158,85,.9)}
 .sv-table .sv-ko{box-shadow:inset 0 0 0 2px #e0533d;background:rgba(224,83,61,.14)}
+#sv-alerte{position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#c0392b;color:#fff;
+  padding:12px 18px;font:600 .84rem 'Red Hat Display',sans-serif;text-align:center;line-height:1.5}
+#sv-alerte b{font-weight:800}
 .sv-table .col-court{width:80px}
 .sv-table .col-prix{width:132px}
 .sv-table .col-tech{width:125px}
@@ -1674,16 +1677,35 @@ async function svSauver(el){
   try{
     const patch = { [champ]: val, majAtMs: Date.now(), relanceAtMs: Date.now(), suiviOff: false };
     if(champ === 'dateDevis') patch.dateEstimee = false;   // une date saisie a la main n'est plus une estimation
-    await updateDoc(doc(db, "clients", tr.dataset.id), patch);
+    // Firestore met les ecritures en file d'attente quand la liaison est coupee :
+    // la promesse ne repond alors ni oui ni non, et la saisie part au rechargement
+    // sans le moindre message. On impose donc un delai de reponse.
+    const limite = new Promise((_, rej) => setTimeout(() => rej(new Error('serveur injoignable')), 8000));
+    await Promise.race([updateDoc(doc(db, "clients", tr.dataset.id), patch), limite]);
     el.dataset.avant = val;
     el.title = '';
     svMarque(el, 'sv-ok');
+    svAlerte(false);
     setTimeout(() => { if(el.classList.contains('sv-ok')) svMarque(el, null); }, 1600);
   }catch(e){
     svMarque(el, 'sv-ko');
     el.title = "Non enregistre : " + (e.code || e.message);
-    toast("Enregistrement refusé : " + (e.code || e.message));
+    svAlerte(true);
   }
+}
+
+// Bandeau rouge permanent tant qu'une case n'a pas pu etre enregistree.
+function svAlerte(actif){
+  let b = document.getElementById('sv-alerte');
+  if(!actif){
+    if(b && !document.querySelector('#sv-table .sv-ko')) b.remove();
+    return;
+  }
+  if(b) return;
+  b = document.createElement('div');
+  b.id = 'sv-alerte';
+  b.innerHTML = '<b>Rien ne s\'enregistre.</b> Les cases en rouge ne sont pas dans la base — ne ferme pas la page, vérifie ta connexion. Chaque nouvelle frappe réessaie.';
+  document.body.appendChild(b);
 }
 
 // Dernier filet : on pousse ce qui n'est pas encore parti quand la page se ferme
