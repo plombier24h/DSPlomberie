@@ -365,7 +365,7 @@ body.large .wrap{max-width:1500px}
 #sv-recherche{flex:1 1 240px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:8px;color:#fff;font:400 .88rem 'Red Hat Display',sans-serif;padding:9px 13px}
 #sv-recherche:focus{outline:none;border-color:var(--orange)}
 .sv-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--ink2)}
-.sv-table{width:100%;border-collapse:collapse;min-width:1180px;table-layout:fixed}
+.sv-table{width:100%;border-collapse:collapse;min-width:1330px;table-layout:fixed}
 .sv-table th{background:rgba(0,0,0,.35);color:rgba(255,255,255,.62);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;padding:10px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;z-index:2}
 .sv-table th small{display:block;text-transform:none;letter-spacing:0;color:var(--orange);font-size:.66rem;font-weight:600}
 .sv-table td{border-bottom:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);padding:0;vertical-align:top}
@@ -2764,6 +2764,7 @@ const SV_COLS = [
   { k:'dateDevis',    t:'Date',            cls:'col-date', date:true },
   { k:'deal',         t:'Deal',            sous:'15 %',  cls:'col-court c' },
   { k:'call',         t:'Call',            sous:'100 €', cls:'col-court c' },
+  { k:'description',  t:'Description',     long:true },
   { k:'notes',        t:'Note',            long:true },
   { k:'prix',         t:'Prix',            cls:'col-prix c' },
   { k:'technicien',   t:'Technicien',      cls:'col-tech c' },
@@ -2955,7 +2956,7 @@ function renderSuivi(){
   const champ = document.getElementById('sv-recherche');
   const q = strip((champ && champ.value) || '');
   const liste = svTrier(contacts.filter(c => !q ||
-      strip([c.nom, c.notes, c.technicien, c.relance, c.devisFacture, c.deal, c.call, c.prix].join(' ')).includes(q)));
+      strip([c.nom, c.description, c.notes, c.technicien, c.relance, c.devisFacture, c.deal, c.call, c.prix].join(' ')).includes(q)));
   const nb = document.getElementById('sv-nb');
   if(nb) nb.textContent = contacts.length
       ? (liste.length === contacts.length ? contacts.length + ' client' + (contacts.length > 1 ? 's' : '')
@@ -2980,7 +2981,7 @@ function renderSuivi(){
       return `<td class="${col.cls || ''}">${champ}</td>`;
     }).join('') + '<td class="col-sup"><button class="sv-sup" data-sv-sup title="Retirer du tableau"><i class="fas fa-xmark"></i></button></td></tr>').join('');
 
-  tbl.innerHTML = entete + (lignes || '<tr><td colspan="11" style="padding:16px;color:rgba(255,255,255,.45)">Aucun client. Clique sur « Nouveau client ».</td></tr>');
+  tbl.innerHTML = entete + (lignes || '<tr><td colspan="12" style="padding:16px;color:rgba(255,255,255,.45)">Aucun client. Clique sur « Nouveau client ».</td></tr>');
 
   const ajuster = () => tbl.querySelectorAll('textarea').forEach(t => { t.style.height = 'auto'; t.style.height = Math.max(38, t.scrollHeight) + 'px'; });
   tbl.querySelectorAll('textarea').forEach(t => t.addEventListener('input', ajuster));
