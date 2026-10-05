@@ -295,6 +295,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
 }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -456,6 +457,7 @@ body{font-family:'Red Hat Display',sans-serif;background:var(--ink);color:#fff;m
         <button class="btn" id="btn-fiche"><i class="fas fa-envelope"></i> Copier la fiche et ouvrir le mail</button>
         <button class="btn ghost hidden" id="btn-pj-envoi"><i class="fas fa-paperclip"></i> Joindre les pièces au mail</button>
         <button class="btn ghost hidden" id="btn-pj-drive"><i class="fas fa-cloud-arrow-up"></i> Envoyer sur Drive</button>
+        <button class="btn ghost small" id="btn-drive-racine"><i class="fas fa-folder-open"></i> Choisir le dossier Clients</button>
         <span class="etat" id="pj-drive-etat"></span>
         <span class="etat" id="fiche-etat"></span>
       </div>
@@ -1260,7 +1262,10 @@ $('btn-pj-envoi').addEventListener('click', async () => {
 /* ---------- Google Drive : sauvegarde des photos et videos du client ---------- */
 const DRIVE_CLIENT_ID = '1005022938633-6i3bkocptbb9o2j0obl6hm1o633dait8.apps.googleusercontent.com';
 const DRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
-const DRIVE_RACINE    = 'DS Plomberie - Dossiers clients';
+// Cle du selecteur de dossier Google. L'autorisation drive.file ne donne acces
+// qu'aux fichiers crees par l'application : le dossier « Clients » existant doit
+// donc etre designe une fois dans le selecteur, ce qui ouvre aussi son contenu.
+const DRIVE_PICKER_KEY = 'AIzaSyCVzOevRreO4W5fOKAc5sg5zLbfMvJjYfw';
 let driveJeton = null, driveJetonFin = 0, driveClient = null, driveRacineId = null;
 
 function driveEtat(txt){
@@ -1324,16 +1329,77 @@ async function driveEnvoi(fichier, parentId){
 }
 
 // L'identifiant du dossier racine est partage par Firestore pour que tous les
-// postes deposent au meme endroit au lieu de creer chacun son dossier.
+// postes deposent au meme endroit : c'est le dossier « Clients » du Drive,
+// designe une fois pour toutes avec le selecteur Google.
 async function driveRacine(){
   if(driveRacineId) return driveRacineId;
   try{
     const s = await getDoc(doc(db, 'reglages', 'drive'));
     if(s.exists() && s.data().racineId){ driveRacineId = s.data().racineId; return driveRacineId; }
   }catch(e){}
-  driveRacineId = await driveDossier(DRIVE_RACINE, null);
-  try{ await setDoc(doc(db, 'reglages', 'drive'), { racineId: driveRacineId, majAtMs: Date.now() }, { merge: true }); }catch(e){}
-  return driveRacineId;
+  throw new Error("dossier Drive non défini — clique sur « Choisir le dossier Clients »");
+}
+
+function drivePickerPret(){
+  return new Promise((resolve, reject) => {
+    if(window.google && google.picker) return resolve();
+    if(typeof gapi === 'undefined') return reject(new Error("Google ne s'est pas chargé, vérifie la connexion."));
+    gapi.load('picker', { callback: resolve, onerror: () => reject(new Error('sélecteur indisponible')) });
+  });
+}
+
+async function driveChoisirRacine(){
+  const b = $('btn-drive-racine'); if(b) b.disabled = true;
+  try{
+    driveEtat('connexion…');
+    const jeton = await driveJetonDemande();
+    await drivePickerPret();
+    driveEtat('');
+    const vue = new google.picker.DocsView(google.picker.ViewId.FOLDERS)
+      .setIncludeFolders(true).setSelectFolderEnabled(true)
+      .setMimeTypes('application/vnd.google-apps.folder');
+    new google.picker.PickerBuilder()
+      .setOAuthToken(jeton)
+      .setDeveloperKey(DRIVE_PICKER_KEY)
+      .setTitle('Choisis le dossier Clients')
+      .addView(vue)
+      .setCallback(async (d) => {
+        if(!d || d.action !== google.picker.Action.PICKED) return;
+        const choisi = d.docs && d.docs[0];
+        if(!choisi) return;
+        driveRacineId = choisi.id;
+        try{
+          await setDoc(doc(db, 'reglages', 'drive'),
+            { racineId: choisi.id, racineNom: choisi.name || '', majAtMs: Date.now() }, { merge: true });
+        }catch(e){}
+        driveEtat('dossier « ' + (choisi.name || '') + ' » enregistré');
+        toast('Dossier Drive : ' + (choisi.name || ''));
+      })
+      .build().setVisible(true);
+  }catch(e){
+    driveEtat('');
+    toast('Drive : ' + (e.message || e));
+  }finally{
+    if(b) b.disabled = false;
+  }
+}
+
+// Le dossier du client existe deja la plupart du temps : on le cherche avant
+// d'en creer un, sinon on fabrique un doublon a cote du sien.
+async function driveDossierClient(nom, parentId){
+  const jeton = await driveJetonDemande();
+  const q = "mimeType='application/vnd.google-apps.folder' and trashed=false and '" +
+            parentId + "' in parents and name='" + String(nom).replace(/'/g, "\\'") + "'";
+  try{
+    const r = await fetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) +
+                          '&fields=files(id,name)&pageSize=1',
+                          { headers: { Authorization: 'Bearer ' + jeton } });
+    if(r.ok){
+      const d = await r.json();
+      if(d.files && d.files.length) return d.files[0].id;
+    }
+  }catch(e){}
+  return driveDossier(nom, parentId);
 }
 
 async function driveEnvoyerPieces(){
@@ -1350,7 +1416,7 @@ async function driveEnvoyerPieces(){
     let fiche = contacts.find(c => strip(c.nom || '') === strip(nom));
     const dejaEnFiche = ((fiche && fiche.pieces) || []).filter(p => p.vignette).length;
     let dossierId = fiche && fiche.driveFolderId;
-    if(!dossierId) dossierId = await driveDossier(nom, racine);
+    if(!dossierId) dossierId = await driveDossierClient(nom, racine);
 
     const envoyees = [];
     for(let i = 0; i < pieces.length; i++){
@@ -1391,6 +1457,7 @@ async function driveEnvoyerPieces(){
   }
 }
 $('btn-pj-drive').addEventListener('click', driveEnvoyerPieces);
+$('btn-drive-racine').addEventListener('click', driveChoisirRacine);
 
 /* ---------- tableau de suivi, partage avec la console ---------- */
 const SV_COLS = [
