@@ -121,11 +121,18 @@ hr { border:none; border-top:1px solid #CBD5E0; margin:16px 0; }
         color:#4a5568; font-family:Arial, Helvetica, sans-serif; resize:vertical; min-height:38px; line-height:1.55; padding:4px; }
 .remarques textarea:focus { outline:none; border-color:#1A365D; }
 .signatures { margin-top:14px; font-size:12px; display:flex; justify-content:space-between;
-              align-items:flex-end; gap:20px; page-break-inside:avoid; }
+              align-items:flex-start; gap:28px; page-break-inside:avoid; }
 .signatures .sig-client { flex:1 1 auto; }
-.signatures .sig-client .trait { display:inline-block; border-bottom:1px solid #4a5568; width:210px; margin-left:6px; }
+.signatures .sig-titre { line-height:1.4; }
+/* Le cadre de signature du client ne bouge jamais : meme place, meme taille,
+   que le client signe au stylo sur le PDF ou en ligne. */
+.cadre-signature { width:230px; height:84px; border:1px solid #A0AEC0; border-radius:3px;
+                   margin-top:7px; position:relative; overflow:hidden; background:#fff; }
+.cadre-signature #signature-affichee { position:absolute; inset:0; display:flex;
+                   align-items:center; justify-content:center; padding:4px; }
+.cadre-signature #signature-affichee img { max-width:100%; max-height:100%; }
 .sig-entreprise { flex:0 0 auto; text-align:center; }
-.tampon { width:186px; display:block; margin:4px auto 0; }
+.tampon { width:186px; display:block; margin:7px auto 0; }
 .pied { margin-top:16px; border-top:1px solid #CBD5E0; padding-top:7px; font-size:9.5px; color:#718096; text-align:center; }
 .pagination { text-align:center; font-size:9.5px; color:#718096; margin-top:5px; }
 
@@ -308,11 +315,6 @@ paiement entraîne une pénalité, ainsi qu'une indemnité
 forfaitaire de 40 € pour frais de recouvrement.</textarea>
 </div>
 
-<div class="section" id="bloc-signature" style="text-align:right;display:none;">
-<b>Signature du client :</b><br>
-<div id="signature-affichee" style="border:1px solid #ccc; height:80px; width:220px; margin-left:auto; margin-top:6px;"></div>
-</div>
-
 <div id="bloc-pad-signature" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
 <div style="background:#fff;border-radius:12px;padding:24px;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.35);">
 <b>Signez ici pour accepter ce devis :</b><br>
@@ -332,10 +334,11 @@ forfaitaire de 40 € pour frais de recouvrement.</textarea>
 
 <div class="signatures">
 <div class="sig-client">
-<div>Signature du Client : <span class="trait"></span></div>
-<div style="margin-top:12px;">Signature de l'Entreprise :</div>
+<div class="sig-titre">Signature du Client précédée de la mention «&nbsp;Bon pour accord&nbsp;» :</div>
+<div class="cadre-signature" id="bloc-signature" style="display:none;"><div id="signature-affichee"></div></div>
 </div>
 <div class="sig-entreprise">
+<div class="sig-titre">Signature de l'Entreprise :</div>
 <img class="tampon" src="img/tampon-ds.png" alt="Tampon et signature">
 </div>
 </div>
